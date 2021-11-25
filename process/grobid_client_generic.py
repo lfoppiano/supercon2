@@ -1,37 +1,65 @@
 import json
-import time
 import os
+import time
 
 import requests
+import yaml
 
-from .client import ApiClient
+from process.client import ApiClient
 
 '''
 This client is a generic client for any Grobid application and sub-modules.
-At the moment, it supports only single document processing.    
+At the moment, it supports only single document processing.
 
 Source: https://github.com/kermitt2/grobid-client-python 
 '''
-class grobid_client_generic(ApiClient):
 
+
+class GrobidClientGeneric(ApiClient):
 
     def __init__(self, config_path=None, ping=False):
         self.config = None
         if config_path:
-            self._load_config_from_file(path=config_path, ping=ping)
+            self.config = self.load_yaml_config_from_file(path=config_path, ping=ping)
         os.environ['NO_PROXY'] = "nims.go.jp"
 
-    def _load_config_from_file(self, path='./config.json', ping=False):
+    @staticmethod
+    def load_json_config_from_file(self, path='./config.json', ping=False):
         """
-        Load the json configuration 
+        Load the json configuration
         """
-        config_json = open(path).read()
-        self.config = json.loads(config_json)
+        config = {}
+        with open(path, 'r') as fp:
+            config = json.load(fp)
+
         if ping:
             result = self.ping_grobid()
             if not result:
                 raise Exception("Grobid is down.")
 
+        return config
+
+    def load_yaml_config_from_file(self, path='./config.yaml', ping=False):
+        """
+        Load the YAML configuration
+        """
+        config = {}
+        try:
+            with open(path, 'r') as the_file:
+                raw_configuration = the_file.read()
+
+            config = yaml.safe_load(raw_configuration)
+        except Exception as e:
+            print("Configuration could not be loaded: ", str(e))
+            exit(1)
+
+        if ping:
+            result = self.ping_grobid()
+            if not result:
+                raise Exception("Grobid is down.")
+        
+        return config
+        
     def set_config(self, config, ping=False):
         self.config = config
         if ping:
@@ -39,8 +67,8 @@ class grobid_client_generic(ApiClient):
                 result = self.ping_grobid()
                 if not result:
                     raise Exception("Grobid is down.")
-            except Exception:
-                raise Exception("Grobid is down")
+            except Exception as e:
+                raise Exception("Grobid is down or other problems were encountered. ", e)
 
     def ping_grobid(self):
         # test if the server is up and running...
@@ -58,7 +86,7 @@ class grobid_client_generic(ApiClient):
 
     def get_grobid_url(self, action):
         grobid_config = self.config['grobid']
-        base_url = grobid_config['server'] + grobid_config['prefix']
+        base_url = grobid_config['server']
         action_url = base_url + grobid_config['url_mapping'][action]
 
         return action_url
@@ -128,7 +156,8 @@ class grobid_client_generic(ApiClient):
         else:
             return res.text, status
 
-    def process_json(self, text, method_name="processJson", params={}, headers={"Accept": "application/json"}, verbose=False):
+    def process_json(self, text, method_name="processJson", params={}, headers={"Accept": "application/json"},
+                     verbose=False):
         files = {
             'input': (
                 None,

@@ -11,6 +11,8 @@ from tqdm import tqdm
 from supercon_batch_mongo_extraction import connect_mongo, MongoSuperconProcessor
 from utils import json_serial
 
+multiprocessing.set_start_method("fork", force=True)
+
 
 class MongoTabularProcessor(MongoSuperconProcessor):
     grobid_client = None
@@ -106,7 +108,7 @@ class MongoTabularProcessor(MongoSuperconProcessor):
 
     def setup_batch_processes(self, db_name=None, num_threads=os.cpu_count() - 1, only_failed=False):
         if db_name is None:
-            self.db_name = self.config["mongo"]["database"]
+            self.db_name = self.config["mongo"]["db"]
         else:
             self.db_name = db_name
 
@@ -151,7 +153,8 @@ if __name__ == '__main__':
     parser.add_argument("--database", "-db",
                         help="Set the database name which is normally read from the configuration file", type=str,
                         required=False)
-    parser.add_argument("--force", "-f", help="Re-process all the records and replace existing one. ", action="store_true", default=False)
+    parser.add_argument("--force", "-f", help="Re-process all the records and replace existing one. ",
+                        action="store_true", default=False)
     parser.add_argument("--verbose",
                         help="Print all log information", action="store_true", required=False, default=False)
 

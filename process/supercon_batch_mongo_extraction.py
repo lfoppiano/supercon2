@@ -6,7 +6,6 @@ import os
 import sys
 from datetime import datetime
 from hashlib import blake2b
-from multiprocessing import Manager
 from pathlib import Path
 
 import gridfs
@@ -14,16 +13,15 @@ import pymongo
 from pymongo import MongoClient
 from tqdm import tqdm
 
-def connect_mongo(config_path=None, config=None):
-    if config_path:
-        with open(config_path, 'r') as fp:
-            configuration = json.load(fp)
-        mongo_client_url = configuration['mongo']['server']
-    elif config:
-        mongo_client_url = config['mongo']['server'] if 'mongo' in config and 'server' in config['mongo'] else ''
-    else:
-        raise Exception("Config is None")
+from process.grobid_client_generic import GrobidClientGeneric
 
+multiprocessing.set_start_method("fork")
+
+
+def connect_mongo(config):
+    if config is None or config == {}:
+        raise Exception("Config is blank!")
+    mongo_client_url = config['mongo']['server'] if 'mongo' in config and 'server' in config['mongo'] else ''
     c = MongoClient(mongo_client_url)
 
     return c
@@ -41,20 +39,19 @@ class MongoSuperconProcessor:
     grobid_client = None
     config = {}
 
-    m = Manager()
-    queue_input = m.Queue()
-    queue_output = m.Queue()
-    queue_logger = m.Queue()
+    m = multiprocessing.Manager()
+    queue_input = None
+    queue_output = None
+    queue_logger = None
 
     def __init__(self, config_path, verbose=False):
         self.verbose = verbose
-        config_json = open(config_path).read()
-        self.config = json.loads(config_json)
+        self.grobid_client = GrobidClientGeneric()
+        self.config = self.grobid_client.load_yaml_config_from_file(config_path)
+        self.grobid_client.set_config(self.config, ping=True)
 
         if verbose:
             print("Configuration: ", self.config)
-        self.grobid_client = grobid_client_generic()
-        self.grobid_client.set_config(self.config, ping=True)
 
         if verbose:
             print("Init completed.")
@@ -77,13 +74,13 @@ class MongoSuperconProcessor:
         db.tabular.create_index([("hash", pymongo.ASCENDING), ("timestamp", pymongo.ASCENDING)])
         db.tabular.create_index("hash")
 
-        db.binary.chunks([("files_id", pymongo.ASCENDING), ("n", pymongo.ASCENDING)])
+        db.binary.chunks.create_index([("files_id", pymongo.ASCENDING), ("n", pymongo.ASCENDING)])
 
         db.binary.files.create_index([("filename", pymongo.ASCENDING), ("uploadDate", pymongo.ASCENDING)])
         db.binary.files.create_index("hash")
 
     def write_mongo_status(self, db_name, service):
-        '''Write the status of the document being processed'''
+        """Write the status of the document being processed"""
         connection = connect_mongo(config=self.config)
         db = connection[db_name]
         while True:
@@ -98,7 +95,7 @@ class MongoSuperconProcessor:
         pass
 
     def write_mongo_single(self, db_name):
-        '''Write the result of the document being processed'''
+        """Write the result of the document being processed"""
 
         connection = connect_mongo(config=self.config)
         db = connection[db_name]
@@ -141,6 +138,7 @@ class MongoSuperconProcessor:
                 self.queue_input.put(source_path)
                 break
 
+            hash = None
             if self.process_only_new:
                 connection = connect_mongo(config=self.config)
                 db = connection[self.db_name]
@@ -163,7 +161,7 @@ class MongoSuperconProcessor:
                 extracted_json['type'] = 'automatic'
                 self.queue_output.put((extracted_json, source_path), block=True)
 
-            status_info = {'path': str(source_path), 'status': status, 'timestamp': datetime.utcnow()}
+            status_info = {'path': str(source_path), 'status': status, 'timestamp': datetime.utcnow(), 'hash': hash}
             self.queue_logger.put(status_info, block=True)
 
     def prepare_data(self, extracted_data, abs_path):
@@ -178,7 +176,7 @@ class MongoSuperconProcessor:
 
     def setup_batch_processes(self, db_name=None, num_threads=os.cpu_count() - 1, only_new=False):
         if db_name is None:
-            self.db_name = self.config["mongo"]["database"]
+            self.db_name = self.config["mongo"]["db"]
         else:
             self.db_name = db_name
 
@@ -191,6 +189,7 @@ class MongoSuperconProcessor:
 
         num_threads_process = num_threads
         num_threads_store = math.ceil(num_threads / 2) if num_threads > 1 else 1
+
         self.queue_input = self.m.Queue(maxsize=num_threads_process)
         self.queue_output = self.m.Queue(maxsize=num_threads_store)
         self.queue_logger = self.m.Queue(maxsize=num_threads_store)
@@ -229,7 +228,7 @@ if __name__ == '__main__':
         description="Extract superconductor materials and properties and save them on MongoDB - extraction")
     parser.add_argument("--input", help="Input directory", type=Path, required=True)
     parser.add_argument("--config", help="Configuration file", type=Path, required=True)
-    parser.add_argument("--num-threads", "-n", help="Number of concurrent processes", type=int, default=2,
+    parser.add_argument("--num-threads", "-n", help="Number of concurrent processes", type=int, default=3,
                         required=False)
     parser.add_argument("--only-new", help="Processes only documents that have not record in the database",
                         action="store_true",
@@ -263,7 +262,6 @@ if __name__ == '__main__':
         sys.exit(-1)
 
     processor_ = MongoSuperconProcessor(config_path, verbose)
-    pdf_files = []
     processor_.setup_batch_processes(num_threads=num_threads, db_name=db_name, only_new=only_new)
     start_queue = processor_.get_queue_input()
 
@@ -273,8 +271,6 @@ if __name__ == '__main__':
                 continue
 
             abs_path = os.path.join(root, file_)
-            # pdf_files.append(abs_path)
-
             start_queue.put(abs_path, block=True)
 
     print("Finishing!")
