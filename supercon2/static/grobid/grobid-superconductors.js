@@ -414,7 +414,7 @@ let grobid = (function ($) {
 
             let json = JSON.parse(response);
             let pages = json['pages'];
-            let paragraphs = json['paragraphs'];
+            let passages = json['passages'];
 
             let spanGlobalIndex = 0;
             let copyButtonElement = $('#copy-button');
@@ -429,21 +429,25 @@ let grobid = (function ($) {
             function appendLinkToTable(span, link, addedLinks) {
                 let encodedLinkId = encodeLinkAsString(span, link)
 
-                let classes = Object.keys(span.attributes)
-                    .filter(function (key) {
-                        return key.endsWith("clazz");
-                    })
-                    .map(function (key) {
-                        return span.attributes[key]
-                    }).join(", ");
+                let shapes = {}
+                let classes = {}
+                if (span.attributes) {
+                    classes = Object.keys(span.attributes)
+                        .filter(function (key) {
+                            return key.endsWith("clazz");
+                        })
+                        .map(function (key) {
+                            return span.attributes[key]
+                        }).join(", ");
 
-                let shapes = Object.keys(span.attributes)
-                    .filter(function (key) {
-                        return key.endsWith("shape");
-                    })
-                    .map(function (key) {
-                        return span.attributes[key]
-                    }).join(", ");
+                    shapes = Object.keys(span.attributes)
+                        .filter(function (key) {
+                            return key.endsWith("shape");
+                        })
+                        .map(function (key) {
+                            return span.attributes[key]
+                        }).join(", ");
+                }
 
                 let html_code = createRowHtml(encodedLinkId, span.text, link.targetText, link.type, true, cla = classes, shape = shapes);
                 let {
@@ -476,9 +480,9 @@ let grobid = (function ($) {
             }
 
             let globalLinkToPressures = []
-            paragraphs.forEach(function (paragraph, paragraphIdx) {
+            passages.forEach(function (passage, passageIdx) {
                 let addedLinks = []
-                let spans = paragraph.spans;
+                let spans = passage.spans;
                 let localSpans = []
                 // hey bro, this must be asynchronous to avoid blocking the brothers
 
@@ -534,22 +538,20 @@ let grobid = (function ($) {
                                             return;
                                         }
 
-                                        // span.text == material
-                                        // link.targetText == tcValue
+                                        let snippetAnnotations = new Array(span, link_entity);
                                         let row_id = appendLinkToTable(span, link, addedLinks);
-                                        // appendRemoveButton(row_id);
 
                                         if (linkToPressures[link.targetId] !== undefined) {
-                                            $("#" + row_id + " td:eq(6)").text(spansMap[linkToPressures[link.targetId]].text)
-                                            delete globalLinkToPressures[link.targetId]
+                                            $("#" + row_id + " td:eq(6)").text(spansMap[linkToPressures[link.targetId]].text);
+                                            snippetAnnotations.push(spansMap[linkToPressures[link.targetId]]);
+                                            delete globalLinkToPressures[link.targetId];
                                         }
 
-
-                                        let paragraph_popover = annotateTextAsHtml(paragraph.text, [span, link_entity]);
+                                        let passage_popover = annotateTextAsHtml(passage.text, snippetAnnotations);
 
                                         $("#" + row_id).popover({
                                             content: function () {
-                                                return paragraph_popover;
+                                                return passage_popover;
                                             },
                                             html: true,
                                             // container: 'body',
@@ -566,7 +568,7 @@ let grobid = (function ($) {
 
             let addedLinks = []
 
-            //Reprocessing the links for which the targetId isn't in the same paragraph
+            //Reprocessing the links for which the targetId isn't in the same passage
             unlinkedElements.forEach(function (span, spanIdx) {
                 if (span.links !== undefined && span.links.length > 0) {
                     span.links.forEach(function (link, linkIdx) {
@@ -604,15 +606,15 @@ let grobid = (function ($) {
             let pos = 0;
 
             annotationList.sort(function (a, b) {
-                let startA = parseInt(a.offsetStart, 10);
-                let startB = parseInt(b.offsetStart, 10);
+                let startA = parseInt(a.offset_start, 10);
+                let startB = parseInt(b.offset_start, 10);
 
                 return startA - startB;
             });
 
             annotationList.forEach(function (annotation, annotationIdx) {
-                let start = parseInt(annotation.offsetStart, 10);
-                let end = parseInt(annotation.offsetEnd, 10);
+                let start = parseInt(annotation.offset_start, 10);
+                let end = parseInt(annotation.offset_end, 10);
 
                 let type = getPlainType(annotation.type);
                 let links = annotation.links
@@ -710,7 +712,7 @@ let grobid = (function ($) {
         }
 
         function addRow() {
-            console.log("Adding new row. ");
+            // console.log("Adding new row. ");
 
             let random_number = '_' + Math.random().toString(36).substr(2, 9);
 
@@ -784,6 +786,23 @@ let grobid = (function ($) {
         function getPlainType(type) {
             return type.replace("<", "").replace(">", "");
         }
+        
+        var createNestedObject = function (base, names, value) {
+            // If a value is given, remove the last name and keep it for later:
+            var lastName = arguments.length === 3 ? names.pop() : false;
+
+            // Walk the hierarchy, creating new objects where needed.
+            // If the lastName was removed, then the last object is not set yet:
+            for (var i = 0; i < names.length; i++) {
+                base = base[names[i]] = base[names[i]] || {};
+            }
+
+            // If a value was given, set it to the last name:
+            if (lastName) base = base[lastName] = value;
+
+            // Return the last object in the hierarchy:
+            return base;
+        };
 
         // Transformation to HTML
         function spanToHtml(span, topPos) {
@@ -838,32 +857,59 @@ let grobid = (function ($) {
 
             if (span.attributes) {
                 let previousPrefix = "";
-                let resolvedFormulas = [];
-                let formula = "";
-                let attributeHtmlString = "<div class='border col-12 p-0'>";
+                let attributeHtmlStringStart = "<div class='border col-12 p-0'>";
+                let attributeHtmlString = ""
+                obj = {}
+
                 Object.keys(span.attributes).sort().forEach(function (key) {
                     let splits = key.split("_");
-                    let prefix = splits[0];
-                    let propertyName = splits[1];
+                    let value = span.attributes[key];
 
-                    if (propertyName === "formula") {
-                        formula = span.attributes[key];
-                        attributeHtmlString += "<row><div class='col-12'>" + propertyName + ": <strong>" + span.attributes[key] + "</strong></div></row>";
-                    } else if (propertyName === 'rawTaggedValue') {
-                        //Ignoring
-
-                    } else if (propertyName === 'resolvedFormula') {
-                        resolvedFormulas.push(span.attributes[key])
-                    } else {
-                        attributeHtmlString += "<row><div class='col-12'>" + propertyName + ": <strong>" + span.attributes[key] + "</strong></div></row>";
-                    }
-                    previousPrefix = prefix;
+                    createNestedObject(obj, splits, value);
                 });
 
-                if (resolvedFormulas.length > 0 && resolvedFormulas[0] !== formula) {
-                    attributeHtmlString += "<row><div class='col-12'>resolvedFormula: <strong>" + resolvedFormulas.join(", ") + "</strong></div></row>";
-                }
-                attributeHtmlString += "</div>";
+                Object.keys(obj).forEach(function (key) {
+                    attributeHtmlString += attributeHtmlStringStart;
+                    let resolvedFormulas = [];
+                    let formula = "";
+                    let variables = []
+
+                    Object.keys(obj[key]).forEach(function (sub_key) {
+                        propertyName = sub_key
+
+                        if (propertyName === "formula") {
+                            formula = obj[key][sub_key]['rawValue'];
+                            attributeHtmlString += "<row><div class='col-12'>" + propertyName + ": <strong>" + formula + "</strong></div></row>";
+                        } else if (propertyName === 'rawTaggedValue') {
+                            // continue
+                        } else if (propertyName === 'clazz') {
+                            attributeHtmlString += "<row><div class='col-12'>Class: <strong>" + obj[key][sub_key] + "</strong></div></row>";
+                        } else if (propertyName === 'resolvedFormulas') {
+                            let resolvedFormulasList = obj[key][sub_key];
+                            Object.keys(resolvedFormulasList).forEach(function (k) {
+                                resolvedFormulas.push(resolvedFormulasList[k]['rawValue'])
+                            });
+                        } else if (propertyName === 'variables') {
+                            let variableList = obj[key][sub_key]
+                            Object.keys(variableList).forEach(function (variable_name) {
+                                let var_values = variableList[variable_name];
+                                Object.keys(var_values).forEach(function (var_value_index) {
+                                    variables.push(var_values[var_value_index]);
+                                })
+                                attributeHtmlString += "<row><div class='col-12'>" + "variable " + variable_name + ": <strong>" + variables.join(", ") + "</strong></div></row>";
+                            });
+                        } else {
+                            attributeHtmlString += "<row><div class='col-12'>" + propertyName + ": <strong>" + obj[key][sub_key] + "</strong></div></row>";
+                        }
+                        previousPrefix = key;
+
+                    })
+
+                    if (resolvedFormulas.length > 0 && resolvedFormulas[0] !== formula) {
+                        attributeHtmlString += "<row><div class='col-12'>resolvedFormula: <strong>" + resolvedFormulas.join(", ") + "</strong></div></row>";
+                    }
+                    attributeHtmlString += "</div>";
+                })
 
                 string += attributeHtmlString;
             }
