@@ -1,22 +1,14 @@
 import argparse
 import json
+import os
 from pathlib import Path
 
+import yaml
 from flask import Flask
 
+from supercon2 import service
 from supercon2.service import bp
-
-
-def load_config(config_file):
-    global config
-    try:
-        with open(config_file, 'r') as fp:
-            config = json.load(fp)
-
-    except Exception as e:
-        print("configuration could not be loaded: ", str(e))
-        exit(1)
-
+from supercon2.utils import load_config_yaml
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -25,19 +17,19 @@ if __name__ == '__main__':
                         help="Host of the service.")
     parser.add_argument("--port", type=str, default=8080,
                         help="Port of the service.")
-    parser.add_argument("--root-path", type=str, default="/supercon", required=False,
+    parser.add_argument("--root-path", type=str, default="/", required=False,
                         help="Root path prefix for the URLs.")
     parser.add_argument("--config-file", type=Path, required=False, help="Configuration file to be used.",
-                        default='./config.json')
+                        default='config.yaml')
     parser.add_argument("--debug", action="store_true", required=False, default=False,
                         help="Activate the debug mode for the service")
 
     args = parser.parse_args()
 
-    load_config(args.config_file)
+    service.config = load_config_yaml(args.config_file)
 
     root_path = args.root_path
-    static_path = root_path + '/static'
+    static_path = os.path.join(root_path, '/static')
 
     app = Flask(__name__, static_url_path=static_path)
     app.register_blueprint(bp, url_prefix=root_path)

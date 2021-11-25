@@ -1,2 +1,5 @@
 Flask==2.0.2
 pymongo
+requests
+tqdm
+pyyaml

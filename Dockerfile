@@ -25,8 +25,7 @@ RUN pip --version
 
 RUN python3 -m pip install pip --upgrade
 RUN pip install -r ./requirements.txt
-RUN #python -m spacy download en_core_web_sm
 
 EXPOSE 8080
 
-CMD ["python3", "-m", "supercond2", "--config", "supercon2/config.json"]
+CMD ["python3", "-m", "supercond2", "--config", "supercon2/config.yaml"]

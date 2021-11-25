@@ -1,14 +1,14 @@
-import argparse
 import json
-from pathlib import Path
 
 import gridfs
-from flask import Flask, render_template, request, Response, Blueprint, url_for
+from flask import render_template, request, Response, Blueprint, url_for
 
 from process.supercon_batch_mongo_extraction import connect_mongo
 from process.utils import json_serial
+from supercon2.utils import load_config_yaml
 
 bp = Blueprint('supercon', __name__)
+config = []
 
 
 @bp.route('/version')
@@ -26,10 +26,10 @@ def render_page(page):
     return render_template(page)
 
 
-@bp.route('/annotation/feedback', methods=['POST'])
-def annotation_feedback():
-    print("Received feedback request. id=" + str(request.form))
-    return request.form
+# @bp.route('/annotation/feedback', methods=['POST'])
+# def annotation_feedback():
+#     print("Received feedback request. id=" + str(request.form))
+#     return request.form
 
 
 @bp.route('/publishers')
@@ -232,8 +232,5 @@ def get_binary(hash):
 
 
 @bp.route('/config', methods=['GET'])
-def get_config(config_json='./config.json'):
-    config = json.loads(open(config_json).read())
-    return config
-
-
+def get_config(config_file='config.yaml'):
+    return load_config_yaml(config_file)
