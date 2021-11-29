@@ -1,7 +1,7 @@
 
 grobid: 
-  server: "http://falcon.nims.go.jp/superconductors/unstable"
-#  server: "http://localhost:8072",
+#  server: "http://falcon.nims.go.jp/superconductors/unstable"
+  server: "http://localhost:8072"
   url_mapping: 
     processPDF_disableLinking: "/service/process/pdf?disableLinking=true"
     processPDF: "/service/process/pdf"
