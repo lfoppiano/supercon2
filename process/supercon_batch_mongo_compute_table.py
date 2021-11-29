@@ -8,8 +8,8 @@ from pathlib import Path
 
 from tqdm import tqdm
 
-from supercon_batch_mongo_extraction import connect_mongo, MongoSuperconProcessor
-from utils import json_serial
+from process.supercon_batch_mongo_extraction import connect_mongo, MongoSuperconProcessor
+from process.utils import json_serial
 
 multiprocessing.set_start_method("fork", force=True)
 
@@ -174,3 +174,5 @@ if __name__ == '__main__':
     processor.setup_batch_processes(num_threads=num_threads, db_name=db_name)
 
     processor.process_json_batch()
+
+    processor.tear_down_batch_processes()
