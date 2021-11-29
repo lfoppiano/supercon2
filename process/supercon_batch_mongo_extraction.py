@@ -11,6 +11,7 @@ from pathlib import Path
 import gridfs
 import pymongo
 from pymongo import MongoClient
+from pymongo.errors import DocumentTooLarge
 from tqdm import tqdm
 
 from process.grobid_client_generic import GrobidClientGeneric
@@ -115,7 +116,14 @@ class MongoSuperconProcessor:
 
             if self.verbose:
                 print("Storing annotations in mongodb, hash: ", hash)
-            document_id = db.document.insert_one(output_json).inserted_id
+
+            try:
+                document_id = db.document.insert_one(output_json).inserted_id
+            except DocumentTooLarge as e:
+                status_info = {'status': None, 'message': e, 'timestamp': datetime.utcnow(), 'hash': hash}
+                self.queue_logger.put(status_info, block=True)
+                return
+
             if self.verbose:
                 print("Storing binary ", hash)
             file = fs_binary.find_one({"hash": hash})
