@@ -29,10 +29,8 @@ if __name__ == '__main__':
     service.config = load_config_yaml(args.config_file)
 
     root_path = args.root_path
-    static_path = os.path.join(root_path, '/static')
-
+    static_path = root_path + '/static'
     app = Flask(__name__, static_url_path=static_path)
     app.register_blueprint(bp, url_prefix=root_path)
-    print(app.url_map)
 
     app.run(host=args.host, port=args.port, debug=args.debug)
