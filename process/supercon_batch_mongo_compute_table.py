@@ -57,7 +57,15 @@ class MongoTabularProcessor(MongoSuperconProcessor):
                                                         "processJson")
             if r is not None:
                 aggregated_entries = r
-                json_aggregated_entries = json.loads(aggregated_entries)
+                try:
+                    json_aggregated_entries = json.loads(aggregated_entries)
+                except TypeError as error:
+                    self.queue_logger.put(
+                        {'hash': hash, 'message': error, 'timestamp_doc': timestamp, 'status': status,
+                         'timestamp': datetime.utcnow()},
+                        block=True)
+                    return
+
                 for ag_e in json_aggregated_entries:
                     ag_e['hash'] = hash
                     ag_e['timestamp'] = timestamp
