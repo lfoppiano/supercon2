@@ -15,5 +15,10 @@ mongo:
   db: "supercon_dev_2"
 
 batch_size: 1000
-sleep_time: 5
+
+# Seconds to wait when receiving a 503 response
+sleep_time: 10
 coordinates: null
+
+# Max number of retry 
+max_retry: 3

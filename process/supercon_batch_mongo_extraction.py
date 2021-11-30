@@ -160,7 +160,7 @@ class MongoSuperconProcessor:
                 print("Processing file " + str(source_path))
 
             r, status = self.grobid_client.process_pdf(str(source_path), "processPDF",
-                                                       headers={"Accept": "application/json"})
+                                                       headers={"Accept": "application/json"}, verbose=self.verbose)
             if r is None:
                 if self.verbose:
                     print("Response is empty or without content for " + str(source_path) + ". Moving on. ")

@@ -57,9 +57,9 @@ class GrobidClientGeneric(ApiClient):
             result = self.ping_grobid()
             if not result:
                 raise Exception("Grobid is down.")
-        
+
         return config
-        
+
     def set_config(self, config, ping=False):
         self.config = config
         if ping:
@@ -117,7 +117,8 @@ class GrobidClientGeneric(ApiClient):
     def process_pdf_batch(self, pdf_files, params={}):
         pass
 
-    def process_pdf(self, pdf_file, method_name, params={}, headers={"Accept": "application/json"}):
+    def process_pdf(self, pdf_file, method_name, params={}, headers={"Accept": "application/json"}, verbose=False,
+                    retry=None):
 
         files = {
             'input': (
@@ -144,9 +145,22 @@ class GrobidClientGeneric(ApiClient):
             headers=headers
         )
 
-        if status == 503:
-            time.sleep(self.config['sleep_time'])
-            return self.process_pdf(pdf_file, method_name, params, headers)
+        if status == 503 or status == 429:
+            if retry is None:
+                retry = self.config['max_retry'] - 1
+            else:
+                if retry - 1 == 0:
+                    if verbose:
+                        print("re-try exausted. Aborting request")
+                    return None, status
+                else:
+                    retry -= 1
+
+            sleep_time = self.config['sleep_time']
+            if verbose:
+                print("Server is saturated, waiting", sleep_time, "seconds and trying again. ")
+            time.sleep(sleep_time)
+            return self.process_pdf(pdf_file, method_name, params, headers, verbose=verbose, retry=retry)
         elif status != 200:
             # print('Processing failed with error ', status)
             return None, status
