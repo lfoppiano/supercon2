@@ -64,7 +64,7 @@ class MongoTabularProcessor(MongoSuperconProcessor):
                         {'hash': hash, 'message': error, 'timestamp_doc': timestamp, 'status': status,
                          'timestamp': datetime.utcnow()},
                         block=True)
-                    return
+                    continue
 
                 for ag_e in json_aggregated_entries:
                     ag_e['hash'] = hash

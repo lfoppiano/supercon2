@@ -122,7 +122,7 @@ class MongoSuperconProcessor:
             except DocumentTooLarge as e:
                 status_info = {'status': None, 'message': e, 'timestamp': datetime.utcnow(), 'hash': hash}
                 self.queue_logger.put(status_info, block=True)
-                return
+                continue
 
             if self.verbose:
                 print("Storing binary ", hash)
