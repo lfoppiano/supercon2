@@ -162,8 +162,11 @@ class GrobidClientGeneric(ApiClient):
             time.sleep(sleep_time)
             return self.process_pdf(pdf_file, method_name, params, headers, verbose=verbose, retry=retry)
         elif status != 200:
-            # print('Processing failed with error ', status)
-            return None, status
+            desc = None
+            if res.content:
+                c = json.loads(res.text)
+                desc = c['description'] if 'description' in c else None
+            return desc, status
         elif status == 204:
             # print('No content returned. Moving on. ')
             return None, status

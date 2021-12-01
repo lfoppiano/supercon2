@@ -146,12 +146,11 @@ class MongoSuperconProcessor:
                 self.queue_input.put(source_path)
                 break
 
-            hash = None
+            hash_full = get_file_hash(source_path)
+            hash = hash_full[:10]
             if self.process_only_new:
                 connection = connect_mongo(config=self.config)
                 db = connection[self.db_name]
-                hash_full = get_file_hash(source_path)
-                hash = hash_full[:10]
                 document = db.document.find_one({"hash": hash})
                 if document:
                     continue
@@ -161,15 +160,20 @@ class MongoSuperconProcessor:
 
             r, status = self.grobid_client.process_pdf(str(source_path), "processPDF",
                                                        headers={"Accept": "application/json"}, verbose=self.verbose)
-            if r is None:
-                if self.verbose:
-                    print("Response is empty or without content for " + str(source_path) + ". Moving on. ")
-            else:
-                extracted_json = self.prepare_data(r, source_path)
-                extracted_json['type'] = 'automatic'
-                self.queue_output.put((extracted_json, source_path), block=True)
 
-            status_info = {'path': str(source_path), 'status': status, 'timestamp': datetime.utcnow(), 'hash': hash}
+            if r is not None:
+                if status == 200:
+                    status_info = {'path': str(source_path), 'status': status, 'timestamp': datetime.utcnow(), 'hash': hash}
+                    extracted_json = self.prepare_data(r, source_path)
+                    extracted_json['type'] = 'automatic'
+                    self.queue_output.put((extracted_json, source_path), block=True)
+                else:
+                    status_info = {'path': str(source_path), 'status': status, 'timestamp': datetime.utcnow(),
+                                   'hash': hash, 'message': r}
+            else:
+                status_info = {'path': str(source_path), 'status': status, 'timestamp': datetime.utcnow(),
+                               'hash': hash}
+                
             self.queue_logger.put(status_info, block=True)
 
     def prepare_data(self, extracted_data, abs_path):
