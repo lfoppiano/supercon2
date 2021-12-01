@@ -151,7 +151,7 @@ class GrobidClientGeneric(ApiClient):
             else:
                 if retry - 1 == 0:
                     if verbose:
-                        print("re-try exausted. Aborting request")
+                        print("re-try exhausted. Aborting request")
                     return None, status
                 else:
                     retry -= 1
