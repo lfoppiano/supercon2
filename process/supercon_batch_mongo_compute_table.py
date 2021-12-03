@@ -56,30 +56,37 @@ class MongoTabularProcessor(MongoSuperconProcessor):
             r, status = self.grobid_client.process_json(json.dumps(preprocessed_json, default=json_serial),
                                                         "processJson")
             if r is not None:
-                aggregated_entries = r
-                try:
-                    json_aggregated_entries = json.loads(aggregated_entries)
-                except TypeError as error:
-                    self.queue_logger.put(
-                        {'hash': hash, 'message': error, 'timestamp_doc': timestamp, 'status': status,
-                         'timestamp': datetime.utcnow()},
-                        block=True)
-                    continue
+                if status == 200:
+                    aggregated_entries = r
+                    try:
+                        json_aggregated_entries = json.loads(aggregated_entries)
+                    except TypeError as error:
+                        self.queue_logger.put(
+                            {'hash': hash, 'message': error, 'timestamp_doc': timestamp, 'status': status,
+                             'timestamp': datetime.utcnow()})
+                        continue
 
-                for ag_e in json_aggregated_entries:
-                    ag_e['hash'] = hash
-                    ag_e['timestamp'] = timestamp
-                    ag_e['type'] = 'automatic'
-                    for item in ['title', 'doi', 'authors', 'publisher', 'journal', 'year']:
-                        ag_e[item] = biblio_data[item] if item in biblio_data else ""
+                    for ag_e in json_aggregated_entries:
+                        ag_e['hash'] = hash
+                        ag_e['timestamp'] = timestamp
+                        ag_e['type'] = 'automatic'
+                        for item in ['title', 'doi', 'authors', 'publisher', 'journal', 'year']:
+                            ag_e[item] = biblio_data[item] if item in biblio_data else ""
 
-                # We remove the previous version of the same data
-                tabular_collection.delete_many({"hash": hash})
-                tabular_collection.insert_many(json_aggregated_entries)
+                    # We remove the previous version of the same data
+                    tabular_collection.delete_many({"hash": hash})
+                    tabular_collection.insert_many(json_aggregated_entries)
+                    status_info = {'status': status, 'timestamp': datetime.utcnow(),
+                                   'hash': hash}
 
-            self.queue_logger.put(
-                {'hash': hash, 'timestamp_doc': timestamp, 'status': status, 'timestamp': datetime.utcnow()},
-                block=True)
+                else:
+                    status_info = {'status': status, 'timestamp': datetime.utcnow(),
+                                   'hash': hash, 'message': r}
+            else:
+                status_info = {'status': status, 'timestamp': datetime.utcnow(),
+                               'hash': hash}
+
+            self.queue_logger.put(status_info, block=True)
 
     def process_json_batch(self):
         connection = connect_mongo(config=self.config)
