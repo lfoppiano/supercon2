@@ -92,7 +92,10 @@ class MongoSuperconProcessor:
                 break
 
             status_info['service'] = service
-            db.logger.insert_one(status_info)
+            try:
+                db.logger.insert_one(status_info)
+            except DocumentTooLarge as e:
+                print("Error while logging: ", status_info, "while inserting log: ", e)
         pass
 
     def write_mongo_single(self, db_name):
