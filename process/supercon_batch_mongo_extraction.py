@@ -163,7 +163,8 @@ class MongoSuperconProcessor:
 
             if r is not None:
                 if status == 200:
-                    status_info = {'path': str(source_path), 'status': status, 'timestamp': datetime.utcnow(), 'hash': hash}
+                    status_info = {'path': str(source_path), 'status': status, 'timestamp': datetime.utcnow(),
+                                   'hash': hash}
                     extracted_json = self.prepare_data(r, source_path)
                     extracted_json['type'] = 'automatic'
                     self.queue_output.put((extracted_json, source_path), block=True)
@@ -173,7 +174,7 @@ class MongoSuperconProcessor:
             else:
                 status_info = {'path': str(source_path), 'status': status, 'timestamp': datetime.utcnow(),
                                'hash': hash}
-                
+
             self.queue_logger.put(status_info, block=True)
 
     def prepare_data(self, extracted_data, abs_path):
