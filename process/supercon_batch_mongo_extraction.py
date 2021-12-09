@@ -95,7 +95,9 @@ class MongoSuperconProcessor:
             try:
                 db.logger.insert_one(status_info)
             except DocumentTooLarge as e:
-                print("Error while logging: ", status_info, "while inserting log: ", e)
+                print("Error while logging: ", status_info, ". Exception:", e)
+            except UnicodeEncodeError as ue:
+                print("Error while logging: ", status_info, ". Exception:", ue)
         pass
 
     def write_mongo_single(self, db_name):
