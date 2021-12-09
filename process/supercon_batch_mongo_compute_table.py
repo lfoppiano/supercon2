@@ -107,17 +107,19 @@ class MongoTabularProcessor(MongoSuperconProcessor):
         cursor_aggregation = document_collection.aggregate(
             [{"$sort": {"hash": 1, "timestamp": 1}}, {"$group": {"_id": "$hash", "lastDate": {"$last": "$timestamp"}}}])
 
-        for item in tqdm(iterable=cursor_aggregation, maxinterval=documents_to_process):
-            # We skip data that has been already extracted
-            if not self.force:
-                tabular_entry = tabular_collection.find_one({"hash": item['_id']}, {"hash": 1})
-                if tabular_entry:
-                    continue
+        with tqdm(total=documents_to_process, unit='document') as tq:
+            for item in cursor_aggregation:
+                # We skip data that has been already extracted
+                if not self.force:
+                    tabular_entry = tabular_collection.find_one({"hash": item['_id']}, {"hash": 1})
+                    if tabular_entry:
+                        continue
 
-            document = document_collection.find_one({"hash": item['_id'], "timestamp": item['lastDate']})
-            if 'passages' not in document:
-                continue
-            self.queue_input.put((document, item['_id'], item['lastDate']))
+                document = document_collection.find_one({"hash": item['_id'], "timestamp": item['lastDate']})
+                if 'passages' not in document:
+                    continue
+                self.queue_input.put((document, item['_id'], item['lastDate']))
+                tq.update()
 
         self.tear_down_batch_processes()
 
