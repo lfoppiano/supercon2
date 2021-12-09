@@ -126,6 +126,10 @@ class MongoSuperconProcessor:
                 status_info = {'status': None, 'message': e, 'timestamp': datetime.utcnow(), 'hash': hash}
                 self.queue_logger.put(status_info, block=True)
                 continue
+            except UnicodeEncodeError as ue:
+                status_info = {'status': None, 'message': ue, 'timestamp': datetime.utcnow(), 'hash': hash}
+                self.queue_logger.put(status_info, block=True)
+                continue
 
             if self.verbose:
                 print("Storing binary ", hash)
@@ -281,13 +285,28 @@ if __name__ == '__main__':
     processor_.setup_batch_processes(num_threads=num_threads, db_name=db_name, only_new=only_new)
     start_queue = processor_.get_queue_input()
 
-    for root, dirs, files in tqdm(os.walk(input_path)):
+    if verbose:
+        print("Counting documents.")
+
+    count = 0
+    for root, dirs, files in os.walk(input_path, followlinks=False):
         for file_ in files:
             if not file_.lower().endswith(".pdf"):
                 continue
+            count += 1
 
-            abs_path = os.path.join(root, file_)
-            start_queue.put(abs_path, block=True)
+    if verbose:
+        print("Counting documents finished.", count, "documents to process.")
 
-    print("Finishing!")
+    with tqdm(total=count, unit='document') as tq:
+        for root, dirs, files in os.walk(input_path, followlinks=False):
+            for file_ in files:
+                if not file_.lower().endswith(".pdf"):
+                    continue
+                abs_path = os.path.join(root, file_)
+                start_queue.put(abs_path, block=True)
+                tq.update()
+
+    print("Starting tearing down processes. ")
     processor_.tear_down_batch_processes()
+    print("Finishing! ")
