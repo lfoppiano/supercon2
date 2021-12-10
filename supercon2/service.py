@@ -87,7 +87,7 @@ def get_stats():
     tabular_collection = db_supercon_dev.get_collection("tabular")
 
     pipeline_group_by_publisher = [
-        {"$match": {"type": "automatic"}},
+        {"$match": {"type": "automatic", "status": "valid"}},
         {"$group": {"_id": "$publisher", "count_records": {"$sum": 1}, "hashes": {"$addToSet": "$hash"}}},
         {"$project": {"_id": 1, "hashes": 1, "count_records": 1, "count_docs": {"$size": "$hashes"}}},
         {"$project": {"hashes": 0}},
@@ -96,7 +96,7 @@ def get_stats():
     by_publisher = tabular_collection.aggregate(pipeline_group_by_publisher)
 
     pipeline_group_by_year = [
-        {"$match": {"type": "automatic"}},
+        {"$match": {"type": "automatic", "status": "valid"}},
         {"$group": {"_id": "$year", "count_records": {"$sum": 1}, "hashes": {"$addToSet": "$hash"}}},
         {"$project": {"_id": 1, "hashes": 1, "count_records": 1, "count_docs": {"$size": "$hashes"}}},
         {"$project": {"hashes": 0}},
@@ -105,7 +105,7 @@ def get_stats():
     by_year = tabular_collection.aggregate(pipeline_group_by_year)
 
     pipeline_group_by_journal = [
-        {"$match": {"type": "automatic"}},
+        {"$match": {"type": "automatic", "status": "valid"}},
         {"$group": {"_id": "$journal", "count_records": {"$sum": 1}, "hashes": {"$addToSet": "$hash"}}},
         {"$project": {"_id": 1, "hashes": 1, "count_records": 1, "count_docs": {"$size": "$hashes"}}},
         {"$project": {"hashes": 0}},
@@ -168,7 +168,7 @@ def get_tabular(type='automatic', publisher=None, year=None, start=None, length=
         # aggregation_query = [{"$match": {"type": type}}] + aggregation_query
         # cursor_aggregation = document_collection.aggregate(aggregation_query)
 
-        query = {"type": "automatic"}
+        query = {"type": "automatic", "status": "valid"}
 
         if publisher:
             query['publisher'] = publisher

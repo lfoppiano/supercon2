@@ -63,13 +63,13 @@ class MongoSuperconProcessor:
 
         db.document.create_index([("hash", pymongo.ASCENDING), ("timestamp", pymongo.ASCENDING)])
         db.document.create_index("hash")
-        db.document.create_index("type")
+        db.document.create_index([("type", pymongo.TEXT), ("status", pymongo.TEXT)])
         db.document.create_index("timestamp")
         db.document.create_index("biblio.year")
         db.document.create_index("biblio.journal")
         db.document.create_index("biblio.publisher")
 
-        db.tabular.create_index("type")
+        db.tabular.create_index([("type", pymongo.TEXT), ("status", pymongo.TEXT)])
         db.tabular.create_index(
             [("hash", pymongo.ASCENDING), ("timestamp", pymongo.ASCENDING), ("type", pymongo.ASCENDING)])
         db.tabular.create_index([("hash", pymongo.ASCENDING), ("timestamp", pymongo.ASCENDING)])
