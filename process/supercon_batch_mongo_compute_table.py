@@ -3,6 +3,7 @@ import json
 import multiprocessing
 import os
 import sys
+from collections import OrderedDict
 from datetime import datetime
 from pathlib import Path
 
@@ -67,6 +68,7 @@ class MongoTabularProcessor(MongoSuperconProcessor):
                         continue
 
                     for ag_e in json_aggregated_entries:
+                        ag_e['status'] = "valid"
                         ag_e['hash'] = hash
                         ag_e['timestamp'] = timestamp
                         ag_e['type'] = 'automatic'
@@ -78,13 +80,29 @@ class MongoTabularProcessor(MongoSuperconProcessor):
                     tabular_collection.insert_many(json_aggregated_entries)
                     status_info = {'status': status, 'timestamp': datetime.utcnow(),
                                    'hash': hash}
-
                 else:
                     status_info = {'status': status, 'timestamp': datetime.utcnow(),
                                    'hash': hash, 'message': r}
             else:
-                status_info = {'status': status, 'timestamp': datetime.utcnow(),
-                               'hash': hash}
+                if status == 204:
+                    empty_document = OrderedDict()
+                    empty_document['hash'] = hash
+                    empty_document['timestamp'] = timestamp
+                    empty_document['type'] = 'automatic'
+                    empty_document['status'] = "empty"
+
+                    for item in ['title', 'doi', 'authors', 'publisher', 'journal', 'year']:
+                        empty_document[item] = biblio_data[item] if item in biblio_data else ""
+
+                    # We remove the previous version of the same data
+                    tabular_collection.delete_many({"hash": hash})
+                    tabular_collection.insert_one(empty_document)
+                    status_info = {'status': status, 'timestamp': datetime.utcnow(),
+                                   'hash': hash}
+
+                else:
+                    status_info = {'status': status, 'timestamp': datetime.utcnow(),
+                                   'hash': hash}
 
             self.queue_logger.put(status_info, block=True)
 
