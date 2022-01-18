@@ -39,21 +39,28 @@ check that pip is the correct one in the conda environment:
 which pip
 ```
 
-(pip should come from `.envs/supercuration/bin/pip` or something like that. In negative case, and eventually unset it
+pip should be something like `....supercon2/bin/pip`. If not you should unset it with: 
 
 ```
 unset pip
 ```
+
+To run the service you can use: 
+
 ```
 python -m supercon2 --config supercon2/config.json
 ```
+
+
 ## Scripts
 
-1. save PDF, extract JSON response
+1. Process a PDF document and extracts the JSON response
 ```
 python -m process.supercon_batch_mongo_extraction --config ./process/config.yaml --input <your_pdf_input_directory>
 ```
-2. compute tables and save back
+
+2. Transforms the JSON document in tabular format 
+
 ```
 python -m process.supercon_batch_mongo_compute_table --config ./process/config.yaml
 ```
