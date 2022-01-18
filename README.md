@@ -1,50 +1,59 @@
-# Supercon 2 
+# Supercon 2
 
 **Work in progress**
 
 Superconductors material database rebuild with semi-automatic extraction system interface
-This interface allows extraction and visualisation of material and properties from superconductors-related papers. 
-It can be used to visualise the harvested information from processing PDFs using [Grobid Superconductor](https://github.com/lfoppiano/grobid-superconductors) 
- 
+This interface allows extraction and visualisation of material and properties from superconductors-related papers.
+It can be used to visualise the harvested information from processing PDFs using [Grobid Superconductor](https://github.com/lfoppiano/grobid-superconductors)
+
 ## Interface
 
 Main features
- - Visualisation 
+ - Visualisation
  - Filtering
  - export in Excel, JSON, XML, etc...
 
 ### Process
 
 Main features:
- - versioning 
+ - versioning
  - skip/force reprocessing
  - simple logging (successes and failures divided by process steps)
 
 ## Getting started
 
-### Docker 
+### Docker
 
 ### Development
 
-We recommend to use CONDA 
+We recommend to use CONDA
 
-> conda create -n supercon2 pip python=3.9 
-
+```
+> conda create -n supercon2 pip python=3.9
 > conda activate supercon2
+```
 
-check that pip is the correct one in the conda environment: 
+check that pip is the correct one in the conda environment:
 
-> which pip 
+```
+> which pip
+```
 
-(pip should come from `.envs/supercuration/bin/pip` or something like that. In negative case, and eventually unset it 
+(pip should come from `.envs/supercuration/bin/pip` or something like that. In negative case, and eventually unset it
 
-> unset pip 
-
-> python -m supercon2 --config supercon2/config.json 
-
+```
+> unset pip
+```
+```
+> python -m supercon2 --config supercon2/config.json
+```
 ## Scripts
 
-1. `supercon_batch_mongo_extraction` (save PDF, extract JSON response)
-2. `supercon_bath_mongo_compute_table` (compute tables and save back)
-
-
+1. save PDF, extract JSON response
+```
+> python -m process.supercon_batch_mongo_extraction --config ./process/config.yaml --input <your_pdf_input_directory>
+```
+2. compute tables and save back
+```
+> python -m process.supercon_batch_mongo_compute_table --config ./process/config.yaml
+```
