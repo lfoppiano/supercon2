@@ -29,31 +29,31 @@ Main features:
 We recommend to use CONDA
 
 ```
-> conda create -n supercon2 pip python=3.9
-> conda activate supercon2
+conda create -n supercon2 pip python=3.9
+conda activate supercon2
 ```
 
 check that pip is the correct one in the conda environment:
 
 ```
-> which pip
+which pip
 ```
 
 (pip should come from `.envs/supercuration/bin/pip` or something like that. In negative case, and eventually unset it
 
 ```
-> unset pip
+unset pip
 ```
 ```
-> python -m supercon2 --config supercon2/config.json
+python -m supercon2 --config supercon2/config.json
 ```
 ## Scripts
 
 1. save PDF, extract JSON response
 ```
-> python -m process.supercon_batch_mongo_extraction --config ./process/config.yaml --input <your_pdf_input_directory>
+python -m process.supercon_batch_mongo_extraction --config ./process/config.yaml --input <your_pdf_input_directory>
 ```
 2. compute tables and save back
 ```
-> python -m process.supercon_batch_mongo_compute_table --config ./process/config.yaml
+python -m process.supercon_batch_mongo_compute_table --config ./process/config.yaml
 ```
