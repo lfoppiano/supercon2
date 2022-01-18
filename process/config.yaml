@@ -1,15 +1,15 @@
 
-grobid: 
+grobid:
 #  server: "http://falcon.nims.go.jp/superconductors/unstable"
-  server: "http://localhost:8072"
-  url_mapping: 
+  server: "http://localhost:8072" # https://github.com/lfoppiano/grobid-superconductors
+  url_mapping:
     processPDF_disableLinking: "/service/process/pdf?disableLinking=true"
     processPDF: "/service/process/pdf"
     processText: "/service/process/text"
     processJson: "/service/process/json"
     ping: "/"
-  
-mongo: 
+
+mongo:
 #  server: "falcon.nims.go.jp:27017"
   server: "localhost:27017"
   db: "supercon_dev_2"
@@ -20,5 +20,5 @@ batch_size: 1000
 sleep_time: 10
 coordinates: null
 
-# Max number of retry 
+# Max number of retry
 max_retry: 3
