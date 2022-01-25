@@ -1,6 +1,7 @@
 import json
 
 import gridfs
+from bson import ObjectId
 from flask import render_template, request, Response, Blueprint, url_for
 
 from process.supercon_batch_mongo_extraction import connect_mongo
@@ -117,30 +118,30 @@ def get_stats():
 
 
 @bp.route("/tabular", methods=["GET"])
-def get_tabular_from_form_data():
+def get_records_from_form_data():
     type = request.args.get('type', default="automatic", type=str)
     publisher = request.args.get('publisher', default=None, type=str)
     year = request.args.get('year', default=None, type=str)
 
-    return get_tabular(type, publisher, year)
+    return get_records(type, publisher, year)
 
 
-@bp.route("/tabular/<type>", methods=["GET"])
+@bp.route("/records/<type>", methods=["GET"])
 def get_tabular_from_path_by_type(type):
-    return get_tabular(type)
+    return get_records(type)
 
 
-@bp.route("/tabular/<type>/<publisher>/<year>", methods=["GET"])
+@bp.route("/records/<type>/<publisher>/<year>", methods=["GET"])
 def get_tabular_from_path_by_type_publisher_year(type, publisher, year):
-    return get_tabular(type, publisher, year)
+    return get_records(type, publisher, year)
 
 
-@bp.route("/tabular/<type>/<year>", methods=["GET"])
+@bp.route("/records/<type>/<year>", methods=["GET"])
 def get_tabular_from_path_by_type_year(type, year):
-    return get_tabular(type, publisher=None, year=year)
+    return get_records(type, publisher=None, year=year)
 
 
-def get_tabular(type='automatic', publisher=None, year=None, start=None, length=None):
+def get_records(type='automatic', status='valid', publisher=None, year=None, start=None, limit=None):
     connection = connect_mongo(config=config)
     db_name = config['mongo']['db']
     db_supercon_dev = connection[db_name]
@@ -149,10 +150,25 @@ def get_tabular(type='automatic', publisher=None, year=None, start=None, length=
     #     {"$group": {"_id": "$hash", "versions": {"$addToSet": "$timestamp"}, "count": {"$sum": 1}}},
     #     {"$sort": {"count": -1}}
     # ]
+
+    query = {"type": type, "status": status}
     entries = []
     tabular_collection = db_supercon_dev.get_collection("tabular")
+
+    if publisher:
+        query['publisher'] = publisher
+
+    if year:
+        query['year'] = int(year)
+
+    if start:
+        query['skip'] = start
+
+    if limit:
+        query['limit'] = limit
+
     if type == "manual":
-        for entry in tabular_collection.find({"type": "manual"}):
+        for entry in tabular_collection.find(query):
             del entry['_id']
             entry['section'] = entry['section'][1:-1] if 'section' in entry and entry['section'] is not None else ''
             entry['subsection'] = entry['subsection'][1:-1] if 'subsection' in entry and entry[
@@ -167,14 +183,6 @@ def get_tabular(type='automatic', publisher=None, year=None, start=None, length=
         # aggregation_query = [{"$sort": {"hash": 1, "timestamp": 1}}, {"$group": {"_id": "$hash", "lastDate": {"$last": "$timestamp"}}}]
         # aggregation_query = [{"$match": {"type": type}}] + aggregation_query
         # cursor_aggregation = document_collection.aggregate(aggregation_query)
-
-        query = {"type": "automatic", "status": "valid"}
-
-        if publisher:
-            query['publisher'] = publisher
-
-        if year:
-            query['year'] = int(year)
 
         for entry in tabular_collection.find(query):
             del entry['_id']
@@ -209,8 +217,8 @@ def get_annotations(hash):
     '''Get annotations (latest version)'''
     db_name = config['mongo']['db']
     connection = connect_mongo(config=config)
-    db_supercon_dev = connection[db_name]
-    annotations = db_supercon_dev.get_collection("document").find({"hash": hash}).sort("timestamp", -1)
+    db = connection[db_name]
+    annotations = db.get_collection("document").find({"hash": hash}).sort("timestamp", -1)
     annotation = annotations[0]
     del annotation["_id"]
     return Response(json.dumps(annotation, default=json_serial), mimetype="application/json")
@@ -229,6 +237,62 @@ def get_binary(hash):
         return 404
     else:
         return Response(fs_binary.get(file._id).read(), mimetype='application/pdf')
+
+
+@bp.route('/flag/<id>', methods=['GET'])
+def get_flag(id):
+    connection = connect_mongo(config=config)
+    db_name = config['mongo']['db']
+    db = connection[db_name]
+    record = db.get_collection("tabular").find_one({"_id": ObjectId(id)}, {'_id': 0, 'type': 1, 'status': 1})
+
+    return record
+
+
+@bp.route('/flag/<id>', methods=['PUT', 'PATCH'])
+def flag_record(id):
+    connection = connect_mongo(config=config)
+    db_name = config['mongo']['db']
+    db = connection[db_name]
+    tabular_collection = db.get_collection("tabular")
+    record = tabular_collection.find_one({"_id": ObjectId(id)})
+    if record is None:
+        return 404
+    else:
+        status = record['status']
+        type = record['type']
+
+        if status == 'automatic' and type == 'valid':
+            status = 'manual'
+            type = 'invalid'
+
+            tabular_collection.update_one({'_id': record['_id']}, {'$set': {'status': status, 'type': type}})
+            return 200
+        else:
+            return 206
+
+
+@bp.route('/unflag/<id>', methods=['PUT', 'PATCH'])
+def flag_record(id):
+    connection = connect_mongo(config=config)
+    db_name = config['mongo']['db']
+    db = connection[db_name]
+    tabular_collection = db.get_collection("tabular")
+    record = tabular_collection.find_one({"_id": ObjectId(id)})
+    if record is None:
+        return 404
+    else:
+        status = record['status']
+        type = record['type']
+
+        if status == 'manual' and type == 'invalid':
+            status = 'automatic'
+            type = 'valid'
+
+            tabular_collection.update_one({'_id': record['_id']}, {'$set': {'status': status, 'type': type}})
+            return 200
+        else:
+            return 206
 
 
 @bp.route('/config', methods=['GET'])
