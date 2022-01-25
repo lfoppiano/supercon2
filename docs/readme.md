@@ -1,12 +1,15 @@
 # Technical documentation
 
+## Introduction
+
+## Overview 
+
+
 ## Workflow status flags
 
 The workflows flags are properties within the database that are used to mark different status of the data:
  - `type` indicate the type of operation that was performed
- - `status` indicate the status of the current record 
-
-
+ - `status` indicate the status of the current record
 
 The current version works using the following flags:
 
@@ -22,3 +25,4 @@ The current version works using the following flags:
 However the flags should be used in pair and the state change is illustrate as follows: 
 
 ![](images/status-flags-schema.png)
+
