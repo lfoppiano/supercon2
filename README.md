@@ -1,30 +1,27 @@
 # Supercon 2
 
 **Work in progress**
+This project provides the service and processes to build the next version of [Supercon](http://supecon.nims.go.jp). 
+The service provides the API and interface which allows the visualisation of material and properties extracted from superconductors-related papers.
+The process is composed by scripts that interact with [Grobid Superconductor](https://github.com/lfoppiano/grobid-superconductors) to extract materials information from large quantities of PDFs.
 
-Superconductors material database rebuild with semi-automatic extraction system interface
-This interface allows extraction and visualisation of material and properties from superconductors-related papers.
-It can be used to visualise the harvested information from processing PDFs using [Grobid Superconductor](https://github.com/lfoppiano/grobid-superconductors)
+## Service API and visualisation interface
 
-## Interface
-
-Main features
- - Visualisation
- - Filtering
+The service API provides the following features: 
+ - Visualisation of records of extracted materials-properties and enhanced PDFS with annotations
+ - Filter records through columns search
  - export in Excel, JSON, XML, etc...
 
-### Process
+![record-list.png](docs/images/record-list.png)
 
-Main features:
- - versioning
- - skip/force reprocessing
- - simple logging (successes and failures divided by process steps)
+![pdf-view.png](docs/images/pdf-view.png)
 
-## Getting started
+### Getting started
 
-### Docker
+#### Docker
+TBD 
 
-### Development
+#### Local development
 
 We recommend to use CONDA
 
@@ -52,15 +49,83 @@ python -m supercon2 --config supercon2/config.json
 ```
 
 
-## Scripts
+### Processes
 
-1. Process a PDF document and extracts the JSON response
+The processes are composed by a set of python scripts that were built under the following principles: 
+ - versioning
+ - skip/force reprocessing
+ - simple logging (successes and failures divided by process steps)
+
+#### Functionalities
+
+##### PDF processing and extraction 
+
+Extract superconductor materials and properties and save them on MongoDB - extraction
+
+```
+usage: supercon_batch_mongo_extraction.py [-h] --input INPUT --config CONFIG [--num-threads NUM_THREADS] [--only-new] [--database DATABASE] [--verbose]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --input INPUT         Input directory
+  --config CONFIG       Configuration file
+  --num-threads NUM_THREADS, -n NUM_THREADS
+                        Number of concurrent processes
+  --only-new            Processes only documents that have not record in the database
+  --database DATABASE, -db DATABASE
+                        Force the database name which is normally read from the configuration file
+  --verbose             Print all log information
+```
+
+Example: 
 ```
 python -m process.supercon_batch_mongo_extraction --config ./process/config.yaml --input <your_pdf_input_directory>
 ```
 
-2. Transforms the JSON document in tabular format 
 
+##### Conversion from document representation to material-properties records
+
+Process extracted documents and compute the tabular format: 
+
+```
+usage: supercon_batch_mongo_compute_table.py [-h] --config CONFIG [--num-threads NUM_THREADS] [--database DATABASE] [--force] [--verbose]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --config CONFIG       Configuration file
+  --num-threads NUM_THREADS, -n NUM_THREADS
+                        Number of concurrent processes
+  --database DATABASE, -db DATABASE
+                        Set the database name which is normally read from the configuration file
+  --force, -f           Re-process all the records and replace existing one.
+  --verbose             Print all log information
+
+```
+Example: 
+```
+python -m process.supercon_batch_mongo_compute_table --config ./process/config.yaml
+```
+
+##### Feedback manual corrections from Excel to the database 
+
+Feedback to supercon2 corrections from an Excel file
+
+
+```
+usage: feedback_corrections.py [-h] --corrections CORRECTIONS --config CONFIG [--dry-run] [--database DATABASE] [--verbose]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --corrections CORRECTIONS
+                        Correction file (csv or excel)
+  --config CONFIG       Configuration file
+  --dry-run             Perform the operations without writing on the database.
+  --database DATABASE, -db DATABASE
+                        Force the database name which is normally read from the configuration file
+  --verbose             Print all log information
+
+```
+Example: 
 ```
 python -m process.supercon_batch_mongo_compute_table --config ./process/config.yaml
 ```
