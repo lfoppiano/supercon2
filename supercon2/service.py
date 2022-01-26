@@ -122,8 +122,10 @@ def get_records_from_form_data():
     type = request.args.get('type', default="automatic", type=str)
     publisher = request.args.get('publisher', default=None, type=str)
     year = request.args.get('year', default=None, type=str)
+    start = request.args.get('start', default=0, type=int)
+    limit = request.args.get('limit', default=-1, type=int)
 
-    return get_records(type, publisher, year)
+    return get_records(type, publisher, year, start=start, limit=limit)
 
 
 @bp.route("/records/<type>", methods=["GET"])
@@ -170,8 +172,8 @@ def get_records(type='automatic', status='valid', publisher=None, year=None, sta
     if type == "manual":
         for entry in tabular_collection.find(query):
             del entry['_id']
-            entry['section'] = entry['section'][1:-1] if 'section' in entry and entry['section'] is not None else ''
-            entry['subsection'] = entry['subsection'][1:-1] if 'subsection' in entry and entry[
+            entry['section'] = entry['section'] if 'section' in entry and entry['section'] is not None else ''
+            entry['subsection'] = entry['subsection'] if 'subsection' in entry and entry[
                 'subsection'] is not None else ''
             entry['doc_url'] = None
             entries.append(entry)
@@ -273,7 +275,7 @@ def flag_record(id):
 
 
 @bp.route('/unflag/<id>', methods=['PUT', 'PATCH'])
-def flag_record(id):
+def unflag_record(id):
     connection = connect_mongo(config=config)
     db_name = config['mongo']['db']
     db = connection[db_name]
