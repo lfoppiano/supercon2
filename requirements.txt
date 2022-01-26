@@ -3,3 +3,5 @@ pymongo
 requests
 tqdm
 pyyaml
+pytest
+pytest-mongodb
