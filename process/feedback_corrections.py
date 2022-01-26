@@ -83,15 +83,6 @@ def write_correction(doc, corrections, collection, dry_run: bool = False):
 
         print("Creating training data. Saving the sentence for the moment.")
 
-        # tabular_collection_output.update_one({
-        #     '_id': doc['_id']
-        # }, {
-        #     '$set': {
-        #         'status': 'obsolete',
-        #         'type': 'automatic'
-        #     }
-        # }, upsert=True)
-        # tabular_collection_output.insert_one(new_doc)
     else:
         collection.update_one({
             '_id': doc['_id']
