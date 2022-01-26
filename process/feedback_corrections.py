@@ -24,6 +24,7 @@ def connect_mongo(config):
     return c
 
 
+# This part will be implemented in the service
 def create_training_data_from_passage(passage):
     if 'spans' not in passage or 'text' not in passage:
         return None
