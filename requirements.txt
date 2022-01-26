@@ -4,4 +4,4 @@ requests
 tqdm
 pyyaml
 pytest
-pytest-mongo
+pytest-mongodb
