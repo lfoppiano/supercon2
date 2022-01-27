@@ -48,8 +48,26 @@ To run the service you can use:
 python -m supercon2 --config supercon2/config.json
 ```
 
+### API documentation
 
-### Processes
+Quick API documentation summary:
+
+| URL                                | Method    | Description                                                        |
+|------------------------------------|-----------|--------------------------------------------------------------------|
+| /stats                             | GET       | Return statistics                                                  |
+ | /records                           | GET       | Return the list of records                                         |
+ | /records/<type>                    | GET       | Return the list of records of a specific type `automatic`/`manual` |
+ | /records/<type>/<year>             | GET       | Return the list of records of a specific type + year               |
+ | /records/<type>/<publisher>/<year> | GET       | Return the list of records of a specific type + publisher + year   |
+| /record/<id>                       | GET       | Return the single record                                           |  
+| /record/flags/<id>                 | GET       | Return the flags of a single record                                | 
+| /record/flag/<id>                  | PATCH/PUT | Flag a record                                                      |  
+| /record/unflag/<id>                | PATCH/PUT | Unflag  a record                                                   |   
+| /document/<hash>                   | GET       | Load the template to show the PDF with annotations                 |
+| /annotation/<hash>                 | GET       | Return the single document JSON representation                     |
+| /pdf/<hash>                        | GET       | Return the PDF document corresponding to the identifier            |
+
+## Processes
 
 The processes are composed by a set of python scripts that were built under the following principles: 
  - versioning
