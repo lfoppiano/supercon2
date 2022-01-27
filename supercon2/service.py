@@ -117,7 +117,7 @@ def get_stats():
     return render_template("stats.html", by_publisher=by_publisher, by_year=by_year, by_journal=by_journal)
 
 
-@bp.route("/tabular", methods=["GET"])
+@bp.route("/records", methods=["GET"])
 def get_records_from_form_data():
     type = request.args.get('type', default="automatic", type=str)
     publisher = request.args.get('publisher', default=None, type=str)
@@ -236,12 +236,22 @@ def get_binary(hash):
 
     file = fs_binary.find_one({"hash": hash})
     if file is None:
-        return 404
+        return "Document with identifier=" + str(hash) + " not found.", 404
     else:
         return Response(fs_binary.get(file._id).read(), mimetype='application/pdf')
 
+@bp.route('/record/<id>', methods=['GET'])
+def get_record(id):
+    connection = connect_mongo(config=config)
+    db_name = config['mongo']['db']
+    db = connection[db_name]
+    record = db.get_collection("tabular").find_one({"_id": ObjectId(id)})
 
-@bp.route('/flag/<id>', methods=['GET'])
+    record['_id'] = str(record['_id'])
+    return record
+
+
+@bp.route('/record/flags/<id>', methods=['GET'])
 def get_flag(id):
     connection = connect_mongo(config=config)
     db_name = config['mongo']['db']
@@ -251,7 +261,7 @@ def get_flag(id):
     return record
 
 
-@bp.route('/flag/<id>', methods=['PUT', 'PATCH'])
+@bp.route('/record/flag/<id>', methods=['PUT', 'PATCH'])
 def flag_record(id):
     connection = connect_mongo(config=config)
     db_name = config['mongo']['db']
@@ -261,20 +271,16 @@ def flag_record(id):
     if record is None:
         return 404
     else:
-        status = record['status']
-        type = record['type']
+        new_status = 'invalid'
+        new_type = 'manual'
 
-        if status == 'automatic' and type == 'valid':
-            status = 'manual'
-            type = 'invalid'
+        changes = {'status': new_status, 'type': new_type}
 
-            tabular_collection.update_one({'_id': record['_id']}, {'$set': {'status': status, 'type': type}})
-            return 200
-        else:
-            return 206
+        tabular_collection.update_one({'_id': record['_id']}, {'$set': changes})
+        return changes, 200
 
 
-@bp.route('/unflag/<id>', methods=['PUT', 'PATCH'])
+@bp.route('/record/unflag/<id>', methods=['PUT', 'PATCH'])
 def unflag_record(id):
     connection = connect_mongo(config=config)
     db_name = config['mongo']['db']
@@ -282,19 +288,14 @@ def unflag_record(id):
     tabular_collection = db.get_collection("tabular")
     record = tabular_collection.find_one({"_id": ObjectId(id)})
     if record is None:
-        return 404
+        return "Record with id=" + id + " not found.", 404
     else:
-        status = record['status']
-        type = record['type']
+        status = 'valid'
+        type = 'automatic'
 
-        if status == 'manual' and type == 'invalid':
-            status = 'automatic'
-            type = 'valid'
-
-            tabular_collection.update_one({'_id': record['_id']}, {'$set': {'status': status, 'type': type}})
-            return 200
-        else:
-            return 206
+        changes = {'status': status, 'type': type}
+        tabular_collection.update_one({'_id': record['_id']}, {'$set': changes})
+        return changes, 200
 
 
 @bp.route('/config', methods=['GET'])
