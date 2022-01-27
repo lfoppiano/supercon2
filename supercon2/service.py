@@ -120,12 +120,13 @@ def get_stats():
 @bp.route("/records", methods=["GET"])
 def get_records_from_form_data():
     type = request.args.get('type', default="automatic", type=str)
+    status = request.args.get('status', default="valid", type=str)
     publisher = request.args.get('publisher', default=None, type=str)
     year = request.args.get('year', default=None, type=str)
     start = request.args.get('start', default=0, type=int)
     limit = request.args.get('limit', default=-1, type=int)
 
-    return get_records(type, publisher, year, start=start, limit=limit)
+    return get_records(type, status, publisher, year, start=start, limit=limit)
 
 
 @bp.route("/records/<type>", methods=["GET"])
@@ -163,14 +164,17 @@ def get_records(type='automatic', status='valid', publisher=None, year=None, sta
     if year:
         query['year'] = int(year)
 
-    if start:
-        query['skip'] = start
 
-    if limit:
-        query['limit'] = limit
+    cursor = tabular_collection.find(query)
+
+    if start > 0:
+        cursor.skip(start)
+
+    if limit > 0:
+        cursor.limit(limit)
 
     if type == "manual":
-        for entry in tabular_collection.find(query):
+        for entry in cursor:
             del entry['_id']
             entry['section'] = entry['section'] if 'section' in entry and entry['section'] is not None else ''
             entry['subsection'] = entry['subsection'] if 'subsection' in entry and entry[
@@ -186,7 +190,7 @@ def get_records(type='automatic', status='valid', publisher=None, year=None, sta
         # aggregation_query = [{"$match": {"type": type}}] + aggregation_query
         # cursor_aggregation = document_collection.aggregate(aggregation_query)
 
-        for entry in tabular_collection.find(query):
+        for entry in cursor:
             del entry['_id']
             entry['section'] = entry['section'] if 'section' in entry and entry['section'] is not None else ''
             entry['subsection'] = entry['subsection'] if 'subsection' in entry and entry[
