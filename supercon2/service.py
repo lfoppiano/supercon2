@@ -2,7 +2,8 @@ import json
 
 import gridfs
 from bson import ObjectId
-from flask import render_template, request, Response, Blueprint, url_for
+from flask import render_template, request, Response, url_for
+from flask_rest_api import Blueprint
 
 from process.supercon_batch_mongo_extraction import connect_mongo
 from process.utils import json_serial
@@ -144,7 +145,7 @@ def get_tabular_from_path_by_type_year(type, year):
     return get_records(type, publisher=None, year=year)
 
 
-def get_records(type='automatic', status='valid', publisher=None, year=None, start=None, limit=None):
+def get_records(type='automatic', status='valid', publisher=None, year=None, start=-1, limit=-1):
     connection = connect_mongo(config=config)
     db_name = config['mongo']['db']
     db_supercon_dev = connection[db_name]
@@ -173,32 +174,29 @@ def get_records(type='automatic', status='valid', publisher=None, year=None, sta
     if limit > 0:
         cursor.limit(limit)
 
-    if type == "manual":
-        for entry in cursor:
-            del entry['_id']
-            entry['section'] = entry['section'] if 'section' in entry and entry['section'] is not None else ''
-            entry['subsection'] = entry['subsection'] if 'subsection' in entry and entry[
-                'subsection'] is not None else ''
+
+    for entry in cursor:
+        # if '_id' in entry.keys():
+        # entry['id'] = str(entry['_id'])
+        # del entry['_id']
+        entry['section'] = entry['section'] if 'section' in entry and entry['section'] is not None else ''
+        entry['subsection'] = entry['subsection'] if 'subsection' in entry and entry[
+            'subsection'] is not None else ''
+        entry['title'] = entry['title'] if 'title' in entry and entry[
+            'title'] is not None else ''
+
+        entries.append(entry)
+
+        if type == "manual":
             entry['doc_url'] = None
-            entries.append(entry)
-
-    elif type == 'automatic':
-        # document_collection = db_supercon_dev.get_collection("document")
-        # documents = document_collection.aggregate(pipeline)
-        # document_list = list(documents)
-        # aggregation_query = [{"$sort": {"hash": 1, "timestamp": 1}}, {"$group": {"_id": "$hash", "lastDate": {"$last": "$timestamp"}}}]
-        # aggregation_query = [{"$match": {"type": type}}] + aggregation_query
-        # cursor_aggregation = document_collection.aggregate(aggregation_query)
-
-        for entry in cursor:
-            del entry['_id']
-            entry['section'] = entry['section'] if 'section' in entry and entry['section'] is not None else ''
-            entry['subsection'] = entry['subsection'] if 'subsection' in entry and entry[
-                'subsection'] is not None else ''
-            entry['title'] = entry['title'] if 'title' in entry and entry[
-                'title'] is not None else ''
+        elif type == 'automatic':
+            # document_collection = db_supercon_dev.get_collection("document")
+            # documents = document_collection.aggregate(pipeline)
+            # document_list = list(documents)
+            # aggregation_query = [{"$sort": {"hash": 1, "timestamp": 1}}, {"$group": {"_id": "$hash", "lastDate": {"$last": "$timestamp"}}}]
+            # aggregation_query = [{"$match": {"type": type}}] + aggregation_query
+            # cursor_aggregation = document_collection.aggregate(aggregation_query)
             entry['doc_url'] = url_for('supercon.get_document', hash=entry['hash'])
-            entries.append(entry)
 
     return json.dumps(entries, default=json_serial)
 

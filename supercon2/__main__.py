@@ -5,6 +5,7 @@ from pathlib import Path
 
 import yaml
 from flask import Flask
+from flask_rest_api import Api
 
 from supercon2 import service
 from supercon2.service import bp
@@ -31,6 +32,9 @@ if __name__ == '__main__':
     root_path = args.root_path
     static_path = root_path + '/static'
     app = Flask(__name__, static_url_path=static_path)
-    app.register_blueprint(bp, url_prefix=root_path)
+    app.config['OPENAPI_VERSION'] = '3.0.2'
+
+    api = Api(app)
+    api.register_blueprint(bp, url_prefix=root_path)
 
     app.run(host=args.host, port=args.port, debug=args.debug)
