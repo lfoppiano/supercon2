@@ -76,14 +76,14 @@ def write_correction(doc, corrections, collection, dry_run: bool = False):
     new_doc['type'] = 'manual'
     new_doc['status'] = 'valid'
     del new_doc['_id']
-    new_doc_id = "00000"
+
     if dry_run:
         print("Updating record with id: ", doc['_id'],
               "and setting flags 'status'='obsolete' and 'type'='automatic'.")
         print("Creating new record with status'='valid' and 'type'='manual'\n", new_doc)
 
         print("Creating training data. Saving the sentence for the moment.")
-
+        new_doc_id = "00000"
     else:
         collection.update_one({
             '_id': doc['_id']
@@ -149,6 +149,18 @@ def write_raw_training_data(doc, new_doc_id, document_collection, training_data_
     return None
 
 
+def flag_as_correct(doc_id, collection, dry_run=False):
+    if dry_run:
+        print("Flagging document with id ", doc_id, "as corrected. ")
+        return
+
+    status = 'valid'
+    type = 'manual'
+
+    changes = {'status': status, 'type': type}
+    return collection.update_one({'_id': doc_id}, {'$set': changes})
+
+
 def process(corrections_file, database, dry_run=False):
     tabular_collection = database.get_collection("tabular")
     document_collection = database.get_collection("document")
@@ -158,9 +170,6 @@ def process(corrections_file, database, dry_run=False):
     df.replace({np.nan: None})
     for index, row in df.iterrows():
         status = row[0]
-        if status == "correct":
-            continue
-
         raw_material = row[1]
         formula = row[2]
         corrected_formula = row[3]
@@ -175,6 +184,10 @@ def process(corrections_file, database, dry_run=False):
         documents = tabular_collection.find({"hash": hash, "status": "valid"})
 
         for doc in documents:
+            if status == "correct":
+                flag_as_correct(doc['_id'], tabular_collection, dry_run=dry_run)
+                continue
+
             if doc['rawMaterial'] != raw_material:
                 continue
 
