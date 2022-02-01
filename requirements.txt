@@ -5,4 +5,4 @@ tqdm
 pyyaml
 pytest
 pytest-mongodb
-flask-rest-api
+apiflask

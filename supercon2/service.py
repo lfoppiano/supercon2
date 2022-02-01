@@ -1,15 +1,16 @@
 import json
 
 import gridfs
+from apiflask import APIBlueprint, abort
 from bson import ObjectId
+from bson.errors import InvalidId
 from flask import render_template, request, Response, url_for
-from flask_rest_api import Blueprint
 
 from process.supercon_batch_mongo_extraction import connect_mongo
 from process.utils import json_serial
 from supercon2.utils import load_config_yaml
 
-bp = Blueprint('supercon', __name__)
+bp = APIBlueprint('supercon', __name__)
 config = []
 
 
@@ -244,10 +245,11 @@ def get_binary(hash):
 
 @bp.route('/record/<id>', methods=['GET'])
 def get_record(id):
+    object_id = validateObjectId(id)
     connection = connect_mongo(config=config)
     db_name = config['mongo']['db']
     db = connection[db_name]
-    record = db.get_collection("tabular").find_one({"_id": ObjectId(id)})
+    record = db.get_collection("tabular").find_one({"_id": object_id})
 
     record['_id'] = str(record['_id'])
     return record
@@ -255,21 +257,23 @@ def get_record(id):
 
 @bp.route('/record/flags/<id>', methods=['GET'])
 def get_flag(id):
+    object_id = validateObjectId(id)
     connection = connect_mongo(config=config)
     db_name = config['mongo']['db']
     db = connection[db_name]
-    record = db.get_collection("tabular").find_one({"_id": ObjectId(id)}, {'_id': 0, 'type': 1, 'status': 1})
+    record = db.get_collection("tabular").find_one({"_id": object_id}, {'_id': 0, 'type': 1, 'status': 1})
 
     return record
 
 
 @bp.route('/record/flag/<id>', methods=['PUT', 'PATCH'])
 def flag_record(id):
+    object_id = validateObjectId(id)
     connection = connect_mongo(config=config)
     db_name = config['mongo']['db']
     db = connection[db_name]
     tabular_collection = db.get_collection("tabular")
-    record = tabular_collection.find_one({"_id": ObjectId(id)})
+    record = tabular_collection.find_one({"_id": object_id})
     if record is None:
         return 404
     else:
@@ -282,13 +286,22 @@ def flag_record(id):
         return changes, 200
 
 
+def validateObjectId(id):
+    try:
+        return ObjectId(id)
+    except InvalidId as e:
+        abort(400, "Invalid ObjectID")
+
+
 @bp.route('/record/unflag/<id>', methods=['PUT', 'PATCH'])
 def unflag_record(id):
+    object_id = validateObjectId(id)
     connection = connect_mongo(config=config)
     db_name = config['mongo']['db']
     db = connection[db_name]
     tabular_collection = db.get_collection("tabular")
-    record = tabular_collection.find_one({"_id": ObjectId(id)})
+
+    record = tabular_collection.find_one({"_id": object_id})
     if record is None:
         return "Record with id=" + id + " not found.", 404
     else:
