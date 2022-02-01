@@ -50,7 +50,18 @@ python -m supercon2 --config supercon2/config.json
 
 ### API documentation
 
-Quick API documentation summary:
+The application supports custom `root_path`, which can be configured from the `config.yaml` file. All the API is served under the custom `root_path`. 
+
+The API documentation is provided by apiflask OpenAPI (swagger) implementation. 
+
+| URL   | Description                                    |
+|-------|------------------------------------------------|
+| /spec | Serve the OpenAPI documentation as YAML        |
+ | /redoc | Serve the OpenAPI documentation via redoc      |
+ | /docs | Serve the OpenAPI documentation via swagger-UI |
+
+
+Following a API documentation summary:
 
 | URL                                | Method    | Description                                                        |
 |------------------------------------|-----------|--------------------------------------------------------------------|
