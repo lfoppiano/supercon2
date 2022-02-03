@@ -1,0 +1,46 @@
+<!DOCTYPE XHTML>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Supercon 2 list of processed articles</title>
+    <link rel="icon" type="image/x-icon" href={{ url_for('static', filename='resources/img/favicon.ico') }}/>
+    <link rel="shortcut icon" type="image/x-icon" href={{ url_for('static', filename='resources/img/favicon.ico') }}/>
+    <!-- <script src="https://unpkg.com/axios/dist/axios.min.js"></script> -->
+</head>
+
+<body>
+<div class="container-fluid">
+
+    <div id="app">
+      {{ hoge }}
+    </div>
+
+    <footer>
+        <p><span style="color:#848484;">contributors - 2021</span></p>
+    </footer>
+</div>
+<script type="module" lang="ts">
+    import { createApp } from "https://unpkg.com/vue@3.2.4/dist/vue.esm-browser.prod.js";
+    import axios from 'https://cdn.skypack.dev/axios'
+    const app = createApp({
+      data() {
+        return {
+          hoge: ''
+        }
+      },
+      mounted() {
+        console.log("mounted")
+        axios.get("/tabular/automatic").then((data) => {
+          console.log({data})
+        })
+      },
+      methods: {
+      },
+      created() {
+        console.log("created")
+      },
+    });
+    app.mount("#app");
+  </script>
+</body>
+</html>
