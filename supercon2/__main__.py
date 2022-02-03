@@ -31,6 +31,9 @@ if __name__ == '__main__':
     root_path = args.root_path
     static_path = root_path + '/static'
     app = Flask(__name__, static_url_path=static_path)
+    app.config.update(
+        TEMPLATES_AUTO_RELOAD=True
+    )
     app.register_blueprint(bp, url_prefix=root_path)
 
     app.run(host=args.host, port=args.port, debug=args.debug)
