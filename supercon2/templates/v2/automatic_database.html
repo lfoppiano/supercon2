@@ -2,37 +2,91 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
     <title>Supercon 2 list of processed articles</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href={{ url_for('static', filename='resources/img/favicon.ico') }}/>
     <link rel="shortcut icon" type="image/x-icon" href={{ url_for('static', filename='resources/img/favicon.ico') }}/>
-    <!-- <script src="https://unpkg.com/axios/dist/axios.min.js"></script> -->
 </head>
 
 <body>
 <div class="container-fluid">
 
     <div id="app">
-      <p v-if="hoge.length > 0">hoge</p>
-
+      <v-data-table
+        :headers="headers"
+        :items="items"
+        :items-per-page="5"
+        :dense="true"
+        loading-text="loading ..."
+        class="elevation-1"
+      ></v-data-table>
     </div>
-
     <footer>
         <p><span style="color:#848484;">contributors - 2021</span></p>
     </footer>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
 <script type="module" lang="ts">
-    import { createApp } from "https://unpkg.com/vue@3.2.4/dist/vue.esm-browser.prod.js";
     import axios from 'https://cdn.skypack.dev/axios'
-    const app = createApp({
+    new Vue({
+      el: '#app',
+      vuetify: new Vuetify(),
       data() {
         return {
-          hoge: ''
+          headers: [
+            {text: 'appliedPressure', value: 'appliedPressure'},
+            {text: 'appliedPressureId', value: 'appliedPressureId'},
+            {text: 'authors', value: 'authors'},
+            {text: 'criticalTemperature', value: 'criticalTemperature'},
+            {text: 'criticalTemperatureId', value: 'criticalTemperatureId'},
+            {text: 'criticalTemperatureMeasurementMethod', value: 'criticalTemperatureMeasurementMethod'},
+            {text: 'criticalTemperatureMeasurementMethodId', value: 'criticalTemperatureMeasurementMethodId'},
+            {text: 'crystalStructure', value: 'crystalStructure'},
+            {text: 'crystalStructureId', value: 'crystalStructureId'},
+            {text: 'doc_url', value: 'doc_url'},
+            {text: 'doi', value: 'doi'},
+            {text: 'doping', value: 'doping'},
+            {text: 'fabrication', value: 'fabrication'},
+            {text: 'filename', value: 'filename'},
+            {text: 'formula', value: 'formula'},
+            {text: 'hash', value: 'hash'},
+            {text: 'id', value: 'id'},
+            {text: 'journal', value: 'journal'},
+            {text: 'linkType', value: 'linkType'},
+            {text: 'materialClass', value: 'materialClass'},
+            {text: 'materialId', value: 'materialId'},
+            {text: 'name', value: 'name'},
+            {text: 'path', value: 'path'},
+            {text: 'publisher', value: 'publisher'},
+            {text: 'rawMaterial', value: 'rawMaterial'},
+            {text: 'section', value: 'section'},
+            {text: 'sentence', value: 'sentence'},
+            {text: 'shape', value: 'shape'},
+            {text: 'spaceGroup', value: 'spaceGroup'},
+            {text: 'spaceGroupId', value: 'spaceGroupId'},
+            {text: 'status', value: 'status'},
+            {text: 'subsection', value: 'subsection'},
+            {text: 'substrate', value: 'substrate'},
+            {text: 'timestamp', value: 'timestamp'},
+            {text: 'title', value: 'title'},
+            {text: 'type', value: 'type'},
+            {text: 'unitCellType', value: 'unitCellType'},
+            {text: 'unitCellTypeId', value: 'unitCellTypeId'},
+            {text: 'variables', value: 'variables'},
+            {text: 'year', value: 'year'}
+            ],
+          items: []
         }
       },
       mounted() {
         console.log("mounted")
         axios.get("/tabular/automatic").then((data) => {
           console.log({data})
+          this.items = data.data
         })
       },
       methods: {
@@ -40,8 +94,8 @@
       created() {
         console.log("created")
       },
-    });
-    app.mount("#app");
+    })
   </script>
+
 </body>
 </html>
