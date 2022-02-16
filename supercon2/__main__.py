@@ -31,6 +31,7 @@ if __name__ == '__main__':
                    docs_path=root_path + '/docs', redoc_path=root_path + '/redoc')
     app.config['OPENAPI_VERSION'] = '3.0.2'
     app.config['SPEC_FORMAT'] = 'yaml'
+    app.tags = ['supercon']
 
     app.register_blueprint(bp, url_prefix=root_path)
 

@@ -123,7 +123,7 @@ def get_stats():
 
 
 @bp.route("/records", methods=["GET"])
-@output(Record)
+@output(Record(many=True))
 def get_records_from_form_data():
     type = request.args.get('type', default="automatic", type=str)
     status = request.args.get('status', default="valid", type=str)
@@ -136,18 +136,19 @@ def get_records_from_form_data():
 
 
 @bp.route("/records/<type>", methods=["GET"])
-@output(Record)
+@output(Record(many=True))
 def get_tabular_from_path_by_type(type):
     return get_records(type)
 
 
 @bp.route("/records/<type>/<publisher>/<year>", methods=["GET"])
-@output(Record)
+@output(Record(many=True))
 def get_tabular_from_path_by_type_publisher_year(type, publisher, year):
     return get_records(type, publisher, year)
 
 
 @bp.route("/records/<type>/<year>", methods=["GET"])
+@output(Record(many=True))
 def get_tabular_from_path_by_type_year(type, year):
     return get_records(type, publisher=None, year=year)
 
@@ -262,7 +263,7 @@ def get_record(id):
     return record
 
 
-@bp.route('/record/flags/<id>', methods=['GET'])
+@bp.route('/record/<id>/flags', methods=['GET'])
 @output(Flag)
 def get_flag(id):
     object_id = validateObjectId(id)
@@ -274,7 +275,7 @@ def get_flag(id):
     return record
 
 
-@bp.route('/record/flag/<id>', methods=['PUT', 'PATCH'])
+@bp.route('/record/<id>/flag', methods=['PUT', 'PATCH'])
 @output(Flag)
 def flag_record(id):
     object_id = validateObjectId(id)
@@ -302,7 +303,7 @@ def validateObjectId(id):
         abort(400, "Invalid ObjectID")
 
 
-@bp.route('/record/unflag/<id>', methods=['PUT', 'PATCH'])
+@bp.route('/record/<id>/unflag', methods=['PUT', 'PATCH'])
 @output(Flag)
 def unflag_record(id):
     object_id = validateObjectId(id)
