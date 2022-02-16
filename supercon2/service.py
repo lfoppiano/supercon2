@@ -1,13 +1,14 @@
 import json
 
 import gridfs
-from apiflask import APIBlueprint, abort
+from apiflask import APIBlueprint, abort, output
 from bson import ObjectId
 from bson.errors import InvalidId
 from flask import render_template, request, Response, url_for
 
 from process.supercon_batch_mongo_extraction import connect_mongo
 from process.utils import json_serial
+from supercon2.schemas import Publishers, Record, Years, Flag
 from supercon2.utils import load_config_yaml
 
 bp = APIBlueprint('supercon', __name__)
@@ -36,6 +37,7 @@ def render_page(page):
 
 
 @bp.route('/publishers')
+@output(Publishers)
 def get_publishers():
     connection = connect_mongo(config=config)
     db_name = config['mongo']['db']
@@ -46,6 +48,7 @@ def get_publishers():
 
 
 @bp.route('/years')
+@output(Years)
 def get_years():
     connection = connect_mongo(config=config)
     db_name = config['mongo']['db']
@@ -120,6 +123,7 @@ def get_stats():
 
 
 @bp.route("/records", methods=["GET"])
+@output(Record)
 def get_records_from_form_data():
     type = request.args.get('type', default="automatic", type=str)
     status = request.args.get('status', default="valid", type=str)
@@ -132,11 +136,13 @@ def get_records_from_form_data():
 
 
 @bp.route("/records/<type>", methods=["GET"])
+@output(Record)
 def get_tabular_from_path_by_type(type):
     return get_records(type)
 
 
 @bp.route("/records/<type>/<publisher>/<year>", methods=["GET"])
+@output(Record)
 def get_tabular_from_path_by_type_publisher_year(type, publisher, year):
     return get_records(type, publisher, year)
 
@@ -244,6 +250,7 @@ def get_binary(hash):
         return Response(fs_binary.get(file._id).read(), mimetype='application/pdf')
 
 @bp.route('/record/<id>', methods=['GET'])
+@output(Record)
 def get_record(id):
     object_id = validateObjectId(id)
     connection = connect_mongo(config=config)
@@ -256,6 +263,7 @@ def get_record(id):
 
 
 @bp.route('/record/flags/<id>', methods=['GET'])
+@output(Flag)
 def get_flag(id):
     object_id = validateObjectId(id)
     connection = connect_mongo(config=config)
@@ -267,6 +275,7 @@ def get_flag(id):
 
 
 @bp.route('/record/flag/<id>', methods=['PUT', 'PATCH'])
+@output(Flag)
 def flag_record(id):
     object_id = validateObjectId(id)
     connection = connect_mongo(config=config)
@@ -294,6 +303,7 @@ def validateObjectId(id):
 
 
 @bp.route('/record/unflag/<id>', methods=['PUT', 'PATCH'])
+@output(Flag)
 def unflag_record(id):
     object_id = validateObjectId(id)
     connection = connect_mongo(config=config)
