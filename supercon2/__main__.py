@@ -30,7 +30,7 @@ if __name__ == '__main__':
     app = APIFlask(__name__, static_url_path=static_path, spec_path=root_path + '/spec',
                    docs_path=root_path + '/docs', redoc_path=root_path + '/redoc')
     app.config['OPENAPI_VERSION'] = '3.0.2'
-    app.config['SPEC_FORMAT'] = 'yaml'
+    app.config['SPEC_FORMAT'] = 'json'
     app.tags = ['supercon']
 
     app.register_blueprint(bp, url_prefix=root_path)
