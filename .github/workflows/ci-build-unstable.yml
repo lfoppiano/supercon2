@@ -1,0 +1,47 @@
+name: Build unstable
+
+on: [push]
+
+concurrency: 
+  group: gradle
+  cancel-in-progress: true
+
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: "3.8"
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 pytest
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    - name: Lint with flake8
+      run: |
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    - name: Test with pytest
+      run: |
+        pytest
+
+  docker-build:
+    needs: [build]
+
+    runs-on: self-hosted
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: set up proxy http
+        run: echo -e "systemProp.http.proxyHost=wwwout.nims.go.jp\nsystemProp.http.proxyPort=8888\nsystemProp.http.nonProxyHosts=*.nims.go.jp,localhost\n\nsystemProp.https.proxyHost=wwwout.nims.go.jp\nsystemProp.https.proxyPort=8888\nsystemProp.https.nonProxyHosts=*.nims.go.jp,localhost" >> gradle.properties
+      - name: check result proxy
+        run: cat gradle.properties
+      - name: Build the Docker image
+        run: docker build . --file Dockerfile --tag lfoppiano/supercon2:latest
