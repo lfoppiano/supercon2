@@ -6,3 +6,4 @@ pyyaml
 pytest
 pytest-mongodb
 numpy
+pandas
