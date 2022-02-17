@@ -21,8 +21,8 @@ def test_process_excel_check_obsolete_links(mongodb):
     for record_manually_corrected in records_manually_corrected:
         assert tabular_collection.find_one({"_id": record_manually_corrected['previous']})["status"] == "obsolete"
 
-    records_obsolete = tabular_collection.find({"hash": "48ba234393", "status": "obsolete"})
-    assert records_obsolete.count() == 2
+    records_obsolete = list(tabular_collection.find({"hash": "48ba234393", "status": "obsolete"}))
+    assert len(records_obsolete) == 2
 
 
 def test_process_excel_verify_training_data(mongodb):
@@ -32,7 +32,7 @@ def test_process_excel_verify_training_data(mongodb):
                              tabular_collection.find({"status": "valid", "type": "manual"}, {'_id': 1})]
 
     training_data_collection = mongodb.get_collection("training-data")
-    assert training_data_collection.count() == 2
+    assert len(list(training_data_collection)) == 2
 
     training_data_records = list(training_data_collection.find())
 
