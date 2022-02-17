@@ -8,7 +8,7 @@ def test_database(mongodb):
 
 
 def test_process_excel_check_obsolete_links(mongodb):
-    process('resources/supercon_corrected.xlsx', mongodb)
+    process('tests/resources/supercon_corrected.xlsx', mongodb)
 
     tabular_collection = mongodb.get_collection("tabular")
     records_all = tabular_collection.find({"hash": "48ba234393"})
@@ -26,7 +26,7 @@ def test_process_excel_check_obsolete_links(mongodb):
 
 
 def test_process_excel_verify_training_data(mongodb):
-    process('resources/supercon_corrected.xlsx', mongodb)
+    process('tests/resources/supercon_corrected.xlsx', mongodb)
     tabular_collection = mongodb.get_collection("tabular")
     corrected_identifiers = [str(record['_id']) for record in
                              tabular_collection.find({"status": "valid", "type": "manual"}, {'_id': 1})]
