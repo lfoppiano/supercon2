@@ -207,7 +207,7 @@ def get_records(type='automatic', status='valid', publisher=None, year=None, sta
             # cursor_aggregation = document_collection.aggregate(aggregation_query)
             entry['doc_url'] = url_for('supercon.get_document', hash=entry['hash'])
 
-    return json.dumps(entries, default=json_serial)
+    return entries
 
 
 @bp.route("/automatic_database", methods=["GET"])
