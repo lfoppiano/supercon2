@@ -178,9 +178,7 @@ def get_records(type='automatic', status='valid', publisher=None, year=None, sta
 
 
     for entry in cursor:
-        # if '_id' in entry.keys():
-        # entry['id'] = str(entry['_id'])
-        # del entry['_id']
+        entry['id'] = str(entry['_id'])
         entry['section'] = entry['section'] if 'section' in entry and entry['section'] is not None else ''
         entry['subsection'] = entry['subsection'] if 'subsection' in entry and entry[
             'subsection'] is not None else ''
