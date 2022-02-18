@@ -30,7 +30,7 @@ if __name__ == '__main__':
 
     root_path = args.root_path
 
-    if root_path == "/" and service.config['root-path'] is None:
+    if root_path == "/" and ('root-path' in service.config and service.config['root-path'] is None):
         root_path = service.config['root-path']
 
     static_path = root_path + '/static'
