@@ -251,7 +251,7 @@ def get_record(id):
     db = connection[db_name]
     record = db.get_collection("tabular").find_one({"_id": object_id})
 
-    record['_id'] = str(record['_id'])
+    record['id'] = str(record['_id'])
     return record
 
 
