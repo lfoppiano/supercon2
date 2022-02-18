@@ -1,5 +1,5 @@
 from flask_marshmallow import Schema
-from marshmallow.fields import String, List, Field, Integer
+from marshmallow.fields import String, List, Field, Integer, DateTime
 
 
 class Flag(Schema):
@@ -47,7 +47,7 @@ class Record(Schema):
     filename = String()
     hash = String()
     type = String()
-    timestamp = String()
+    timestamp = DateTime()
     status = String()
     title = String()
     doi = String()
