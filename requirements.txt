@@ -8,3 +8,4 @@ pytest-mongodb
 numpy
 pandas
 openpyxl
+apiflask
