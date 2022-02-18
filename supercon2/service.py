@@ -126,14 +126,7 @@ def get_stats():
 @input(RecordParamsIn, location='query')
 @output(Record(many=True))
 def get_records_from_form_data(query_data):
-    type = query_data['type']
-    status = query_data['status']
-    publisher = query_data['publisher']
-    year = query_data['year']
-    start = query_data['start']
-    limit = query_data['limit']
-
-    return get_records(type, status, publisher, year, start=start, limit=limit)
+    return get_records(**query_data)
 
 
 @bp.route("/records/<type>", methods=["GET"])
