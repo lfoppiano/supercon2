@@ -1,11 +1,19 @@
 from flask_marshmallow import Schema
-from marshmallow.fields import String, List, Field
+from marshmallow.fields import String, List, Field, Integer
+
 
 class Flag(Schema):
     status = String()
     type = String()
 
-# class Records(Schema):
+
+class RecordParamsIn(Schema):
+    type = String(default="automatic")
+    status = String(default="valid")
+    publisher = String(default=None)
+    year = String(default=None)
+    start = Integer(default=0)
+    limit = Integer(default=-1)
 
 
 class Record(Schema):

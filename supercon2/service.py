@@ -1,14 +1,14 @@
 import json
 
 import gridfs
-from apiflask import APIBlueprint, abort, output
+from apiflask import APIBlueprint, abort, output, input
 from bson import ObjectId
 from bson.errors import InvalidId
 from flask import render_template, request, Response, url_for
 
 from process.supercon_batch_mongo_extraction import connect_mongo
 from process.utils import json_serial
-from supercon2.schemas import Publishers, Record, Years, Flag
+from supercon2.schemas import Publishers, Record, Years, Flag, RecordParamsIn
 from supercon2.utils import load_config_yaml
 
 bp = APIBlueprint('supercon', __name__)
@@ -123,14 +123,15 @@ def get_stats():
 
 
 @bp.route("/records", methods=["GET"])
+@input(RecordParamsIn, location='query')
 @output(Record(many=True))
-def get_records_from_form_data():
-    type = request.args.get('type', default="automatic", type=str)
-    status = request.args.get('status', default="valid", type=str)
-    publisher = request.args.get('publisher', default=None, type=str)
-    year = request.args.get('year', default=None, type=str)
-    start = request.args.get('start', default=0, type=int)
-    limit = request.args.get('limit', default=-1, type=int)
+def get_records_from_form_data(query_data):
+    type = query_data['type']
+    status = query_data['status']
+    publisher = query_data['publisher']
+    year = query_data['year']
+    start = query_data['start']
+    limit = query_data['limit']
 
     return get_records(type, status, publisher, year, start=start, limit=limit)
 
