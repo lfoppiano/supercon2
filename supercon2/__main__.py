@@ -33,6 +33,8 @@ if __name__ == '__main__':
     if root_path == "/" and ('root-path' in service.config and service.config['root-path'] is None):
         root_path = service.config['root-path']
 
+    print("root_path:", root_path)
+
     static_path = root_path + '/static'
     app = Flask(__name__, static_url_path=static_path)
     app.register_blueprint(bp, url_prefix=root_path)
