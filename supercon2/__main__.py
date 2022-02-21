@@ -1,10 +1,7 @@
 import argparse
-import json
-import os
 from pathlib import Path
 
-import yaml
-from flask import Flask
+from apiflask import APIFlask
 
 from supercon2 import service
 from supercon2.service import bp
@@ -29,11 +26,19 @@ if __name__ == '__main__':
     service.config = load_config_yaml(args.config_file)
 
     root_path = args.root_path
+
+    if root_path == "/" and ('root-path' in service.config and service.config['root-path'] is not None):
+        root_path = service.config['root-path']
+
+    print("root_path:", root_path)
+
     static_path = root_path + '/static'
-    app = Flask(__name__, static_url_path=static_path)
-    app.config.update(
-        TEMPLATES_AUTO_RELOAD=True
-    )
+    app = APIFlask(__name__, static_url_path=static_path, spec_path=root_path + '/spec',
+                   docs_path=root_path + '/docs', redoc_path=root_path + '/redoc')
+    app.config['OPENAPI_VERSION'] = '3.0.2'
+    app.config['SPEC_FORMAT'] = 'json'
+    app.tags = ['supercon']
+
     app.register_blueprint(bp, url_prefix=root_path)
 
     app.run(host=args.host, port=args.port, debug=args.debug)
