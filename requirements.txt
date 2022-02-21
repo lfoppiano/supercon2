@@ -5,4 +5,7 @@ tqdm
 pyyaml
 pytest
 pytest-mongodb
+numpy
+pandas
+openpyxl
 apiflask

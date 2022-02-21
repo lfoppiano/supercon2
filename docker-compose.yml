@@ -1,0 +1,26 @@
+version: "3.9"
+services:
+  mongo:
+    image: mongo
+    restart: always
+    ports:
+      - 27018:27017
+    volumes:
+      - ./resources/mongo:/data/db:rw
+#      - /Users/lfoppiano/development/projects/supercon/mongo-container:/data/db:rw
+    networks:
+      net1:
+        aliases:
+          - "mongo.local"
+
+  supercon2:
+    image: lfoppiano/supercon2:1.2
+    volumes:
+      - ./supercon2/config-docker.yaml:/opt/service/supercon2/config.yaml:ro
+    ports:
+      - 8080:8080
+    networks:
+      - net1
+
+networks:
+  net1:

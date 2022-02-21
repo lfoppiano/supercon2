@@ -1,5 +1,5 @@
 mongo:
   server: "localhost:27017"
 #  server: "falcon.nims.go.jp:27017"
-  db: "supercon_sakai"
-#  db: "supercon_tmp"
+  db: "supercon_tmp"
+#  db: "supercon_dev_1203"

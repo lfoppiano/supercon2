@@ -19,7 +19,30 @@ The service API provides the following features:
 ### Getting started
 
 #### Docker
-TBD 
+
+Docker can be built with: 
+
+> docker build -t lfoppiano/supercon2:1.2 --file Dockerfile .
+
+and run: 
+
+> docker run  -rm -p 8080 -v ./supercon2/config-docker.yaml:/opt/service/supercon2/config.yaml:ro lfoppiano/supercon2:1.2
+
+For connecting to mongodb is possible to connect directly to the mongodb IP (to be specified in `config-docker.yaml`), if this is not possible then it's recommended to use docker-compose.
+
+#### Docker compose
+
+The docker compose is going to mount the volume `resources/mongo` as `/data/db` in the container. And mapping the mongodb container with port 27018 (to avoid conflicts with the default mongodb port). 
+
+The configuration file `supercon2/config-docker.yaml` is also mapped in the supercon2 container `/opt/service/supercon2/config.yaml`
+
+Docker compose is executed by running:  
+
+> docker-compose up 
+
+and shut down: 
+
+> docker-compose down 
 
 #### Local development
 
