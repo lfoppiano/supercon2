@@ -13,11 +13,13 @@
 </head>
 
 <body>
-  <div id="app">
+  <v-app id="app">
     <v-container fluid>
       <h2>Supercon2 "automatically extracted database" tabular view</h2>
+      <v-select v-model="selectedHeaders" :items="headers" label="Select Columns" multiple outlined return-object>
+      </v-select>
       <!-- TODO: height 800px should be dynamic? up to a user screen size?  -->
-      <v-data-table :headers="headers" :items="items" :items-per-page="10" :dense="true" loading-text="loading ..."
+      <v-data-table :headers="showHeaders" :items="items" :items-per-page="10" :dense="true" loading-text="loading ..."
         :multi-sort="true" class="elevation-1" height="800">
         <!-- <template v-slot:body.prepend>
           <tr>
@@ -55,66 +57,71 @@
       </v-data-table>
     </v-container>
     <p><span style="color:#848484;">contributors - 2021</span></p>
-  </div>
+  </v-app>
   <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
-  <script type="module" lang="ts">
-    import axios from 'https://cdn.skypack.dev/axios'
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script>
     new Vue({
       el: '#app',
       vuetify: new Vuetify(),
       data() {
         return {
+          selectedHeaders: [],
           headers: [
-            { text: 'Raw Material', value: 'rawMaterial' },
-            { text: 'Name', value: 'name' },
-            { text: 'Formula', value: 'formula' },
-            // { text: 'Space Group', value: 'spaceGroup' },
-            // { text: 'Space Group ID', value: 'spaceGroupId' },
-            // { text: 'Crystal Structure', value: 'crystalStructure' },
-            // { text: 'Crystal Structure ID', value: 'crystalStructureId' },
-            // { text: 'Unit Cell Type', value: 'unitCellType' },
-            // { text: 'Unit Cell Type ID', value: 'unitCellTypeId' },
-            { text: 'Doping', value: 'doping' },
-            { text: 'Shape', value: 'shape' },
-            // { text: 'Variables', value: 'variables' },
-            { text: 'Material Class', value: 'materialClass' },
-            // { text: 'Fabrication', value: 'fabrication' },
-            // { text: 'Substrate', value: 'substrate' },
-            { text: 'Critical Temperature', value: 'criticalTemperature' },
-            // { text: 'Critical TemperatureId', value: 'criticalTemperatureId' },
-            { text: 'Applied Pressure', value: 'appliedPressure' },
-            // { text: 'Applied Pressure ID', value: 'appliedPressureId' },
-            // { text: 'Link Type', value: 'linkType' },
-            { text: 'Section', value: 'section' },
-            { text: 'Subsection', value: 'subsection' },
-            // { text: 'Path', value: 'path' },
-            // { text: 'Filename', value: 'filename' },
-            // { text: 'Hash', value: 'hash' },
-            // { text: 'Timestamp', value: 'timestamp' },
-            { text: 'DOI', value: 'doi' },
-            { text: 'Authors', value: 'authors', width: 300 },
-            { text: 'Title', value: 'title', width: 500 },
-            { text: 'Publisher', value: 'publisher' },
-            { text: 'Journal', value: 'journal' },
-            { text: 'Type', value: 'type' },
-            { text: 'Actions', value: 'actions', sortable: false },
-            // { text: 'Critical Temperature Measurement Method', value: 'criticalTemperatureMeasurementMethod' },
-            // { text: 'Critical Temperature Measurement MethodId', value: 'criticalTemperatureMeasurementMethodId' },
-            // { text: 'Doc URL', value: 'doc_url' },
-            // { text: 'ID', value: 'id' },
-            // { text: 'Material ID', value: 'materialId' },
-            // { text: 'Sentence', value: 'sentence', width: 500 },
-            // { text: 'Status', value: 'status' },
-            // { text: 'Year', value: 'year' },
+            { text: 'Raw Material', value: 'rawMaterial', hidden: false },
+            { text: 'Name', value: 'name', hidden: false },
+            { text: 'Formula', value: 'formula', hidden: false },
+            { text: 'Space Group', value: 'spaceGroup', hidden: true },
+            { text: 'Space Group ID', value: 'spaceGroupId', hidden: true },
+            { text: 'Crystal Structure', value: 'crystalStructure', hidden: true },
+            { text: 'Crystal Structure ID', value: 'crystalStructureId', hidden: true },
+            { text: 'Unit Cell Type', value: 'unitCellType', hidden: true },
+            { text: 'Unit Cell Type ID', value: 'unitCellTypeId', hidden: true },
+            { text: 'Doping', value: 'doping', hidden: false },
+            { text: 'Shape', value: 'shape', hidden: false },
+            { text: 'Variables', value: 'variables', hidden: true },
+            { text: 'Material Class', value: 'materialClass', hidden: false },
+            { text: 'Fabrication', value: 'fabrication', hidden: true },
+            { text: 'Substrate', value: 'substrate', hidden: true },
+            { text: 'Critical Temperature', value: 'criticalTemperature', hidden: false },
+            { text: 'Critical TemperatureId', value: 'criticalTemperatureId', hidden: true },
+            { text: 'Applied Pressure', value: 'appliedPressure', hidden: false },
+            { text: 'Applied Pressure ID', value: 'appliedPressureId', hidden: true },
+            { text: 'Link Type', value: 'linkType', hidden: true },
+            { text: 'Section', value: 'section', hidden: false },
+            { text: 'Subsection', value: 'subsection', hidden: false },
+            { text: 'Path', value: 'path', hidden: true },
+            { text: 'Filename', value: 'filename', hidden: true },
+            { text: 'Hash', value: 'hash', hidden: true },
+            { text: 'Timestamp', value: 'timestamp', hidden: true },
+            { text: 'DOI', value: 'doi', hidden: false },
+            { text: 'Authors', value: 'authors', width: 300, hidden: false },
+            { text: 'Title', value: 'title', width: 500, hidden: false },
+            { text: 'Publisher', value: 'publisher', hidden: false },
+            { text: 'Journal', value: 'journal', hidden: false },
+            { text: 'Type', value: 'type', hidden: false },
+            { text: 'Actions', value: 'actions', sortable: false, hidden: false },
+            { text: 'Critical Temperature Measurement Method', value: 'criticalTemperatureMeasurementMethod', hidden: true },
+            { text: 'Critical Temperature Measurement MethodId', value: 'criticalTemperatureMeasurementMethodId', hidden: true },
+            { text: 'Doc URL', value: 'doc_url', hidden: true },
+            { text: 'ID', value: 'id', hidden: true },
+            { text: 'Material ID', value: 'materialId', hidden: true },
+            { text: 'Sentence', value: 'sentence', width: 500, hidden: true },
+            { text: 'Status', value: 'status', hidden: true },
+            { text: 'Year', value: 'year', hidden: true },
           ],
           items: []
+        }
+      },
+      computed: {
+        showHeaders() {
+          return this.headers.filter(s => this.selectedHeaders.includes(s));
         }
       },
       mounted() {
         console.log("mounted")
         axios.get("/records/automatic").then((data) => {
-          console.log({ data })
           this.items = data.data
         })
       },
@@ -122,6 +129,7 @@
       },
       created() {
         console.log("created")
+        this.selectedHeaders = this.headers.filter(h => !h.hidden)
       },
     })
   </script>
