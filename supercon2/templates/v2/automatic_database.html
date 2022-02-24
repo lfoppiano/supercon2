@@ -16,9 +16,10 @@
   <div id="app">
     <v-container fluid>
       <h2>Supercon2 "automatically extracted database" tabular view</h2>
-      <v-data-table :headers="headers" :items="items" :items-per-page="20" :dense="true" loading-text="loading ..."
-        :multi-sort="true" class="elevation-1">
-        <template v-slot:body.prepend>
+      <!-- TODO: height 800px should be dynamic? up to a user screen size?  -->
+      <v-data-table :headers="headers" :items="items" :items-per-page="10" :dense="true" loading-text="loading ..."
+        :multi-sort="true" class="elevation-1" height="800">
+        <!-- <template v-slot:body.prepend>
           <tr>
             <td>
               <v-text-field v-model="name" type="text" label="Dessert name"></v-text-field>
@@ -33,6 +34,23 @@
               <v-text-field v-model="carbs" type="number" label="Exact number"></v-text-field>
             </td>
           </tr>
+        </template> -->
+        <template v-slot:item.actions="{ item }">
+          <a :href="'../pdf/' + item.hash" target="_blank" :style="{'text-decoration': 'none'}">
+            <v-icon class="mr-2" title="pdf">
+              mdi-file-pdf-box
+            </v-icon>
+          </a>
+          <a :href="'../annotation/' + item.hash" target="_blank" :style="{'text-decoration': 'none'}">
+            <v-icon class="mr-2" title="annotation">
+              mdi-tag-multiple
+            </v-icon>
+          </a>
+          <a :href="'../document/' + item.hash" target="_blank" :style="{'text-decoration': 'none'}">
+            <v-icon class="mr-2" title="document">
+              mdi-file-document
+            </v-icon>
+          </a>
         </template>
       </v-data-table>
     </v-container>
