@@ -37,7 +37,7 @@
             </td>
           </tr>
         </template> -->
-                <template v-slot:item.actions="{ item }">
+                <template v-slot:item.document="{ item }">
                     <a :href="'../pdf/' + item.hash" target="_blank" :style="{'text-decoration': 'none'}">
                         <v-icon class="mr-2" title="pdf">
                             mdi-file-pdf-box
@@ -104,7 +104,7 @@
                         { text: 'Journal', value: 'journal', hidden: false },
                         { text: 'Year', value: 'year', hidden: false },
                         { text: 'Type', value: 'type', hidden: false },
-                        { text: 'Actions', value: 'actions', sortable: false, hidden: false },
+                        { text: 'View Document', value: 'document', sortable: false, hidden: false },
                         // { text: 'Doc URL', value: 'doc_url', hidden: true },
                         // { text: 'ID', value: 'id', hidden: true },
                         // { text: 'Material ID', value: 'materialId', hidden: true },
