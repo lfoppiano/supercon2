@@ -205,10 +205,6 @@ def get_records(type='automatic', status='valid', publisher=None, year=None, sta
 def get_automatic_database():
     return render_template("automatic_database.html")
 
-@bp.route("/v2/automatic_database", methods=["GET"])
-def get_v2_automatic_database():
-    return render_template("v2/automatic_database.html")
-
 @bp.route("/manual_database", methods=["GET"])
 def get_manual_database():
     return render_template("manual_database.html")
