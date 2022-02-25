@@ -120,7 +120,8 @@
                 }
             },
             mounted() {
-                axios.get('{{ url_for("supercon.get_tabular_from_path_by_type", type = "automatic") }}').then((data) => {
+                const url = '{{ url_for("supercon.get_tabular_from_path_by_type", type = "automatic") }}'
+                axios.get(url).then((data) => {
                     this.items = data.data
                 })
             },
