@@ -38,21 +38,10 @@
           </tr>
         </template> -->
                 <template v-slot:item.document="{ item }">
-                    <a :href="'../pdf/' + item.hash" target="_blank" :style="{'text-decoration': 'none'}">
-                        <v-icon class="mr-2" title="pdf">
-                            mdi-file-pdf-box
-                        </v-icon>
+                    <a :href="'./document/' + item.hash" target="_blank" :style="{'text-decoration': 'none'}">
+                        View
                     </a>
-                    <a :href="'../annotation/' + item.hash" target="_blank" :style="{'text-decoration': 'none'}">
-                        <v-icon class="mr-2" title="annotation">
-                            mdi-tag-multiple
-                        </v-icon>
-                    </a>
-                    <a :href="'../document/' + item.hash" target="_blank" :style="{'text-decoration': 'none'}">
-                        <v-icon class="mr-2" title="document">
-                            mdi-file-document
-                        </v-icon>
-                    </a>
+                </template>
                 </template>
             </v-data-table>
             <p><span style="color:#848484;">contributors - 2021</span></p>
