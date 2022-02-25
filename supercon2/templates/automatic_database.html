@@ -120,7 +120,6 @@
                 }
             },
             mounted() {
-                console.log("mounted")
                 axios.get("/records/automatic").then((data) => {
                     this.items = data.data
                 })
@@ -128,7 +127,6 @@
             methods: {
             },
             created() {
-                console.log("created")
                 this.selectedHeaders = this.headers.filter(h => !h.hidden)
             },
         })
