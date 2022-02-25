@@ -67,7 +67,7 @@ def get_years():
 #     tf.write(file.read())
 #     result_text = grobid.process_pdf(tf.name, 'processPDF', params={'disableLinking': 'true'},
 #                                      headers={'Accept': 'application/json'})
-# 
+#
 #     result_json = json.loads(result_text)
 #     new_paragraphs = []
 #     paragraphs = result_json['paragraphs']
@@ -75,13 +75,13 @@ def get_years():
 #         if 'spans' not in paragraph:
 #             new_paragraphs.append(paragraph)
 #             continue
-# 
+#
 #         extracted_data_from_paragraphs = RuleBasedLinker().process_paragraph(paragraph)
 #         for sentence in extracted_data_from_paragraphs:
 #             new_paragraphs.append(sentence)
-# 
+#
 #     result_json['paragraphs'] = new_paragraphs
-# 
+#
 #     return result_json
 
 
@@ -204,7 +204,6 @@ def get_records(type='automatic', status='valid', publisher=None, year=None, sta
 @bp.route("/automatic_database", methods=["GET"])
 def get_automatic_database():
     return render_template("automatic_database.html")
-
 
 @bp.route("/manual_database", methods=["GET"])
 def get_manual_database():
