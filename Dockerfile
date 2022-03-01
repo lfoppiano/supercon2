@@ -17,6 +17,12 @@ WORKDIR /opt/service
 COPY requirements.txt .
 COPY supercon2/ /opt/service/supercon2
 COPY process/ /opt/service/process
+COPY resources/version.txt /opt/service/resources/
+
+# extract version
+COPY .git ./.git
+RUN git rev-parse --short HEAD > /opt/service/resources/version.txt
+RUN rm -rf ./.git
 
 ENV VIRTUAL_ENV=/opt/service/venv
 RUN python3.9 -m venv $VIRTUAL_ENV

@@ -14,11 +14,19 @@ from supercon2.utils import load_config_yaml
 bp = APIBlueprint('supercon', __name__)
 config = []
 
-
 @bp.route('/version')
-def version():
-    return '1.2'
+def get_version():
+    version = None
+    if version is None:
+        try:
+            with open("resources/version.txt", 'r') as fv:
+                file_version = fv.readline()
+            version = file_version.strip() if file_version != "" and file_version is not None else "unknown"
+        except:
+            version = "unknown"
 
+    info_json = {"name": "supercon2", "version": version}
+    return info_json
 
 @bp.route('/')
 def index():
