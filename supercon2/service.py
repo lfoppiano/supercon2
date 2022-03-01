@@ -147,7 +147,7 @@ def get_tabular_from_path_by_type_year(type, year):
     return get_records(type, publisher=None, year=year)
 
 
-def get_records(type='automatic', status='valid', publisher=None, year=None, start=-1, limit=-1):
+def get_records(type=None, status=None, publisher=None, year=None, start=-1, limit=-1):
     connection = connect_mongo(config=config)
     db_name = config['mongo']['db']
     db_supercon_dev = connection[db_name]
@@ -157,7 +157,18 @@ def get_records(type='automatic', status='valid', publisher=None, year=None, sta
     #     {"$sort": {"count": -1}}
     # ]
 
-    query = {"type": type, "status": status}
+    # type and status allowed combinations are: valid/manual, valid/automatic, invalid/manual, invalid/automatic,
+    query = {}
+    if type is None:
+        query['type'] = {"$in": ['automatic', 'manual']}
+    else:
+        query['type'] = type
+
+    if status is None:
+        query['status'] = {"$in": ['valid', 'invalid']}
+    else:
+        query['status'] = status
+
     entries = []
     tabular_collection = db_supercon_dev.get_collection("tabular")
 
