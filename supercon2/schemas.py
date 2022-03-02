@@ -1,5 +1,6 @@
 from flask_marshmallow import Schema
 from marshmallow.fields import String, List, Field, Integer, DateTime
+from marshmallow.validate import OneOf
 
 
 class Flag(Schema):
@@ -8,10 +9,10 @@ class Flag(Schema):
 
 
 class RecordParamsIn(Schema):
-    type = String(default="automatic")
-    status = String(default="valid")
+    type = String(default="automatic", validate=OneOf(['manual', 'automatic']))
+    status = String(default=None, validate=OneOf(['valid', 'invalid']))
     publisher = String(default=None)
-    year = String(default=None)
+    year = Integer(default=None)
     start = Integer(default=0)
     limit = Integer(default=-1)
 
