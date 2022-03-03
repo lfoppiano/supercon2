@@ -21,29 +21,31 @@
             <!-- TODO: height 800px should be dynamic? up to a user screen size?  -->
             <v-data-table :headers="showHeaders" :items="items" :items-per-page="10" :dense="true"
                 loading-text="loading ..." :multi-sort="true" class="elevation-1" height="800">
-                <!-- <template v-slot:body.prepend>
-          <tr>
-            <td>
-              <v-text-field v-model="name" type="text" label="Dessert name"></v-text-field>
-            </td>
-            <td>
-              <v-text-field v-model="calories" type="number" label="Less than"></v-text-field>
-            </td>
-            <td>
-              <v-text-field v-model="fat" type="number" label="Less than"></v-text-field>
-            </td>
-            <td>
-              <v-text-field v-model="carbs" type="number" label="Exact number"></v-text-field>
-            </td>
-          </tr>
-        </template> -->
+                <template v-slot:body.prepend>
+                    <tr>
+                        <td v-for="header in showHeaders" :key="header.value">
+                            <v-radio-group v-model="typeRadioGroup" v-if="header.value === 'type'" dense>
+                                <v-radio v-for="s in ['all', 'manual', 'automatic']" :key="s" :label="s" :value="s">
+                                </v-radio>
+                            </v-radio-group>
+                            <v-radio-group v-model="statusRadioGroup" v-else-if="header.value === 'status'" dense>
+                                <!-- CONFIRM: Do we need empty? -->
+                                <v-radio v-for="s in ['all', 'valid', 'invalid', 'empty']" :key="s" :label="s"
+                                    :value="s">
+                                </v-radio>
+                            </v-radio-group>
+                            <!-- <v-text-field v-model="header.keyword" type="text" :label="header.text" v-else>
+                            </v-text-field> -->
+                        </td>
+                    </tr>
+                </template>
                 <template v-slot:item.document="{ item }">
                     <a :href="'./document/' + item.hash" target="_blank" :style="{'text-decoration': 'none'}">
                         View
                     </a>
                 </template>
-                <template v-slot:item.status="{ item }">
-                    <v-checkbox v-model="item.status" @click="toggleFlag(item)"></v-checkbox>
+                <template v-slot:item.flag="{ item }">
+                    <v-checkbox v-model="item.flag" @click="toggleFlag(item)"></v-checkbox>
                 </template>
             </v-data-table>
             <p><span style="color:#848484;">contributors - 2021</span></p>
@@ -59,6 +61,8 @@
             data() {
                 return {
                     selectedHeaders: [],
+                    typeRadioGroup: 'all',
+                    statusRadioGroup: 'all',
                     headers: [
                         { text: 'Raw Material', value: 'rawMaterial', hidden: false },
                         { text: 'Name', value: 'name', hidden: false },
@@ -94,9 +98,11 @@
                         { text: 'Publisher', value: 'publisher', hidden: false },
                         { text: 'Journal', value: 'journal', hidden: false },
                         { text: 'Year', value: 'year', hidden: false },
-                        { text: 'Type', value: 'type', hidden: false },
+                        // CONFIRM: check column locations for type, status and flag
+                        { text: 'Type', value: 'type', hidden: false, filter: this.typeFilter },
+                        { text: 'Status', value: 'status', sortable: false, hidden: false, filter: this.statusFilter },
+                        { text: 'Flag', value: 'flag', sortable: false, hidden: false, filter: this.flagFilter },
                         { text: 'View Document', value: 'document', sortable: false, hidden: false },
-                        { text: 'Status', value: 'status', sortable: false, hidden: false },
                         // { text: 'Doc URL', value: 'doc_url', hidden: true },
                         // { text: 'ID', value: 'id', hidden: true },
                         // { text: 'Material ID', value: 'materialId', hidden: true },
@@ -116,26 +122,48 @@
                 axios.get(url).then((data) => {
                     this.items = data.data.map((item) => {
                         return {
-                            ...item, ...{ status: item.status === 'valid' }
+                            ...item, ...{ flag: item.status === 'invalid' && item.type === 'manual' }
                         }
                     })
                 })
             },
             methods: {
-                toggleFlag(record) {
-                    console.log(record.status)
+                typeFilter(value, search, item) {
+                    switch (this.typeRadioGroup) {
+                        case 'all':
+                            return true
+                        default:
+                            return item.type === this.typeRadioGroup
+                    }
+                },
+                statusFilter(value, search, item) {
+                    switch (this.statusRadioGroup) {
+                        case 'all':
+                            return true
+                        default:
+                            return item.status === this.statusRadioGroup
+                    }
+                },
+                async toggleFlag(record) {
                     let url = ''
-                    if (record.status) {
+                    if (record.flag) {
                         url =
-                            '{{ url_for("supercon.unflag_record", id = "id") }}'
+                            '{{ url_for("supercon.flag_record", id = "id") }}'
                     } else {
-                        url = '{{ url_for("supercon.flag_record", id = "id") }}'
+                        url = '{{ url_for("supercon.unflag_record", id = "id") }}'
                     }
                     url = url.replace(
                         "id",
                         record.id
                     )
-                    axios.patch(url);
+                    const { data: data } = await axios.patch(url)
+                    this.items = Object.assign(
+                        this.items,
+                        Object.assign(
+                            this.items.find(item => item.id === record.id),
+                            data
+                        )
+                    )
                 },
             },
             created() {
