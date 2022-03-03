@@ -42,6 +42,8 @@
                         View
                     </a>
                 </template>
+                <template v-slot:item.status="{ item }">
+                    <v-checkbox v-model="item.status" @click="toggleFlag(item)"></v-checkbox>
                 </template>
             </v-data-table>
             <p><span style="color:#848484;">contributors - 2021</span></p>
@@ -94,11 +96,11 @@
                         { text: 'Year', value: 'year', hidden: false },
                         { text: 'Type', value: 'type', hidden: false },
                         { text: 'View Document', value: 'document', sortable: false, hidden: false },
+                        { text: 'Status', value: 'status', sortable: false, hidden: false },
                         // { text: 'Doc URL', value: 'doc_url', hidden: true },
                         // { text: 'ID', value: 'id', hidden: true },
                         // { text: 'Material ID', value: 'materialId', hidden: true },
                         // { text: 'Sentence', value: 'sentence', width: 500, hidden: true },
-                        // { text: 'Status', value: 'status', hidden: true },
                     ],
                     items: []
                 }
@@ -109,12 +111,32 @@
                 }
             },
             mounted() {
-                const url = '{{ url_for("supercon.get_tabular_from_path_by_type", type = "automatic") }}'
+                const url =
+                    '{{ url_for("supercon.get_records_from_form_data") }}'
                 axios.get(url).then((data) => {
-                    this.items = data.data
+                    this.items = data.data.map((item) => {
+                        return {
+                            ...item, ...{ status: item.status === 'valid' }
+                        }
+                    })
                 })
             },
             methods: {
+                toggleFlag(record) {
+                    console.log(record.status)
+                    let url = ''
+                    if (record.status) {
+                        url =
+                            '{{ url_for("supercon.flag_record", id = "id") }}'
+                    } else {
+                        url = '{{ url_for("supercon.unflag_record", id = "id") }}'
+                    }
+                    url = url.replace(
+                        "id",
+                        record.id
+                    )
+                    axios.patch(url);
+                },
             },
             created() {
                 this.selectedHeaders = this.headers.filter(h => !h.hidden)
