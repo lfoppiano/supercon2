@@ -25,25 +25,28 @@
                 <template v-slot:body.prepend>
                     <tr>
                         <td v-for="header in showHeaders" :key="header.value">
-                            <v-radio-group v-model="typeRadioGroup" v-if="header.value === 'type'" dense
-                                :readonly="!expandFilter">
+                            <v-text-field v-model="rawMaterialKeyword" type="text" label="keyword"
+                                v-if="header.value === 'rawMaterial'" hide-details>
+                            </v-text-field>
+                            <v-radio-group v-model="typeRadioGroup" v-else-if="header.value === 'type'" dense
+                                hide-details :readonly="!expandFilter">
                                 <v-radio v-for="item in ['all', 'manual', 'automatic']" :key="item" :label="item"
                                     :value="item" v-show="expandFilter || item === typeRadioGroup">
                                 </v-radio>
                             </v-radio-group>
-                            <v-radio-group v-model="statusRadioGroup" v-else-if="header.value === 'status'" dense>
+                            <v-radio-group v-model="statusRadioGroup" v-else-if="header.value === 'status'" dense
+                                hide-details>
                                 <!-- CONFIRM: Do we need empty? -->
                                 <v-radio v-for="item in ['all', 'valid', 'invalid', 'empty']" :key="item" :label="item"
                                     :value="item" v-show="expandFilter || item === statusRadioGroup">
                                 </v-radio>
                             </v-radio-group>
-                            <v-radio-group v-model="flagRadioGroup" v-else-if="header.value === 'flag'" dense>
+                            <v-radio-group v-model="flagRadioGroup" v-else-if="header.value === 'flag'" dense
+                                hide-details>
                                 <v-radio v-for="item in ['all', 'flag', 'unflag']" :key="item" :label="item"
                                     :value="item" v-show="expandFilter || item === flagRadioGroup">
                                 </v-radio>
                             </v-radio-group>
-                            <!-- <v-text-field v-model="header.keyword" type="text" :label="header.text" v-else>
-                            </v-text-field> -->
                         </td>
                     </tr>
                 </template>
@@ -69,12 +72,13 @@
             data() {
                 return {
                     selectedHeaders: [],
+                    rawMaterialKeyword: '',
                     expandFilter: false,
                     typeRadioGroup: 'all',
                     statusRadioGroup: 'all',
                     flagRadioGroup: 'all',
                     headers: [
-                        { text: 'Raw Material', value: 'rawMaterial', hidden: false },
+                        { text: 'Raw Material', value: 'rawMaterial', hidden: false, filter: this.rawMaterialFilter },
                         { text: 'Name', value: 'name', hidden: false },
                         { text: 'Formula', value: 'formula', hidden: false },
                         { text: 'Space Group', value: 'spaceGroup', hidden: true },
@@ -138,6 +142,12 @@
                 })
             },
             methods: {
+                rawMaterialFilter(value, search, item) {
+                    if (this.rawMaterialKeyword === '') {
+                        return true
+                    }
+                    return item.rawMaterial.indexOf(this.rawMaterialKeyword) > -1
+                },
                 typeFilter(value, search, item) {
                     switch (this.typeRadioGroup) {
                         case 'all':
