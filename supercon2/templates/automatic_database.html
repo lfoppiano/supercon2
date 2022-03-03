@@ -34,6 +34,10 @@
                                     :value="s">
                                 </v-radio>
                             </v-radio-group>
+                            <v-radio-group v-model="flagRadioGroup" v-else-if="header.value === 'flag'" dense>
+                                <v-radio v-for="s in ['all', 'flag', 'unflag']" :key="s" :label="s" :value="s">
+                                </v-radio>
+                            </v-radio-group>
                             <!-- <v-text-field v-model="header.keyword" type="text" :label="header.text" v-else>
                             </v-text-field> -->
                         </td>
@@ -63,6 +67,7 @@
                     selectedHeaders: [],
                     typeRadioGroup: 'all',
                     statusRadioGroup: 'all',
+                    flagRadioGroup: 'all',
                     headers: [
                         { text: 'Raw Material', value: 'rawMaterial', hidden: false },
                         { text: 'Name', value: 'name', hidden: false },
@@ -142,6 +147,16 @@
                             return true
                         default:
                             return item.status === this.statusRadioGroup
+                    }
+                },
+                flagFilter(value, search, item) {
+                    switch (this.flagRadioGroup) {
+                        case 'all':
+                            return true
+                        case 'flag':
+                            return item.flag
+                        case 'unflag':
+                            return !item.flag
                     }
                 },
                 async toggleFlag(record) {
