@@ -156,6 +156,10 @@
                     this.filteredItems = items
                 },
                 onKeyDown(event) {
+                    // disable shortcuts when in an input field
+                    if (event.srcElement.nodeName.indexOf('INPUT') > -1) {
+                        return
+                    }
                     const ids = this.filteredItems.map(item => item.id)
                     const pos = this.selectedItems.length === 0 ? -1 : ids.indexOf(this.selectedItem.id)
                     switch (event.key) {
