@@ -20,8 +20,9 @@
             </v-select>
             <!-- TODO: height 800px should be dynamic? up to a user screen size?  -->
             <v-checkbox v-model="expandFilter" label="expand filter"></v-checkbox>
-            <v-data-table :headers="showHeaders" :items="items" :items-per-page="10" :dense="true"
-                loading-text="loading ..." :multi-sort="true" class="elevation-1" height="800">
+            <v-data-table v-model="selectedItems" :headers="showHeaders" :items="items" :items-per-page="itemsPerPage"
+                :dense="true" single-select loading-text="loading ..." :multi-sort="true" class="elevation-1"
+                height="800" @current-items="hasChangedCurrentItems">
                 <template v-slot:body.prepend>
                     <tr>
                         <td v-for="header in showHeaders" :key="header.value">
@@ -70,6 +71,9 @@
             vuetify: new Vuetify(),
             data() {
                 return {
+                    itemsPerPage: 10,
+                    selectedItems: [],
+                    filteredItems: [],
                     selectedHeaders: [],
                     rawMaterialKeyword: '',
                     expandFilter: false,
@@ -127,6 +131,9 @@
             computed: {
                 showHeaders() {
                     return this.headers.filter(s => this.selectedHeaders.includes(s));
+                },
+                selectedItem() {
+                    return this.selectedItems[0]
                 }
             },
             mounted() {
@@ -139,8 +146,36 @@
                         }
                     })
                 })
+                document.addEventListener('keydown', this.onKeyDown)
+            },
+            beforeDestroy() {
+                document.removeEventListener('keydown', this.onKeyDown)
             },
             methods: {
+                hasChangedCurrentItems(items) {
+                    this.filteredItems = items
+                },
+                onKeyDown(event) {
+                    const ids = this.filteredItems.map(item => item.id)
+                    const pos = this.selectedItems.length === 0 ? -1 : ids.indexOf(this.selectedItem.id)
+                    switch (event.key) {
+                        case 'ArrowDown':
+                            event.preventDefault()
+                            if (pos < this.itemsPerPage - 1) {
+                                this.selectedItems = [this.filteredItems[pos + 1]]
+                            }
+                            break
+                        case 'ArrowUp':
+                            event.preventDefault()
+                            if (pos > 0) {
+                                this.selectedItems = [this.filteredItems[pos - 1]]
+                            }
+                            break;
+
+                        default:
+                            break;
+                    }
+                },
                 rawMaterialFilter(value, search, item) {
                     if (this.rawMaterialKeyword === '') {
                         return true
