@@ -56,7 +56,7 @@
                     </a>
                 </template>
                 <template v-slot:item.flag="{ item }">
-                    <v-checkbox v-model="item.flag" @click="toggleFlag(item)"></v-checkbox>
+                    <v-checkbox :input-value="item.flag" @click="toggleFlag(item)"></v-checkbox>
                 </template>
             </v-data-table>
             <p><span style="color:#848484;">contributors - 2021</span></p>
@@ -155,7 +155,7 @@
                 hasChangedCurrentItems(items) {
                     this.filteredItems = items
                 },
-                onKeyDown(event) {
+                async onKeyDown(event) {
                     // disable shortcuts when in an input field
                     if (event.srcElement.nodeName.indexOf('INPUT') > -1) {
                         return
@@ -174,8 +174,9 @@
                             if (pos > 0) {
                                 this.selectedItems = [this.filteredItems[pos - 1]]
                             }
-                            break;
-
+                            break
+                        case 'Enter':
+                            await this.toggleFlag(this.selectedItem)
                         default:
                             break;
                     }
@@ -216,9 +217,9 @@
                     let url = ''
                     if (record.flag) {
                         url =
-                            '{{ url_for("supercon.flag_record", id = "id") }}'
+                            '{{ url_for("supercon.unflag_record", id = "id") }}'
                     } else {
-                        url = '{{ url_for("supercon.unflag_record", id = "id") }}'
+                        url = '{{ url_for("supercon.flag_record", id = "id") }}'
                     }
                     url = url.replace(
                         "id",
@@ -229,7 +230,11 @@
                         this.items,
                         Object.assign(
                             this.items.find(item => item.id === record.id),
-                            data
+                            {
+                                type: data.type,
+                                status: data.status,
+                                flag: !record.flag,
+                            }
                         )
                     )
                 },
