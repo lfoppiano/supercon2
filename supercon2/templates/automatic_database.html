@@ -127,9 +127,9 @@
                     let url = ''
                     if (record.status) {
                         url =
-                            '{{ url_for("supercon.flag_record", id = "id") }}'
+                            '{{ url_for("supercon.unflag_record", id = "id") }}'
                     } else {
-                        url = '{{ url_for("supercon.unflag_record", id = "id") }}'
+                        url = '{{ url_for("supercon.flag_record", id = "id") }}'
                     }
                     url = url.replace(
                         "id",
