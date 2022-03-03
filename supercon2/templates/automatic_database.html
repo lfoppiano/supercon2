@@ -36,8 +36,7 @@
                             </v-radio-group>
                             <v-radio-group v-model="statusRadioGroup" v-else-if="header.value === 'status'" dense
                                 hide-details>
-                                <!-- CONFIRM: Do we need empty? -->
-                                <v-radio v-for="item in ['all', 'valid', 'invalid', 'empty']" :key="item" :label="item"
+                                <v-radio v-for="item in ['all', 'valid', 'invalid']" :key="item" :label="item"
                                     :value="item" v-show="expandFilter || item === statusRadioGroup">
                                 </v-radio>
                             </v-radio-group>
