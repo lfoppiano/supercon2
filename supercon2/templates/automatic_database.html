@@ -19,23 +19,27 @@
             <v-select v-model="selectedHeaders" :items="headers" label="Select Columns" multiple outlined return-object>
             </v-select>
             <!-- TODO: height 800px should be dynamic? up to a user screen size?  -->
+            <v-checkbox v-model="expandFilter" label="expand filter"></v-checkbox>
             <v-data-table :headers="showHeaders" :items="items" :items-per-page="10" :dense="true"
                 loading-text="loading ..." :multi-sort="true" class="elevation-1" height="800">
                 <template v-slot:body.prepend>
                     <tr>
                         <td v-for="header in showHeaders" :key="header.value">
-                            <v-radio-group v-model="typeRadioGroup" v-if="header.value === 'type'" dense>
-                                <v-radio v-for="s in ['all', 'manual', 'automatic']" :key="s" :label="s" :value="s">
+                            <v-radio-group v-model="typeRadioGroup" v-if="header.value === 'type'" dense
+                                :readonly="!expandFilter">
+                                <v-radio v-for="item in ['all', 'manual', 'automatic']" :key="item" :label="item"
+                                    :value="item" v-show="expandFilter || item === typeRadioGroup">
                                 </v-radio>
                             </v-radio-group>
                             <v-radio-group v-model="statusRadioGroup" v-else-if="header.value === 'status'" dense>
                                 <!-- CONFIRM: Do we need empty? -->
-                                <v-radio v-for="s in ['all', 'valid', 'invalid', 'empty']" :key="s" :label="s"
-                                    :value="s">
+                                <v-radio v-for="item in ['all', 'valid', 'invalid', 'empty']" :key="item" :label="item"
+                                    :value="item" v-show="expandFilter || item === statusRadioGroup">
                                 </v-radio>
                             </v-radio-group>
                             <v-radio-group v-model="flagRadioGroup" v-else-if="header.value === 'flag'" dense>
-                                <v-radio v-for="s in ['all', 'flag', 'unflag']" :key="s" :label="s" :value="s">
+                                <v-radio v-for="item in ['all', 'flag', 'unflag']" :key="item" :label="item"
+                                    :value="item" v-show="expandFilter || item === flagRadioGroup">
                                 </v-radio>
                             </v-radio-group>
                             <!-- <v-text-field v-model="header.keyword" type="text" :label="header.text" v-else>
@@ -65,6 +69,7 @@
             data() {
                 return {
                     selectedHeaders: [],
+                    expandFilter: false,
                     typeRadioGroup: 'all',
                     statusRadioGroup: 'all',
                     flagRadioGroup: 'all',
