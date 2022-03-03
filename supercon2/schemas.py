@@ -11,6 +11,7 @@ class Flag(Schema):
 class RecordParamsIn(Schema):
     type = String(default="automatic", validate=OneOf(['manual', 'automatic']))
     status = String(default=None, validate=OneOf(['valid', 'invalid']))
+    document = String(default=None)
     publisher = String(default=None)
     year = Integer(default=None)
     start = Integer(default=0)

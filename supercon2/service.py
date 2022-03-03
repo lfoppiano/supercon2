@@ -1,10 +1,11 @@
+import datetime
 import json
 
 import gridfs
 from apiflask import APIBlueprint, abort, output, input
 from bson import ObjectId
 from bson.errors import InvalidId
-from flask import render_template, request, Response, url_for
+from flask import render_template, Response, url_for
 
 from process.supercon_batch_mongo_extraction import connect_mongo
 from process.utils import json_serial
@@ -13,6 +14,7 @@ from supercon2.utils import load_config_yaml
 
 bp = APIBlueprint('supercon', __name__)
 config = []
+
 
 @bp.route('/version')
 def get_version():
@@ -27,6 +29,7 @@ def get_version():
 
     info_json = {"name": "supercon2", "version": version}
     return info_json
+
 
 @bp.route('/')
 def index():
@@ -130,6 +133,38 @@ def get_stats():
     return render_template("stats.html", by_publisher=by_publisher, by_year=by_year, by_journal=by_journal)
 
 
+@bp.route("/record", methods=["POST"])
+@input(Record)
+@output(Record)
+def create_record(record: Record):
+    validate_record(record)
+    return add_record(record)
+
+
+def validate_record(record):
+    if 'hash' not in record or record['hash'] == "":
+        abort(400, "Missing document hash or doi")
+
+    if 'doi' not in record or record['doi'] == "":
+        abort(400, "Missing document hash or doi")
+
+
+def add_record(record: Record):
+    connection = connect_mongo(config=config)
+    db_name = config['mongo']['db']
+    db_supercon_dev = connection[db_name]
+
+    tabular_collection = db_supercon_dev.get_collection("tabular")
+
+    record['timestamp'] = datetime.datetime.now().isoformat()
+    record['status'] = "valid"
+    record['type'] = "manual"
+
+    new_record = tabular_collection.insert_one(record)
+
+    return new_record.inserted_id
+
+
 @bp.route("/records", methods=["GET"])
 @input(RecordParamsIn, location='query')
 @output(Record(many=True))
@@ -155,7 +190,7 @@ def get_tabular_from_path_by_type_year(type, year):
     return get_records(type, publisher=None, year=year)
 
 
-def get_records(type=None, status=None, publisher=None, year=None, start=-1, limit=-1):
+def get_records(type=None, status=None, document=None, publisher=None, year=None, start=-1, limit=-1):
     connection = connect_mongo(config=config)
     db_name = config['mongo']['db']
     db_supercon_dev = connection[db_name]
@@ -180,12 +215,14 @@ def get_records(type=None, status=None, publisher=None, year=None, start=-1, lim
     entries = []
     tabular_collection = db_supercon_dev.get_collection("tabular")
 
+    if document:
+        query['hash'] = document
+
     if publisher:
         query['publisher'] = publisher
 
     if year:
         query['year'] = int(year)
-
 
     cursor = tabular_collection.find(query)
 
@@ -194,7 +231,6 @@ def get_records(type=None, status=None, publisher=None, year=None, start=-1, lim
 
     if limit > 0:
         cursor.limit(limit)
-
 
     for entry in cursor:
         entry['id'] = str(entry['_id'])
@@ -223,6 +259,7 @@ def get_records(type=None, status=None, publisher=None, year=None, start=-1, lim
 @bp.route("/automatic_database", methods=["GET"])
 def get_automatic_database():
     return render_template("automatic_database.html")
+
 
 @bp.route("/manual_database", methods=["GET"])
 def get_manual_database():
@@ -259,6 +296,7 @@ def get_binary(hash):
         return "Document with identifier=" + str(hash) + " not found.", 404
     else:
         return Response(fs_binary.get(file._id).read(), mimetype='application/pdf')
+
 
 @bp.route('/record/<id>', methods=['GET'])
 @output(Record)
