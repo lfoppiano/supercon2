@@ -6,7 +6,7 @@ from supercon2.service import update_record, _update_record
 def test_update_record(mongodb):
     assert 'tabular' in mongodb.list_collection_names()
 
-    records_by_document_before = mongodb.tabular.find({'hash': '48ba234393'}).count()
+    records_by_document_before = len(list(mongodb.tabular.find({'hash': '48ba234393'})))
 
     new_record = {"rawMaterial": "thin films Mg B2",
                   "materialId": "-964232725",
@@ -28,7 +28,7 @@ def test_update_record(mongodb):
     original_identifier_object_id = ObjectId(original_identifier)
     inserted_id = _update_record(original_identifier_object_id, new_record, mongodb)
 
-    records_by_document_after = mongodb.tabular.find({'hash': '48ba234393'}).count()
+    records_by_document_after = len(list(mongodb.tabular.find({'hash': '48ba234393'})))
 
     assert records_by_document_after > records_by_document_before
 
