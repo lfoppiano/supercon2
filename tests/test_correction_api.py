@@ -1,6 +1,6 @@
 from bson import ObjectId
 
-from supercon2.service import update_record, _update_record
+from supercon2.service import _update_record
 
 
 def test_update_record(mongodb):
