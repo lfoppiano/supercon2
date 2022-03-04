@@ -203,29 +203,18 @@
                             break
                         case 'ArrowUp':
                             event.preventDefault()
-                            if (this.pageIsFirst) {
-                                switch (this.rowNumber) {
-                                    case undefined:
-                                        this.selectedItems = [this.lastFilteredItem]
-                                        break
-                                    case 0:
-                                        break
-                                    default:
-                                        this.selectedItems = [this.filteredItems[rowNumber - 1]]
-                                }
-                            } else {
-                                switch (this.rowNumber) {
-                                    case undefined:
-                                        this.selectedItems = [this.lastFilteredItem]
-                                        break
-                                    case 0:
+                            switch (this.rowNumber) {
+                                case undefined:
+                                    this.selectedItems = [this.lastFilteredItem]
+                                    break
+                                case 0:
+                                    if (!this.pageIsFirst) {
                                         this.page--
                                         this.selectedItems = []
-                                        break
-                                    default:
-                                        this.selectedItems = [this.filteredItems[rowNumber - 1]]
-                                        break;
-                                }
+                                    }
+                                    break
+                                default:
+                                    this.selectedItems = [this.filteredItems[this.rowNumber - 1]]
                             }
                             break
                         case 'Enter':
