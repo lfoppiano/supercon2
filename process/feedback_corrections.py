@@ -1,28 +1,19 @@
 import argparse
-import copy
 import os
 import sys
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from pymongo import MongoClient, DESCENDING
+from pymongo import DESCENDING
 
+from commons.correction_utils import collect_corrections, write_correction
+from commons.mongo_utils import connect_mongo
 from process.grobid_client_generic import GrobidClientGeneric
 
 
 # supercon_sakai: database containing the re-processed documents corrected by sakai-san
 # supercon_sakai_original: database containing the original records corrected by sakai-san
-
-# from process.supercon_batch_mongo_extraction import connect_mongo
-def connect_mongo(config):
-    if config is None or config == {}:
-        raise Exception("Config is blank!")
-    mongo_client_url = config['mongo']['server'] if 'mongo' in config and 'server' in config['mongo'] else ''
-    c = MongoClient(mongo_client_url)
-
-    return c
-
 
 # This part will be implemented in the service
 def create_training_data_from_passage(passage):
@@ -59,61 +50,6 @@ def create_training_data_from_passage(passage):
                                                                                                              -3:-4],
 
     return annotated_text, features
-
-
-def write_correction(doc, corrections, collection, dry_run: bool = False):
-    """Write corrections into the database"""
-
-    new_doc = copy.copy(doc)
-
-    for field, value in corrections.items():
-        new_doc[field] = value
-
-    doc['status'] = "obsolete"  ## 'obsolete' means that another record is taking over
-    doc['type'] = "automatic"
-    obsolete_id = doc['_id']
-    new_doc['previous'] = obsolete_id
-    new_doc['type'] = 'manual'
-    new_doc['status'] = 'valid'
-    del new_doc['_id']
-
-    if dry_run:
-        print("Updating record with id: ", doc['_id'],
-              "and setting flags 'status'='obsolete' and 'type'='automatic'.")
-        print("Creating new record with status'='valid' and 'type'='manual'\n", new_doc)
-
-        print("Creating training data. Saving the sentence for the moment.")
-        new_doc_id = "00000"
-    else:
-        collection.update_one({
-            '_id': doc['_id']
-        }, {
-            '$set': {
-                'status': 'obsolete',
-                'type': 'automatic'
-            }
-        }, upsert=False)
-        result = collection.insert_one(new_doc)
-        new_doc_id = result.inserted_id
-
-    return new_doc_id
-
-
-def collect_corrections(corrected_formula, corrected_tc, corrected_pressure):
-    corrections = {}
-    if corrected_formula is not None and str(corrected_formula) != 'nan':
-        print("Correcting formula with", corrected_formula)
-        corrections['formula'] = corrected_formula
-
-    if corrected_tc is not None and str(corrected_tc) != 'nan':
-        print("Correcting tc with", corrected_tc)
-        corrections['criticalTemperature'] = corrected_tc
-
-    if corrected_pressure is not None and str(corrected_pressure) != 'nan':
-        print("Correcting pressure with", corrected_pressure)
-        corrections['appliedPressure'] = corrected_pressure
-
-    return corrections
 
 
 def write_raw_training_data(doc, new_doc_id, document_collection, training_data_collection):
@@ -166,7 +102,7 @@ def process(corrections_file, database, dry_run=False):
     document_collection = database.get_collection("document")
     training_data_collection = database.get_collection("training-data")
 
-    df = pd.read_excel(corrections_file, sheet_name=0, usecols="A,B,D,E,G,H,I,J,O,M,N")
+    df = pd.read_excel(corrections_file, sheet_name=1, usecols="A,B,D,E,G,H,I,J,O,M,N")
     df.replace({np.nan: None})
     for index, row in df.iterrows():
         status = row[0]
