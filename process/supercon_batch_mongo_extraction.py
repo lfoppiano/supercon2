@@ -10,10 +10,10 @@ from pathlib import Path
 
 import gridfs
 import pymongo
-from pymongo import MongoClient
 from pymongo.errors import DocumentTooLarge
 from tqdm import tqdm
 
+from commons.mongo_utils import connect_mongo
 from process.grobid_client_generic import GrobidClientGeneric
 
 multiprocessing.set_start_method("fork")
