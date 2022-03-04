@@ -236,7 +236,7 @@ def get_document(hash):
 
 @bp.route('/annotation/<hash>', methods=['GET'])
 def get_annotations(hash):
-    '''Get annotations (latest version)'''
+    """Get annotations (latest version)"""
     db_name = config['mongo']['db']
     connection = connect_mongo(config=config)
     db = connection[db_name]
@@ -337,3 +337,19 @@ def unflag_record(id):
 @bp.route('/config', methods=['GET'])
 def get_config(config_file='config.yaml'):
     return load_config_yaml(config_file)
+
+
+@bp.route('/training_data', methods=['GET'])
+def get_training_data():
+    return render_template("training_data.html")
+
+@bp.route('/training/data', methods=['GET'])
+def get_training_data_list():
+    connection = connect_mongo(config=config)
+    db_name = config['mongo']['db']
+    db = connection[db_name]
+    training_data_collection = db.get_collection("training-data")   # TODO: rename training_data
+
+    training_data_list = list(training_data_collection.find({}, {'tokens': 0}))
+
+    return Response(json.dumps(training_data_list, default=json_serial), mimetype="application/json")
