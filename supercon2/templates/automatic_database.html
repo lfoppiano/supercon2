@@ -20,9 +20,10 @@
             </v-select>
             <!-- TODO: height 800px should be dynamic? up to a user screen size?  -->
             <v-checkbox v-model="expandFilter" label="expand filter"></v-checkbox>
-            <v-data-table v-model="selectedItems" :headers="showHeaders" :items="items" :items-per-page="itemsPerPage"
-                :dense="true" single-select loading-text="loading ..." :multi-sort="true" class="elevation-1"
-                height="800" @current-items="hasChangedCurrentItems">
+            <v-data-table v-model="selectedItems" :headers="showHeaders" :items="items" :dense="true" single-select
+                loading-text="loading ..." :multi-sort="true" class="elevation-1"
+                @current-items="hasChangedCurrentItems" :page.sync="page" :items-per-page="itemsPerPage"
+                @page-count="hasChangedPageCount" @click:row="clickRow">
                 <template v-slot:body.prepend>
                     <tr>
                         <td v-for="header in showHeaders" :key="header.value">
@@ -71,6 +72,8 @@
             vuetify: new Vuetify(),
             data() {
                 return {
+                    page: 1,
+                    pageCount: 0,
                     itemsPerPage: 10,
                     selectedItems: [],
                     filteredItems: [],
@@ -152,6 +155,12 @@
                 document.removeEventListener('keydown', this.onKeyDown)
             },
             methods: {
+                hasChangedPageCount(pageCount) {
+                    this.pageCount = pageCount
+                },
+                clickRow(item, event) {
+                    event.select(!event.isSelected)
+                },
                 hasChangedCurrentItems(items) {
                     this.filteredItems = items
                 },
@@ -161,18 +170,41 @@
                         return
                     }
                     const ids = this.filteredItems.map(item => item.id)
-                    const pos = this.selectedItems.length === 0 ? -1 : ids.indexOf(this.selectedItem.id)
+                    let pos = this.selectedItems.length === 1 ? ids.indexOf(this.selectedItem.id) : -1
                     switch (event.key) {
+                        // REFACTOR: nests are deep
                         case 'ArrowDown':
                             event.preventDefault()
-                            if (pos < this.itemsPerPage - 1) {
-                                this.selectedItems = [this.filteredItems[pos + 1]]
+                            // last page
+                            if (this.page === this.pageCount) {
+                                // If less than last page count, move to next column
+                                if (pos < this.filteredItems.length - 1) {
+                                    this.selectedItems = [this.filteredItems[pos + 1]]
+                                }
                             }
+                            // not last page:
+                            if (this.page !== this.pageCount) {
+                                if (pos < this.itemsPerPage - 1) {
+                                    this.selectedItems = [this.filteredItems[pos + 1]]
+                                }
+                                if (pos === this.itemsPerPage - 1) {
+                                    this.selectedItems = []
+                                    this.page++
+                                }
+                            }
+
                             break
                         case 'ArrowUp':
                             event.preventDefault()
+                            // selects the bottom if there are no selected rows
+                            if (pos === -1) {
+                                pos = this.itemsPerPage
+                            }
                             if (pos > 0) {
                                 this.selectedItems = [this.filteredItems[pos - 1]]
+                            }
+                            if (pos === 0 && this.page > 1) {
+                                this.page--
                             }
                             break
                         case 'Enter':
