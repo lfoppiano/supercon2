@@ -136,6 +136,19 @@
                 },
                 selectedItem() {
                     return this.selectedItems[0]
+                },
+                pageIsFirst() {
+                    return this.page === 1
+                },
+                pageIsLast() {
+                    return this.page === this.pageCount
+                },
+                rowNumber() {
+                    const ids = this.filteredItems.map(item => item.id)
+                    return this.selectedItems.length === 1 ? ids.indexOf(this.selectedItem.id) : undefined
+                },
+                lastFilteredItem() {
+                    return this.filteredItems[this.filteredItems.length - 1]
                 }
             },
             mounted() {
@@ -169,41 +182,50 @@
                         return
                     }
                     const ids = this.filteredItems.map(item => item.id)
-                    let pos = this.selectedItems.length === 1 ? ids.indexOf(this.selectedItem.id) : -1
+                    let rowNumber = this.selectedItems.length === 1 ? ids.indexOf(this.selectedItem.id) : -1
                     switch (event.key) {
-                        // REFACTOR: nests are deep
                         case 'ArrowDown':
                             event.preventDefault()
-                            // last page
-                            if (this.page === this.pageCount) {
+                            if (this.pageIsLast) {
                                 // If less than last page count, move to next column
-                                if (pos < this.filteredItems.length - 1) {
-                                    this.selectedItems = [this.filteredItems[pos + 1]]
+                                if (rowNumber < this.filteredItems.length - 1) {
+                                    this.selectedItems = [this.filteredItems[rowNumber + 1]]
                                 }
-                            }
-                            // not last page:
-                            if (this.page !== this.pageCount) {
-                                if (pos < this.itemsPerPage - 1) {
-                                    this.selectedItems = [this.filteredItems[pos + 1]]
+                            } else {
+                                if (rowNumber < this.itemsPerPage - 1) {
+                                    this.selectedItems = [this.filteredItems[rowNumber + 1]]
                                 }
-                                if (pos === this.itemsPerPage - 1) {
+                                if (rowNumber === this.itemsPerPage - 1) {
                                     this.selectedItems = []
                                     this.page++
                                 }
                             }
-
                             break
                         case 'ArrowUp':
                             event.preventDefault()
-                            // selects the bottom if there are no selected rows
-                            if (pos === -1) {
-                                pos = this.itemsPerPage
-                            }
-                            if (pos > 0) {
-                                this.selectedItems = [this.filteredItems[pos - 1]]
-                            }
-                            if (pos === 0 && this.page > 1) {
-                                this.page--
+                            if (this.pageIsFirst) {
+                                switch (this.rowNumber) {
+                                    case undefined:
+                                        this.selectedItems = [this.lastFilteredItem]
+                                        break
+                                    case 0:
+                                        break
+                                    default:
+                                        this.selectedItems = [this.filteredItems[rowNumber - 1]]
+                                }
+                            } else {
+                                switch (this.rowNumber) {
+                                    case undefined:
+                                        this.selectedItems = [this.lastFilteredItem]
+                                        break
+                                    case 0:
+                                        this.page--
+                                        this.selectedItems = []
+                                        break
+                                    default:
+                                        this.selectedItems = [this.filteredItems[rowNumber - 1]]
+                                        break;
+                                }
                             }
                             break
                         case 'Enter':
