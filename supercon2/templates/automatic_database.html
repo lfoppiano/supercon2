@@ -227,11 +227,14 @@
                             break;
                     }
                 },
-                rawMaterialFilter(value, search, item) {
-                    if (this.rawMaterialKeyword === '') {
+                rawMaterialFilter(_, __, item) {
+                    return this.keywordFilter(this.rawMaterialKeyword, item.rawMaterial)
+                },
+                keywordFilter(keyword, target) {
+                    if (keyword === '') {
                         return true
                     }
-                    return item.rawMaterial.indexOf(this.rawMaterialKeyword) > -1
+                    return target.indexOf(keyword) > -1
                 },
                 typeFilter(value, search, item) {
                     switch (this.typeRadioGroup) {
