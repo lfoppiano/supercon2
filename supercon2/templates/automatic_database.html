@@ -18,7 +18,6 @@
             <h2>Supercon2 "automatically extracted database" tabular view</h2>
             <v-select v-model="selectedHeaders" :items="headers" label="Select Columns" multiple outlined return-object>
             </v-select>
-            <!-- TODO: height 800px should be dynamic? up to a user screen size?  -->
             <v-checkbox v-model="expandFilter" label="expand filter"></v-checkbox>
             <v-data-table v-model="selectedItems" :headers="showHeaders" :items="items" :dense="true" single-select
                 loading-text="loading ..." :multi-sort="true" class="elevation-1"
