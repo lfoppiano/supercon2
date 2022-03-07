@@ -8,58 +8,64 @@
     <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
-    <link rel="icon" type="image/x-icon" href={{ url_for('static', filename='resources/img/favicon.ico' ) }} />
-    <link rel="shortcut icon" type="image/x-icon" href={{ url_for('static', filename='resources/img/favicon.ico' ) }} />
+    <link rel="icon" type="image/x-icon" href={{ url_for('static', filename='resources/img/favicon.ico' ) }}/>
+    <link rel="shortcut icon" type="image/x-icon" href={{ url_for('static', filename='resources/img/favicon.ico' ) }}/>
 </head>
 
 <body>
-    <v-app id="app">
-        <v-container fluid>
-            <h2>Supercon2 training data viewer</h2>
-            <v-select v-model="selectedHeaders" :items="headers" label="Select Columns" multiple outlined return-object>
-            </v-select>
-            <!-- TODO: height 800px should be dynamic? up to a user screen size?  -->
-            <v-data-table :headers="showHeaders" :items="items" :items-per-page="10" :dense="true"
-                loading-text="loading ..." :multi-sort="true" class="elevation-1" height="800">
-            </v-data-table>
-            <p><span style="color:#848484;">contributors - 2021</span></p>
-        </v-container>
-    </v-app>
-    <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script>
-        new Vue({
-            el: '#app',
-            vuetify: new Vuetify(),
-            data() {
-                return {
-                    selectedHeaders: [],
-                    headers: [
-                        { text: 'text', value: 'text', hidden: false },
-                        { text: 'hash', value: 'hash', hidden: false }
-                    ],
-                    items: []
-                }
-            },
-            computed: {
-                showHeaders() {
-                    return this.headers.filter(s => this.selectedHeaders.includes(s));
-                }
-            },
-            mounted() {
-                const url = '{{ url_for("supercon.get_training_data_list") }}'
-                axios.get(url).then((data) => {
-                    this.items = data.data
-                })
-            },
-            methods: {
-            },
-            created() {
-                this.selectedHeaders = this.headers.filter(h => !h.hidden)
-            },
-        })
-    </script>
+<v-app id="app">
+    <v-container fluid>
+        <h2>Supercon2 training data viewer</h2>
+        <v-select v-model="selectedHeaders" :items="headers" label="Select Columns" multiple outlined return-object>
+        </v-select>
+        <!-- TODO: height 800px should be dynamic? up to a user screen size?  -->
+        <v-data-table
+                :headers="showHeaders"
+                :items="items"
+                :items-per-page="50"
+                :dense="true"
+                loading-text="loading ..."
+                :multi-sort="true"
+                class="elevation-1"
+                height="800">
+        </v-data-table>
+        <p><span style="color:#848484;">contributors - 2021</span></p>
+    </v-container>
+</v-app>
+<script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+    new Vue({
+        el: '#app',
+        vuetify: new Vuetify(),
+        data() {
+            return {
+                selectedHeaders: [],
+                headers: [
+                    {text: 'text', value: 'annotated_text', hidden: false},
+                    {text: 'hash', value: 'hash', hidden: false}
+                ],
+                items: []
+            }
+        },
+        computed: {
+            showHeaders() {
+                return this.headers.filter(s => this.selectedHeaders.includes(s));
+            }
+        },
+        mounted() {
+            const url = '{{ url_for("supercon.get_training_data_list") }}'
+            axios.get(url).then((data) => {
+                this.items = data.data
+            })
+        },
+        methods: {},
+        created() {
+            this.selectedHeaders = this.headers.filter(h => !h.hidden)
+        },
+    })
+</script>
 
 </body>
 

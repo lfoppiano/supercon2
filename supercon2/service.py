@@ -4,7 +4,7 @@ import gridfs
 from apiflask import APIBlueprint, abort, output, input
 from bson import ObjectId
 from bson.errors import InvalidId
-from flask import render_template, request, Response, url_for
+from flask import render_template, Response, url_for
 
 from process.supercon_batch_mongo_extraction import connect_mongo
 from process.utils import json_serial
@@ -13,6 +13,7 @@ from supercon2.utils import load_config_yaml
 
 bp = APIBlueprint('supercon', __name__)
 config = []
+
 
 @bp.route('/version')
 def get_version():
@@ -27,6 +28,7 @@ def get_version():
 
     info_json = {"name": "supercon2", "version": version}
     return info_json
+
 
 @bp.route('/')
 def index():
@@ -186,7 +188,6 @@ def get_records(type=None, status=None, publisher=None, year=None, start=-1, lim
     if year:
         query['year'] = int(year)
 
-
     cursor = tabular_collection.find(query)
 
     if start > 0:
@@ -194,7 +195,6 @@ def get_records(type=None, status=None, publisher=None, year=None, start=-1, lim
 
     if limit > 0:
         cursor.limit(limit)
-
 
     for entry in cursor:
         entry['id'] = str(entry['_id'])
@@ -223,6 +223,7 @@ def get_records(type=None, status=None, publisher=None, year=None, start=-1, lim
 @bp.route("/automatic_database", methods=["GET"])
 def get_automatic_database():
     return render_template("automatic_database.html")
+
 
 @bp.route("/manual_database", methods=["GET"])
 def get_manual_database():
@@ -259,6 +260,7 @@ def get_binary(hash):
         return "Document with identifier=" + str(hash) + " not found.", 404
     else:
         return Response(fs_binary.get(file._id).read(), mimetype='application/pdf')
+
 
 @bp.route('/record/<id>', methods=['GET'])
 @output(Record)
@@ -343,13 +345,45 @@ def get_config(config_file='config.yaml'):
 def get_training_data():
     return render_template("training_data.html")
 
+
+def get_span_start(type):
+    return '<span class="' + type + '">'
+
+
+def get_span_end():
+    return '</span>'
+
+
 @bp.route('/training/data', methods=['GET'])
 def get_training_data_list():
     connection = connect_mongo(config=config)
     db_name = config['mongo']['db']
     db = connection[db_name]
-    training_data_collection = db.get_collection("training-data")   # TODO: rename training_data
+    training_data_collection = db.get_collection("training-data")  # TODO: rename training_data
 
     training_data_list = list(training_data_collection.find({}, {'tokens': 0}))
 
-    return Response(json.dumps(training_data_list, default=json_serial), mimetype="application/json")
+    training_output = []
+
+    for training_data_item in training_data_list:
+        text = training_data_item['text']
+        spans = training_data_item['spans']
+
+        sorted_spans = list(sorted(spans, key=lambda item: item['offset_start']))
+        annotated_text = ""
+        start = 0
+        for span in sorted_spans:
+            type = span['type'].replace("<", "").replace(">", "")
+            annotated_text += text[start: span['offset_start']] + get_span_start(type) + text[span['offset_start']: span[
+                'offset_end']] + get_span_end()
+            start = span['offset_end']
+
+        annotated_text += text[start: len(text)]
+        training_output.append({
+            "text": text,
+            "annotated_text": annotated_text,
+            "hash": training_data_item['hash'],
+            "corrected_record_id": training_data_item['corrected_record_id']
+        })
+
+    return Response(json.dumps(training_output, default=json_serial), mimetype="application/json")
