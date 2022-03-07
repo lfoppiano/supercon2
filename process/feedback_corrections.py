@@ -164,7 +164,7 @@ def flag_as_correct(doc_id, collection, dry_run=False):
 def process(corrections_file, database, dry_run=False):
     tabular_collection = database.get_collection("tabular")
     document_collection = database.get_collection("document")
-    training_data_collection = database.get_collection("training-data")
+    training_data_collection = database.get_collection("training_data")
 
     df = pd.read_excel(corrections_file, sheet_name=0, usecols="A,B,D,E,G,H,I,J,O,M,N")
     df.replace({np.nan: None})
