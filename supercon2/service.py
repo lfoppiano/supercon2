@@ -347,7 +347,7 @@ def get_training_data():
 
 
 def get_span_start(type):
-    return '<span class="' + type + '">'
+    return '<span class="label ' + type + '">'
 
 
 def get_span_end():

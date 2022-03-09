@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+    <link href={{ url_for('static', filename='resources/css/style-superconductors.css' ) }} rel="stylesheet">
     <link rel="icon" type="image/x-icon" href={{ url_for('static', filename='resources/img/favicon.ico' ) }}/>
     <link rel="shortcut icon" type="image/x-icon" href={{ url_for('static', filename='resources/img/favicon.ico' ) }}/>
 </head>
@@ -28,6 +29,9 @@
                 :multi-sort="true"
                 class="elevation-1"
                 height="800">
+            <template v-slot:item.annotated_text="{ item }">
+                <span v-html="item.annotated_text"></span>
+            </template>
         </v-data-table>
         <p><span style="color:#848484;">contributors - 2021</span></p>
     </v-container>
