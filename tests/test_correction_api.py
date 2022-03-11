@@ -14,13 +14,13 @@ def test_update_record(mongodb):
                   "shape": "thin films",
                   "criticalTemperature": "23 K",
                   "criticalTemperatureId": "-1165456602",
+                  "appliedPressure": "3 GPa",
                   "section": "body",
                   "subsection": "figure",
                   "sentence": "It has the value of 27 K and is higher than T c of single crystals (23 K and 22 K) 22,23 and thin films (24.5 K). 24 Recent results show that",
                   "hash": "48ba234393",
-                  "timestamp": {"$date": "2022-01-14T06:42:24.569Z"},
                   "title": "A defect detection method for MgB 2 superconducting and iron-based Ba(Fe,Co) 2 As 2 wires",
-                  "doi": "10.1063/1.4947056]",
+                  "doi": "10.1063/1.4947056",
                   "authors": "D Gajda, ) A Morawski, A Zaleski, A Yamamoto, T Cetner",
                   "year": 2016}
 
@@ -44,3 +44,5 @@ def test_update_record(mongodb):
     assert old_record_from_db['type'] == "automatic"
 
     assert old_record_from_db['timestamp'] != final_record['timestamp']
+
+    assert final_record['appliedPressure'] == "3 GPa"

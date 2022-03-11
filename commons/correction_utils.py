@@ -1,5 +1,5 @@
 import copy
-import datetime
+from datetime import datetime
 
 
 def collect_corrections(corrected_formula, corrected_tc, corrected_pressure):
@@ -33,8 +33,9 @@ def write_correction(doc, corrections, collection, dry_run: bool = False):
     new_doc['previous'] = obsolete_id
     new_doc['type'] = 'manual'
     new_doc['status'] = 'valid'
-    new_doc['timestamp'] = datetime.datetime.now().isoformat()
+    new_doc['timestamp'] = datetime.utcnow()
     del new_doc['_id']
+    del new_doc['id']
 
     if dry_run:
         print("Updating record with id: ", doc['_id'],
