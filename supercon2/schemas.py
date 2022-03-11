@@ -21,7 +21,7 @@ class RecordParamsIn(Schema):
 class UpdatedRecord(Schema):
     previous_id = String(default=None)
     id = String()
-
+    description = String(default=None)
 
 class Record(Schema):
     id = String()

@@ -143,19 +143,38 @@ def update_record(id, record: Record):
     validate_record(record)
     db = connect_and_get_db()
 
-    new_id = _update_record(object_id, record, db=db)
-    return_info = UpdatedRecord()
+    try:
+        new_id = _update_record(object_id, record, db=db)
+    except Exception as e:
+        abort(400,  str(e))
 
+    return_info = UpdatedRecord()
     return_info.id = new_id
     return_info.previous_id = id
 
     return return_info
 
 
+def find_latest(current_record, collection):
+    next_record = collection.find_one({'previous': current_record['_id']})
+    if next_record is None:
+        return current_record
+    elif next_record['status'] != "obsolete":
+        return next_record
+    else:
+        return find_latest(next_record, collection)
+
+
 def _update_record(object_id: ObjectId, record: Record, db):
     tabular_collection = db.get_collection("tabular")
 
     old_record = tabular_collection.find_one({"_id": object_id})
+    # if old_record['status'] == "obsolete":
+    #     latest_record = find_latest(old_record, tabular_collection)
+    #     message = "The record with id " + str(object_id) + " is obsolete. The latest updated record of the chain is" + str(
+    #         latest_record['_id'])
+    #     raise Exception(message)
+
     new_id = write_correction(old_record, record, tabular_collection)
 
     return new_id
@@ -180,6 +199,12 @@ def validate_record(record):
 
     if 'doi' not in record or record['doi'] == "":
         abort(400, "Missing document hash or doi")
+
+    if 'type' in record:
+        abort(400, "'type' and 'status' cannot be set by update as they are internal values.")
+
+    if 'status' in record:
+        abort(400, "'type' and 'status' cannot be set by update as they are internal values.")
 
 
 def add_record(record: Record):
