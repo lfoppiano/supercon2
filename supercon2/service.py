@@ -10,7 +10,7 @@ from flask import render_template, Response, url_for
 from commons.correction_utils import write_correction
 from commons.mongo_utils import connect_mongo
 from process.utils import json_serial
-from supercon2.schemas import Publishers, Record, Years, Flag, RecordParamsIn
+from supercon2.schemas import Publishers, Record, Years, Flag, RecordParamsIn, UpdatedRecord
 from supercon2.utils import load_config_yaml
 
 bp = APIBlueprint('supercon', __name__)
@@ -137,16 +137,22 @@ def get_stats():
 
 @bp.route("/record/<id>", methods=["PUT", "PATCH"])
 @input(Record)
+@output(UpdatedRecord)
 def update_record(id, record: Record):
     object_id = validateObjectId(id)
     validate_record(record)
     db = connect_and_get_db()
 
-    return str(_update_record(object_id, record, db=db))
+    new_id = _update_record(object_id, record, db=db)
+    return_info = UpdatedRecord()
+
+    return_info.id = new_id
+    return_info.previous_id = id
+
+    return return_info
 
 
 def _update_record(object_id: ObjectId, record: Record, db):
-
     tabular_collection = db.get_collection("tabular")
 
     old_record = tabular_collection.find_one({"_id": object_id})
@@ -160,7 +166,12 @@ def _update_record(object_id: ObjectId, record: Record, db):
 @output(Record)
 def create_record(record: Record):
     validate_record(record)
-    return add_record(record)
+    new_id = add_record(record)
+
+    return_info = UpdatedRecord()
+    return_info.id = new_id
+
+    return return_info
 
 
 def validate_record(record):

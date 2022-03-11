@@ -18,6 +18,11 @@ class RecordParamsIn(Schema):
     limit = Integer(default=-1)
 
 
+class UpdatedRecord(Schema):
+    previous_id = String(default=None)
+    id = String()
+
+
 class Record(Schema):
     id = String()
     rawMaterial = String()
