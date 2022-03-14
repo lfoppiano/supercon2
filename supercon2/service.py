@@ -346,6 +346,26 @@ def get_training_data():
     return render_template("training_data.html")
 
 
+@bp.route('/training/data/<id>', methods=['GET'])
+def export_training_data(id):
+    object_id = validateObjectId(id)
+    connection = connect_mongo(config=config)
+    db_name = config['mongo']['db']
+    db = connection[db_name]
+    training_data_collection = db.get_collection("training_data")
+
+    single_training_data = training_data_collection.find_one({'_id': object_id}, {'tokens': 0})
+
+    single_training_data['id'] = str(single_training_data['_id'])
+    del single_training_data['_id']
+
+    # workaround - to be removed
+    if type(single_training_data['corrected_record_id']) == ObjectId:
+        single_training_data['corrected_record_id'] = str(single_training_data['corrected_record_id'])
+
+    return single_training_data
+
+
 def get_span_start(type):
     return '<span class="label ' + type + '">'
 
@@ -380,6 +400,7 @@ def get_training_data_list():
 
         annotated_text += text[start: len(text)]
         training_output.append({
+            "id": str(training_data_item['_id']),
             "text": text,
             "annotated_text": annotated_text,
             "hash": training_data_item['hash'],
