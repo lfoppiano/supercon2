@@ -359,7 +359,7 @@ def get_training_data_list():
     connection = connect_mongo(config=config)
     db_name = config['mongo']['db']
     db = connection[db_name]
-    training_data_collection = db.get_collection("training-data")  # TODO: rename training_data
+    training_data_collection = db.get_collection("training_data")
 
     training_data_list = list(training_data_collection.find({}, {'tokens': 0}))
 
