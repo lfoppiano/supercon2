@@ -130,8 +130,11 @@
                         <v-container>
                             <v-row>
                                 <v-col cols="12" sm="6" md="2" v-for="(value, key) in editedItem">
-                                    <!-- TODO: ID, Type, Status, FLag should be non-editable -->
-                                    <v-text-field v-model="editedItem[key]" :label="key"></v-text-field>
+                                    <!-- TODO: order of edit items same as header -->
+                                    <v-text-field v-model="editedItem[key]" :label="key" v-if="isEditable(key)"
+                                        disabled>
+                                    </v-text-field>
+                                    <v-text-field v-model="editedItem[key]" :label="key" v-else></v-text-field>
                                 </v-col>
                             </v-row>
                         </v-container>
@@ -288,6 +291,10 @@
                 document.removeEventListener('keydown', this.onKeyDown)
             },
             methods: {
+                isEditable(key) {
+                    const nonEditableKeys = ['id', 'type', 'status', 'flag']
+                    return nonEditableKeys.includes(key)
+                },
                 hasChangedPageCount(pageCount) {
                     this.pageCount = pageCount
                 },
