@@ -18,7 +18,10 @@
             <h2>Supercon2 "automatically extracted database" tabular view</h2>
             <v-select v-model="selectedHeaders" :items="headers" label="Select Columns" multiple outlined return-object>
             </v-select>
-            <v-checkbox v-model="expandFilter" label="expand filter"></v-checkbox>
+            <v-row justify="space-between" class="ma-0">
+                <v-checkbox v-model="expandFilter" label="expand filter" class="mt-0"></v-checkbox>
+                <v-btn @click="createItem" Depressed>New Item</v-btn>
+            </v-row>
             <v-data-table v-model="selectedItems" :headers="showHeaders" :items="items" :dense="true" single-select
                 loading-text="loading ..." :multi-sort="true" class="elevation-1"
                 @current-items="hasChangedCurrentItems" :page.sync="page" :items-per-page="itemsPerPage"
@@ -134,6 +137,9 @@
                                         v-if="isEditableOnDialog(header.value)" disabled>
                                     </v-text-field>
                                     <v-text-field v-model="editedItem[header.value]" :label="header.text"
+                                        v-else-if="isRequiredOnDialog(header.value)" :rules="[rules.required]">
+                                    </v-text-field>
+                                    <v-text-field v-model="editedItem[header.value]" :label="header.text"
                                         v-else-if="isHiddenOnDialog(header.value)" disabled v-show="false">
                                     </v-text-field>
                                     <v-text-field v-model="editedItem[header.value]" :label="header.text" v-else>
@@ -148,7 +154,7 @@
                         <v-btn color="blue darken-1" text @click="close">
                             Cancel
                         </v-btn>
-                        <v-btn color="blue darken-1" text @click="save">
+                        <v-btn color="blue darken-1" text @click="save" :disabled="!saveIsValidated">
                             Save
                         </v-btn>
                     </v-card-actions>
@@ -251,7 +257,10 @@
                         // { text: 'Material ID', value: 'materialId', hidden: true},
                         // { text: 'Sentence', value: 'sentence', width: 500, hidden: true},
                     ],
-                    items: []
+                    items: [],
+                    rules: {
+                        required: value => !!value || 'Required.',
+                    },
                 }
             },
             computed: {
@@ -276,6 +285,9 @@
                 },
                 firstFilteredItem() {
                     return this.filteredItems[0]
+                },
+                saveIsValidated() {
+                    return this.editedItem.doi && this.editedItem.hash
                 }
             },
             mounted() {
@@ -298,12 +310,16 @@
                     })
                 },
                 isEditableOnDialog(key) {
-                    const nonEditableKeys = ['id', 'type', 'status', 'flag']
-                    return nonEditableKeys.includes(key)
+                    const keys = ['id', 'type', 'status', 'flag']
+                    return keys.includes(key)
                 },
                 isHiddenOnDialog(key) {
-                    const nonEditableKeys = ['document', 'actions']
-                    return nonEditableKeys.includes(key)
+                    const keys = ['document', 'actions']
+                    return keys.includes(key)
+                },
+                isRequiredOnDialog(key) {
+                    const keys = ['doi', 'hash']
+                    return keys.includes(key)
                 },
                 hasChangedPageCount(pageCount) {
                     this.pageCount = pageCount
@@ -515,20 +531,41 @@
                     this.editedItem = JSON.parse(JSON.stringify(item))
                     this.dialog = true
                 },
+                createItem() {
+                    this.editedItem = {}
+                    this.dialog = true
+                }
+                ,
                 close() {
                     this.dialog = false
                 },
                 async save() {
-                    let url = '{{ url_for("supercon.update_record", id = "id") }}'
-                    url = url.replace(
-                        "id",
-                        this.editedItem.id
-                    )
-                    // delete as non-editable item
-                    delete this.editedItem.flag
-                    delete this.editedItem.status
-                    delete this.editedItem.type
-                    await axios.put(url, this.editedItem)
+                    let url = ''
+                    // TODO: refactor if else
+                    if (this.editedItem.id) {
+                        url = '{{ url_for("supercon.update_record", id = "id") }}'
+                        url = url.replace(
+                            "id",
+                            this.editedItem.id
+                        )
+                        // delete as non-editable item
+                        delete this.editedItem.flag
+                        delete this.editedItem.status
+                        delete this.editedItem.type
+                        // TODO: add try catch
+                        await axios.put(url, this.editedItem)
+                    } else {
+                        url = '{{ url_for("supercon.create_record") }}'
+                        try {
+                            console.log(this.editedItem)
+                            await axios.post(url, this.editedItem)
+                        } catch (e) {
+                            console.error(e)
+                            window.alert(e.response.data.message)
+                        } finally {
+                            //
+                        }
+                    }
                     this.loadItems()
                     this.close()
                 },
