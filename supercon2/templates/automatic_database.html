@@ -497,7 +497,8 @@
                     )
                 },
                 editItem(item) {
-                    this.editedItem = item
+                    // make a deep copy so that the record is not updated in the table
+                    this.editedItem = JSON.parse(JSON.stringify(item))
                     this.dialog = true
                 },
                 close() {
