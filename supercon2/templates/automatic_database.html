@@ -276,21 +276,24 @@
                 }
             },
             mounted() {
-                const url =
-                    '{{ url_for("supercon.get_records_from_form_data") }}'
-                axios.get(url).then((data) => {
-                    this.items = data.data.map((item) => {
-                        return {
-                            ...item, ...{ flag: item.status === 'invalid' && item.type === 'manual' }
-                        }
-                    })
-                })
+                this.loadItems()
                 document.addEventListener('keydown', this.onKeyDown)
             },
             beforeDestroy() {
                 document.removeEventListener('keydown', this.onKeyDown)
             },
             methods: {
+                loadItems() {
+                    const url =
+                        '{{ url_for("supercon.get_records_from_form_data") }}'
+                    axios.get(url).then((data) => {
+                        this.items = data.data.map((item) => {
+                            return {
+                                ...item, ...{ flag: item.status === 'invalid' && item.type === 'manual' }
+                            }
+                        })
+                    })
+                },
                 isEditable(key) {
                     const nonEditableKeys = ['id', 'type', 'status', 'flag']
                     return nonEditableKeys.includes(key)
@@ -515,6 +518,7 @@
                     delete this.editedItem.status
                     delete this.editedItem.type
                     await axios.put(url, this.editedItem)
+                    this.loadItems()
                     this.close()
                 },
             },
