@@ -113,8 +113,41 @@
                 <template v-slot:item.flag="{ item }">
                     <v-checkbox :input-value="item.flag" @click="toggleFlag(item)"></v-checkbox>
                 </template>
+                <template v-slot:item.actions="{ item }">
+                    <v-icon small class="mr-2" @click="editItem(item)">
+                        mdi-pencil
+                    </v-icon>
+                </template>
             </v-data-table>
             <p><span style="color:#848484;">contributors - 2021</span></p>
+            <v-dialog v-model="dialog">
+                <v-card>
+                    <v-card-title>
+                        <span class="text-h5">{{ formTitle }}</span>
+                    </v-card-title>
+
+                    <v-card-text>
+                        <v-container>
+                            <v-row>
+                                <v-col cols="12" sm="6" md="2" v-for="(value, key) in editedItem">
+                                    <!-- TODO: ID, Type, Status, FLag should be non-editable -->
+                                    <v-text-field v-model="editedItem[key]" :label="key"></v-text-field>
+                                </v-col>
+                            </v-row>
+                        </v-container>
+                    </v-card-text>
+
+                    <v-card-actions>
+                        <v-spacer></v-spacer>
+                        <v-btn color="blue darken-1" text @click="close">
+                            Cancel
+                        </v-btn>
+                        <v-btn color="blue darken-1" text @click="save">
+                            Save
+                        </v-btn>
+                    </v-card-actions>
+                </v-card>
+            </v-dialog>
         </v-container>
     </v-app>
     <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
@@ -126,6 +159,8 @@
             vuetify: new Vuetify(),
             data() {
                 return {
+                    dialog: false,
+                    editedItem: {},
                     page: 1,
                     pageCount: 0,
                     itemsPerPage: 10,
@@ -204,10 +239,11 @@
                         { text: 'Status', value: 'status', sortable: false, hidden: false, filter: this.statusFilter },
                         { text: 'Flag', value: 'flag', sortable: false, hidden: false, filter: this.flagFilter },
                         { text: 'View Document', value: 'document', sortable: false, hidden: false },
-                        // { text: 'Doc URL', value: 'doc_url', hidden: true },
-                        // { text: 'ID', value: 'id', hidden: true },
-                        // { text: 'Material ID', value: 'materialId', hidden: true },
-                        // { text: 'Sentence', value: 'sentence', width: 500, hidden: true },
+                        { text: 'Actions', value: 'actions', sortable: false, hidden: false },
+                        // { text: 'Doc URL', value: 'doc_url', hidden: true},
+                        // { text: 'ID', value: 'id', hidden: true},
+                        // { text: 'Material ID', value: 'materialId', hidden: true},
+                        // { text: 'Sentence', value: 'sentence', width: 500, hidden: true},
                     ],
                     items: []
                 }
@@ -452,6 +488,26 @@
                             }
                         )
                     )
+                },
+                editItem(item) {
+                    this.editedItem = item
+                    this.dialog = true
+                },
+                close() {
+                    this.dialog = false
+                },
+                async save() {
+                    let url = '{{ url_for("supercon.update_record", id = "id") }}'
+                    url = url.replace(
+                        "id",
+                        this.editedItem.id
+                    )
+                    // delete as non-editable item
+                    delete this.editedItem.flag
+                    delete this.editedItem.status
+                    delete this.editedItem.type
+                    await axios.put(url, this.editedItem)
+                    this.close()
                 },
             },
             created() {
