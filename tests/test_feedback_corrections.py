@@ -31,7 +31,7 @@ def test_process_excel_verify_training_data(mongodb):
     corrected_identifiers = [str(record['_id']) for record in
                              tabular_collection.find({"status": "valid", "type": "manual"}, {'_id': 1})]
 
-    training_data_collection = mongodb.get_collection("training-data")
+    training_data_collection = mongodb.get_collection("training_data")
     training_data_records = list(training_data_collection.find())
     assert len(list(training_data_records)) == 2
 
