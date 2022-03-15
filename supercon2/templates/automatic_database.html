@@ -319,6 +319,10 @@
                     if (event.srcElement.nodeName.indexOf('INPUT') > -1) {
                         return
                     }
+                    // disable shortcuts when edit dialog opens
+                    if (this.dialog) {
+                        return
+                    }
                     switch (event.key) {
                         case 'ArrowDown':
                             event.preventDefault()
