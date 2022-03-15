@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 import json
 
 import gridfs
@@ -212,7 +212,7 @@ def add_record(record: Record):
 
     tabular_collection = db.get_collection("tabular")
 
-    record['timestamp'] = datetime.datetime.now().isoformat()
+    record['timestamp'] = datetime.utcnow()
     record['status'] = "valid"
     record['type'] = "manual"
 
