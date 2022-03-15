@@ -131,7 +131,10 @@
                             <v-row>
                                 <v-col cols="12" sm="6" md="2" v-for="header in headers">
                                     <v-text-field v-model="editedItem[header.value]" :label="header.text"
-                                        v-if="isEditable(header.value)" disabled>
+                                        v-if="isEditableOnDialog(header.value)" disabled>
+                                    </v-text-field>
+                                    <v-text-field v-model="editedItem[header.value]" :label="header.text"
+                                        v-else-if="isHiddenOnDialog(header.value)" disabled v-show="false">
                                     </v-text-field>
                                     <v-text-field v-model="editedItem[header.value]" :label="header.text" v-else>
                                     </v-text-field>
@@ -294,8 +297,12 @@
                         })
                     })
                 },
-                isEditable(key) {
+                isEditableOnDialog(key) {
                     const nonEditableKeys = ['id', 'type', 'status', 'flag']
+                    return nonEditableKeys.includes(key)
+                },
+                isHiddenOnDialog(key) {
+                    const nonEditableKeys = ['document', 'actions']
                     return nonEditableKeys.includes(key)
                 },
                 hasChangedPageCount(pageCount) {
