@@ -129,12 +129,12 @@
                     <v-card-text>
                         <v-container>
                             <v-row>
-                                <v-col cols="12" sm="6" md="2" v-for="(value, key) in editedItem">
-                                    <!-- TODO: order of edit items same as header -->
-                                    <v-text-field v-model="editedItem[key]" :label="key" v-if="isEditable(key)"
-                                        disabled>
+                                <v-col cols="12" sm="6" md="2" v-for="header in headers">
+                                    <v-text-field v-model="editedItem[header.value]" :label="header.text"
+                                        v-if="isEditable(header.value)" disabled>
                                     </v-text-field>
-                                    <v-text-field v-model="editedItem[key]" :label="key" v-else></v-text-field>
+                                    <v-text-field v-model="editedItem[header.value]" :label="header.text" v-else>
+                                    </v-text-field>
                                 </v-col>
                             </v-row>
                         </v-container>
