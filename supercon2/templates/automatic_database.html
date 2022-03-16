@@ -75,7 +75,7 @@
                     <v-card-text>
                         <v-container>
                             <v-row>
-                                <v-col cols="12" sm="6" md="2" v-for="header in headers">
+                                <v-col cols="12" sm="6" md="2" v-for="header in headers" :key="header.value">
                                     <v-text-field v-model="editedItem[header.value]" :label="header.text"
                                         v-if="isEditableOnDialog(header.value)" disabled>
                                     </v-text-field>
