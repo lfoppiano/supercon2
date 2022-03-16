@@ -297,6 +297,18 @@
                         case 'Enter':
                             await this.toggleFlag(this.selectedItem)
                             break
+                        // c is an acronym for curation item
+                        case 'c':
+                            event.preventDefault()
+                            if (this.selectedItems.length > 0) {
+                                this.openEditItemDialog(this.selectedItem)
+                            }
+                            break
+                        // n is an acronym for new item
+                        case 'n':
+                            event.preventDefault()
+                            this.openCreateItemDialog()
+                            break
                         default:
                             break;
                     }
