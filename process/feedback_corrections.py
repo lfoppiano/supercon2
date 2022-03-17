@@ -140,7 +140,8 @@ def write_raw_training_data(doc, new_doc_id, document_collection, training_data_
                         "spans": passage['spans'],
                         "tokens": passage['tokens'],
                         "hash": hash,
-                        "corrected_record_id": str(new_doc_id)
+                        "corrected_record_id": str(new_doc_id),
+                        "status": "new"
                     }
                 )
                 return training_data_id
@@ -166,7 +167,7 @@ def process(corrections_file, database, dry_run=False):
     document_collection = database.get_collection("document")
     training_data_collection = database.get_collection("training_data")
 
-    df = pd.read_excel(corrections_file, sheet_name=0, usecols="A,B,D,E,G,H,I,J,O,M,N")
+    df = pd.read_excel(corrections_file, sheet_name=1, usecols="A,B,D,E,G,H,I,J,O,M,N")
     df.replace({np.nan: None})
     for index, row in df.iterrows():
         status = row[0]

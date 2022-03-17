@@ -6,6 +6,7 @@ from bson import ObjectId
 from bson.errors import InvalidId
 from flask import render_template, Response, url_for
 
+from commons.label_studio_commons import to_label_studio_format_single
 from process.supercon_batch_mongo_extraction import connect_mongo
 from process.utils import json_serial
 from supercon2.schemas import Publishers, Record, Years, Flag, RecordParamsIn
@@ -365,6 +366,22 @@ def export_training_data(id):
 
     return single_training_data
 
+
+@bp.route('/training/data/status/<status>')
+def export_by_type(status):
+    connection = connect_mongo(config=config)
+    db_name = config['mongo']['db']
+    db = connection[db_name]
+    training_data_collection = db.get_collection("training_data")
+
+    training_data_list = list(training_data_collection.find({'status': status}, {'tokens': 0}))
+
+    new_format = []
+    for training_data in training_data_list:
+        new_structure = to_label_studio_format_single(training_data['text'], training_data['spans'])
+        new_format.append(new_structure)
+
+    return Response(json.dumps(new_format, default=json_serial), mimetype="application/json")
 
 def get_span_start(type):
     return '<span class="label ' + type + '">'
