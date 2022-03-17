@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 import json
 
 import gridfs
@@ -195,10 +195,10 @@ def create_record(record: Record):
 
 def validate_record(record):
     if 'hash' not in record or record['hash'] == "":
-        abort(400, "Missing document hash or doi")
+        abort(400, "Missing document hash")
 
     if 'doi' not in record or record['doi'] == "":
-        abort(400, "Missing document hash or doi")
+        abort(400, "Missing DOI")
 
     if 'type' in record:
         abort(400, "'type' and 'status' cannot be set by update as they are internal values.")
@@ -212,7 +212,7 @@ def add_record(record: Record):
 
     tabular_collection = db.get_collection("tabular")
 
-    record['timestamp'] = datetime.datetime.now().isoformat()
+    record['timestamp'] = datetime.utcnow()
     record['status'] = "valid"
     record['type'] = "manual"
 
