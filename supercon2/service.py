@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 
 import gridfs
@@ -7,9 +8,11 @@ from bson.errors import InvalidId
 from flask import render_template, Response, url_for
 
 from commons.label_studio_commons import to_label_studio_format_single
-from process.supercon_batch_mongo_extraction import connect_mongo
+from commons.correction_utils import write_correction
+from commons.mongo_utils import connect_mongo
+
 from process.utils import json_serial
-from supercon2.schemas import Publishers, Record, Years, Flag, RecordParamsIn
+from supercon2.schemas import Publishers, Record, Years, Flag, RecordParamsIn, UpdatedRecord
 from supercon2.utils import load_config_yaml
 
 bp = APIBlueprint('supercon', __name__)
@@ -50,20 +53,23 @@ def render_page(page):
 @bp.route('/publishers')
 @output(Publishers)
 def get_publishers():
-    connection = connect_mongo(config=config)
-    db_name = config['mongo']['db']
-    db = connection[db_name]
+    db = connect_and_get_db()
 
     filtered_distinct_publishers = list(filter(lambda x: x is not None, db.tabular.distinct("publisher")))
     return {"publishers": filtered_distinct_publishers}
 
 
-@bp.route('/years')
-@output(Years)
-def get_years():
+def connect_and_get_db():
     connection = connect_mongo(config=config)
     db_name = config['mongo']['db']
     db = connection[db_name]
+    return db
+
+
+@bp.route('/years')
+@output(Years)
+def get_years():
+    db = connect_and_get_db()
 
     distinct_years = db.tabular.distinct("year")
     filtered_distinct_years = list(filter(lambda x: x is not None and 1900 < x < 3000, distinct_years))
@@ -98,10 +104,8 @@ def get_years():
 
 @bp.route("/stats", methods=["GET"])
 def get_stats():
-    db_name = config['mongo']['db']
-    connection = connect_mongo(config=config)
-    db_supercon_dev = connection[db_name]
-    tabular_collection = db_supercon_dev.get_collection("tabular")
+    db = connect_and_get_db()
+    tabular_collection = db.get_collection("tabular")
 
     pipeline_group_by_publisher = [
         {"$match": {"type": "automatic", "status": "valid"}},
@@ -133,6 +137,92 @@ def get_stats():
     return render_template("stats.html", by_publisher=by_publisher, by_year=by_year, by_journal=by_journal)
 
 
+@bp.route("/record/<id>", methods=["PUT", "PATCH"])
+@input(Record)
+@output(UpdatedRecord)
+def update_record(id, record: Record):
+    object_id = validateObjectId(id)
+    validate_record(record)
+    db = connect_and_get_db()
+
+    try:
+        new_id = _update_record(object_id, record, db=db)
+    except Exception as e:
+        abort(400,  str(e))
+
+    return_info = UpdatedRecord()
+    return_info.id = new_id
+    return_info.previous_id = id
+
+    return return_info
+
+
+def find_latest(current_record, collection):
+    next_record = collection.find_one({'previous': current_record['_id']})
+    if next_record is None:
+        return current_record
+    elif next_record['status'] != "obsolete":
+        return next_record
+    else:
+        return find_latest(next_record, collection)
+
+
+def _update_record(object_id: ObjectId, record: Record, db):
+    tabular_collection = db.get_collection("tabular")
+
+    old_record = tabular_collection.find_one({"_id": object_id})
+    # if old_record['status'] == "obsolete":
+    #     latest_record = find_latest(old_record, tabular_collection)
+    #     message = "The record with id " + str(object_id) + " is obsolete. The latest updated record of the chain is" + str(
+    #         latest_record['_id'])
+    #     raise Exception(message)
+
+    new_id = write_correction(old_record, record, tabular_collection)
+
+    return new_id
+
+
+@bp.route("/record", methods=["POST"])
+@input(Record)
+@output(Record)
+def create_record(record: Record):
+    validate_record(record)
+    new_id = add_record(record)
+
+    return_info = UpdatedRecord()
+    return_info.id = new_id
+
+    return return_info
+
+
+def validate_record(record):
+    if 'hash' not in record or record['hash'] == "":
+        abort(400, "Missing document hash")
+
+    if 'doi' not in record or record['doi'] == "":
+        abort(400, "Missing DOI")
+
+    if 'type' in record:
+        abort(400, "'type' and 'status' cannot be set by update as they are internal values.")
+
+    if 'status' in record:
+        abort(400, "'type' and 'status' cannot be set by update as they are internal values.")
+
+
+def add_record(record: Record):
+    db = connect_and_get_db()
+
+    tabular_collection = db.get_collection("tabular")
+
+    record['timestamp'] = datetime.utcnow()
+    record['status'] = "valid"
+    record['type'] = "manual"
+
+    new_record = tabular_collection.insert_one(record)
+
+    return new_record.inserted_id
+
+
 @bp.route("/records", methods=["GET"])
 @input(RecordParamsIn, location='query')
 @output(Record(many=True))
@@ -158,10 +248,8 @@ def get_tabular_from_path_by_type_year(type, year):
     return get_records(type, publisher=None, year=year)
 
 
-def get_records(type=None, status=None, publisher=None, year=None, start=-1, limit=-1):
-    connection = connect_mongo(config=config)
-    db_name = config['mongo']['db']
-    db_supercon_dev = connection[db_name]
+def get_records(type=None, status=None, document=None, publisher=None, year=None, start=-1, limit=-1):
+    db = connect_and_get_db()
 
     # pipeline = [
     #     {"$group": {"_id": "$hash", "versions": {"$addToSet": "$timestamp"}, "count": {"$sum": 1}}},
@@ -181,7 +269,10 @@ def get_records(type=None, status=None, publisher=None, year=None, start=-1, lim
         query['status'] = status
 
     entries = []
-    tabular_collection = db_supercon_dev.get_collection("tabular")
+    tabular_collection = db.get_collection("tabular")
+
+    if document:
+        query['hash'] = document
 
     if publisher:
         query['publisher'] = publisher
@@ -239,9 +330,7 @@ def get_document(hash):
 @bp.route('/annotation/<hash>', methods=['GET'])
 def get_annotations(hash):
     """Get annotations (latest version)"""
-    db_name = config['mongo']['db']
-    connection = connect_mongo(config=config)
-    db = connection[db_name]
+    db = connect_and_get_db()
     annotations = db.get_collection("document").find({"hash": hash}).sort("timestamp", -1)
     annotation = annotations[0]
     del annotation["_id"]
@@ -251,10 +340,8 @@ def get_annotations(hash):
 @bp.route('/pdf/<hash>', methods=['GET'])
 def get_binary(hash):
     '''GET PDF / binary file '''
-    connection = connect_mongo(config=config)
-    db_name = config['mongo']['db']
-    db_supercon_dev = connection[db_name]
-    fs_binary = gridfs.GridFS(db_supercon_dev, collection='binary')
+    db = connect_and_get_db()
+    fs_binary = gridfs.GridFS(db, collection='binary')
 
     file = fs_binary.find_one({"hash": hash})
     if file is None:
@@ -267,9 +354,7 @@ def get_binary(hash):
 @output(Record)
 def get_record(id):
     object_id = validateObjectId(id)
-    connection = connect_mongo(config=config)
-    db_name = config['mongo']['db']
-    db = connection[db_name]
+    db = connect_and_get_db()
     record = db.get_collection("tabular").find_one({"_id": object_id})
 
     record['id'] = str(record['_id'])
@@ -280,9 +365,7 @@ def get_record(id):
 @output(Flag)
 def get_flag(id):
     object_id = validateObjectId(id)
-    connection = connect_mongo(config=config)
-    db_name = config['mongo']['db']
-    db = connection[db_name]
+    db = connect_and_get_db()
     record = db.get_collection("tabular").find_one({"_id": object_id}, {'_id': 0, 'type': 1, 'status': 1})
 
     return record
@@ -292,9 +375,7 @@ def get_flag(id):
 @output(Flag)
 def flag_record(id):
     object_id = validateObjectId(id)
-    connection = connect_mongo(config=config)
-    db_name = config['mongo']['db']
-    db = connection[db_name]
+    db = connect_and_get_db()
     tabular_collection = db.get_collection("tabular")
     record = tabular_collection.find_one({"_id": object_id})
     if record is None:
@@ -313,16 +394,14 @@ def validateObjectId(id):
     try:
         return ObjectId(id)
     except InvalidId as e:
-        abort(400, "Invalid ObjectID")
+        abort(400, "Invalid identifier (objectId)")
 
 
 @bp.route('/record/<id>/unflag', methods=['PUT', 'PATCH'])
 @output(Flag)
 def unflag_record(id):
     object_id = validateObjectId(id)
-    connection = connect_mongo(config=config)
-    db_name = config['mongo']['db']
-    db = connection[db_name]
+    db = connect_and_get_db()
     tabular_collection = db.get_collection("tabular")
 
     record = tabular_collection.find_one({"_id": object_id})

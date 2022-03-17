@@ -16,6 +16,7 @@ WORKDIR /opt/service
 
 COPY requirements.txt .
 COPY supercon2/ /opt/service/supercon2
+COPY commons/ /opt/service/commons
 COPY process/ /opt/service/process
 COPY resources/version.txt /opt/service/resources/
 
@@ -29,8 +30,8 @@ RUN python3.9 -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 RUN pip --version
 
-RUN python3 -m pip install pip --upgrade
-RUN pip install -r ./requirements.txt
+RUN python3 -m pip install pip --upgrade --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host=files.pythonhosted.org
+RUN pip install -r ./requirements.txt --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host=files.pythonhosted.org
 
 EXPOSE 8080
 
