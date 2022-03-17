@@ -76,32 +76,6 @@ def get_years():
     return {"years": filtered_distinct_years}
 
 
-# @bp.route('/process', methods=['POST'])
-# def process_pdf():
-#     file = request.files['input']
-#     grobid = grobid_client_generic(config_path="./config.json")
-#     tf = NamedTemporaryFile()
-#     tf.write(file.read())
-#     result_text = grobid.process_pdf(tf.name, 'processPDF', params={'disableLinking': 'true'},
-#                                      headers={'Accept': 'application/json'})
-#
-#     result_json = json.loads(result_text)
-#     new_paragraphs = []
-#     paragraphs = result_json['paragraphs']
-#     for index, paragraph in enumerate(paragraphs):
-#         if 'spans' not in paragraph:
-#             new_paragraphs.append(paragraph)
-#             continue
-#
-#         extracted_data_from_paragraphs = RuleBasedLinker().process_paragraph(paragraph)
-#         for sentence in extracted_data_from_paragraphs:
-#             new_paragraphs.append(sentence)
-#
-#     result_json['paragraphs'] = new_paragraphs
-#
-#     return result_json
-
-
 @bp.route("/stats", methods=["GET"])
 def get_stats():
     db = connect_and_get_db()
@@ -179,8 +153,20 @@ def _update_record(object_id: ObjectId, record: Record, db):
             latest_record['_id'])
         raise Exception(message)
 
-    new_id = write_correction(old_record, record, tabular_collection)
-    write_raw_training_data(old_record, new_id, document_collection, training_data_collection)
+    new_id = None
+    training_data_id = None
+    try:
+        new_id = write_correction(old_record, record, tabular_collection)
+        training_data_id = write_raw_training_data(old_record, new_id, document_collection, training_data_collection)
+    except Exception as e:
+        # Roll back
+        if training_data_id is not None:
+            training_data_collection.remove({"_id": training_data_id})
+
+        if new_id is not None:
+            tabular_collection.remove({"_id": new_id})
+            tabular_collection.update_one({"_id", old_record['_id']})
+
 
     return new_id
 

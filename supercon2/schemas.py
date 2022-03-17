@@ -32,6 +32,7 @@ class Record(Schema):
     doping = String(allow_none=True)
     materialClass = String(allow_none=True)
     fabrication = String(allow_none=True)
+    shape = String(allow_none=True)
     substrate = String(allow_none=True)
     variables = String(allow_none=True)
     unitCellType = String(allow_none=True)

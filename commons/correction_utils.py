@@ -1,6 +1,7 @@
 import copy
 from datetime import datetime
 
+from bson import ObjectId
 from pymongo import DESCENDING
 
 
@@ -21,7 +22,7 @@ def collect_corrections(corrected_formula, corrected_tc, corrected_pressure):
     return corrections
 
 
-def write_correction(doc, corrections, collection, dry_run: bool = False):
+def write_correction(doc, corrections, collection, dry_run: bool = False) -> ObjectId:
     """Write corrections into the database"""
 
     new_doc = copy.copy(doc)
@@ -61,7 +62,7 @@ def write_correction(doc, corrections, collection, dry_run: bool = False):
     return new_doc_id
 
 
-def write_raw_training_data(doc, new_doc_id, document_collection, training_data_collection):
+def write_raw_training_data(doc, new_doc_id, document_collection, training_data_collection) -> ObjectId:
     """Training data generation"""
 
     hash = doc['hash']
@@ -79,7 +80,7 @@ def write_raw_training_data(doc, new_doc_id, document_collection, training_data_
                 print("Found span and sentence. Pull them out. ")
                 # annotated_text, features = create_training_data_from_passage(passage)
 
-                training_data_id = training_data_collection.insert_one(
+                result = training_data_collection.insert_one(
                     {
                         "text": passage['text'],
                         "spans": passage['spans'],
@@ -89,7 +90,7 @@ def write_raw_training_data(doc, new_doc_id, document_collection, training_data_
                         "status": "new"
                     }
                 )
-                return training_data_id
+                return result.inserted_id
 
     print("If we are here, it means we did not manage to identify the correct passage to create the training data. ")
     return None
