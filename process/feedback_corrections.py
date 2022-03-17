@@ -5,9 +5,8 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from pymongo import DESCENDING
 
-from commons.correction_utils import collect_corrections, write_correction
+from commons.correction_utils import collect_corrections, write_correction, write_raw_training_data
 from commons.mongo_utils import connect_mongo
 from process.grobid_client_generic import GrobidClientGeneric
 
@@ -50,40 +49,6 @@ def create_training_data_from_passage(passage):
                                                                                                              -3:-4],
 
     return annotated_text, features
-
-
-def write_raw_training_data(doc, new_doc_id, document_collection, training_data_collection):
-    """Training data generation"""
-
-    hash = doc['hash']
-
-    # We get the latest document
-    document_latest_version = \
-        document_collection.find({'hash': hash}).sort([('timestamp', DESCENDING)]).limit(1)[0]
-
-    print("Document found ", document_latest_version["_id"])
-
-    for passage in document_latest_version['passages'] if 'passages' in document_latest_version else []:
-        spans = passage['spans'] if 'spans' in passage else []
-        for span in spans:
-            if span['id'] == doc['materialId']:
-                print("Found span and sentence. Pull them out. ")
-                # annotated_text, features = create_training_data_from_passage(passage)
-
-                training_data_id = training_data_collection.insert_one(
-                    {
-                        "text": passage['text'],
-                        "spans": passage['spans'],
-                        "tokens": passage['tokens'],
-                        "hash": hash,
-                        "corrected_record_id": str(new_doc_id),
-                        "status": "new"
-                    }
-                )
-                return training_data_id
-
-    print("If we are here, it means we did not manage to identify the correct passage to create the training data. ")
-    return None
 
 
 def flag_as_correct(doc_id, collection, dry_run=False):
