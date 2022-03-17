@@ -171,11 +171,11 @@ def _update_record(object_id: ObjectId, record: Record, db):
     tabular_collection = db.get_collection("tabular")
 
     old_record = tabular_collection.find_one({"_id": object_id})
-    # if old_record['status'] == "obsolete":
-    #     latest_record = find_latest(old_record, tabular_collection)
-    #     message = "The record with id " + str(object_id) + " is obsolete. The latest updated record of the chain is" + str(
-    #         latest_record['_id'])
-    #     raise Exception(message)
+    if old_record['status'] == "obsolete":
+        latest_record = find_latest(old_record, tabular_collection)
+        message = "The record with id " + str(object_id) + " is obsolete. The latest updated record of the chain is" + str(
+            latest_record['_id'])
+        raise Exception(message)
 
     new_id = write_correction(old_record, record, tabular_collection)
 
