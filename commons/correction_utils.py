@@ -1,6 +1,8 @@
 import copy
 from datetime import datetime
 
+from pymongo import DESCENDING
+
 
 def collect_corrections(corrected_formula, corrected_tc, corrected_pressure):
     corrections = {}
