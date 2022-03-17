@@ -16,6 +16,7 @@ WORKDIR /opt/service
 
 COPY requirements.txt .
 COPY supercon2/ /opt/service/supercon2
+COPY commons/ /opt/service/commons
 COPY process/ /opt/service/process
 COPY resources/version.txt /opt/service/resources/
 
