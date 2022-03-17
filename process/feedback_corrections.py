@@ -76,7 +76,8 @@ def write_raw_training_data(doc, new_doc_id, document_collection, training_data_
                         "spans": passage['spans'],
                         "tokens": passage['tokens'],
                         "hash": hash,
-                        "corrected_record_id": new_doc_id
+                        "corrected_record_id": str(new_doc_id),
+                        "status": "new"
                     }
                 )
                 return training_data_id

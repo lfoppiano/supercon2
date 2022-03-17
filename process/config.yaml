@@ -12,7 +12,8 @@ grobid:
 mongo:
 #  server: "falcon.nims.go.jp:27017"
   server: "localhost:27017"
-  db: "supercon_correction"
+#  db: "supercon_correction"
+  db: "supercon_tmp"
 
 batch_size: 1000
 
