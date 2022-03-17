@@ -8,7 +8,7 @@ from bson.errors import InvalidId
 from flask import render_template, Response, url_for
 
 from commons.label_studio_commons import to_label_studio_format_single
-from commons.correction_utils import write_correction
+from commons.correction_utils import write_correction, write_raw_training_data
 from commons.mongo_utils import connect_mongo
 
 from process.utils import json_serial
@@ -169,6 +169,8 @@ def find_latest(current_record, collection):
 
 def _update_record(object_id: ObjectId, record: Record, db):
     tabular_collection = db.get_collection("tabular")
+    document_collection = db.get_collection("document")
+    training_data_collection = db.get_collection("training_data")
 
     old_record = tabular_collection.find_one({"_id": object_id})
     if old_record['status'] == "obsolete":
@@ -178,6 +180,7 @@ def _update_record(object_id: ObjectId, record: Record, db):
         raise Exception(message)
 
     new_id = write_correction(old_record, record, tabular_collection)
+    write_raw_training_data(old_record, new_id, document_collection, training_data_collection)
 
     return new_id
 
@@ -312,14 +315,9 @@ def get_records(type=None, status=None, document=None, publisher=None, year=None
     return entries
 
 
-@bp.route("/automatic_database", methods=["GET"])
+@bp.route("/database", methods=["GET"])
 def get_automatic_database():
-    return render_template("automatic_database.html")
-
-
-@bp.route("/manual_database", methods=["GET"])
-def get_manual_database():
-    return render_template("manual_database.html")
+    return render_template("database.html")
 
 
 @bp.route('/document/<hash>', methods=['GET'])
@@ -429,9 +427,7 @@ def get_training_data():
 @bp.route('/training/data/<id>', methods=['GET'])
 def export_training_data(id):
     object_id = validateObjectId(id)
-    connection = connect_mongo(config=config)
-    db_name = config['mongo']['db']
-    db = connection[db_name]
+    db = connect_and_get_db()
     training_data_collection = db.get_collection("training_data")
 
     single_training_data = training_data_collection.find_one({'_id': object_id}, {'tokens': 0})
@@ -447,10 +443,8 @@ def export_training_data(id):
 
 
 @bp.route('/training/data/status/<status>')
-def export_by_type(status):
-    connection = connect_mongo(config=config)
-    db_name = config['mongo']['db']
-    db = connection[db_name]
+def export_training_data_by_type(status):
+    db = connect_and_get_db()
     training_data_collection = db.get_collection("training_data")
 
     training_data_list = list(training_data_collection.find({'status': status}, {'tokens': 0}))
@@ -472,9 +466,7 @@ def get_span_end():
 
 @bp.route('/training/data', methods=['GET'])
 def get_training_data_list():
-    connection = connect_mongo(config=config)
-    db_name = config['mongo']['db']
-    db = connection[db_name]
+    db = connect_and_get_db()
     training_data_collection = db.get_collection("training_data")
 
     training_data_list = list(training_data_collection.find({}, {'tokens': 0}))
