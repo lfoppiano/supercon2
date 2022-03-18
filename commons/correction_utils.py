@@ -31,7 +31,7 @@ def write_correction(doc, corrections, collection, dry_run: bool = False) -> Obj
         new_doc[field] = value
 
     doc['status'] = "obsolete"  ## 'obsolete' means that another record is taking over
-    doc['type'] = "automatic"
+    # doc['type'] = "automatic"
     obsolete_id = doc['_id']
     new_doc['previous'] = obsolete_id
     new_doc['type'] = 'manual'

@@ -165,7 +165,8 @@ def _update_record(object_id: ObjectId, record: Record, db):
 
         if new_id is not None:
             tabular_collection.remove({"_id": new_id})
-            tabular_collection.update_one({"_id", old_record['_id']})
+            tabular_collection.update_one({"_id", old_record['_id']},
+                                          {"$set": {"status": "valid"}, "$unset": {"previous": 1}})
 
 
     return new_id
