@@ -17,24 +17,29 @@ This repository contains:
  - SuperCon 2 service, which provides the API and the interface for visualising and editing material and properties extracted from superconductors-related papers.
  - The process to create the SuperCon 2 database from scratch, using [Grobid Superconductor](https://github.com/lfoppiano/grobid-superconductors) to extract materials information from large quantities of PDFs.
 
+**Work in progress**
+
 ## Service 
 
 The `supercon2` service provides the following features: 
- - Visualisation of records of extracted materials-properties 
-   ![record-list.png](docs/images/record-list.png)
+ - Visualisation of records of extracted materials-properties, with filtering, sorting 
+   
+    ![record-list.png](docs/images/record-list.png)
 
  - Visualisation of "augmented" PDFs with highlight annotations of materials and properties
-   ![pdf-view.png](docs/images/pdf-view.png)
-
- - Filtering by columns search
+   
+    ![pdf-view.png](docs/images/pdf-view.png)
 
  - Flagging of invalid records: records can be marked as valid/invalid manually
-   ![flagged-records.png](docs/images/flagged-records.png)
+   
+    ![flagged-records.png](docs/images/flagged-records.png)
 
  - Add/Edit/Remove of records.
-   ![edit-record.png](docs/images/edit-record.png)
+   
+    ![edit-record.png](docs/images/edit-record.png)
  
  - Automatic collection of training data: when a record has been corrected the information of the sentence, spans (the annotations) and tokens (the tokens, including layout information, fonts, and other perpenducular features) are collected
+   
    ![training-data-view.png](docs/images/training-data-view.png)
 
 
