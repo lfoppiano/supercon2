@@ -487,7 +487,7 @@
                         await axios.post(url, this.editedItem)
                     } catch (e) {
                         console.error(e)
-                        window.alert(e.response.data.message)
+                        window.alert(JSON.stringify(e.response.data))
                     } finally {
                         //
                     }
@@ -502,8 +502,14 @@
                     delete this.editedItem.flag
                     delete this.editedItem.status
                     delete this.editedItem.type
-                    // TODO: add try catch
-                    await axios.put(url, this.editedItem)
+                    try {
+                        await axios.put(url, this.editedItem)
+                    } catch (e) {
+                        console.error(e)
+                        window.alert(JSON.stringify(e.response.data))
+                    } finally {
+                        //
+                    }
                 },
             },
             created() {
