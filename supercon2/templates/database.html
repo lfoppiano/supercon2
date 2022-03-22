@@ -16,11 +16,11 @@
     <v-app id="app">
         <v-container fluid>
             <h2>Supercon2 "automatically extracted database" tabular view</h2>
-            <v-select v-model="selectedHeaders" :items="headers" label="Select Columns" multiple outlined return-object>
-            </v-select>
             <v-row justify="space-between" class="ma-0">
-                <v-checkbox v-model="expandFilter" label="expand filter" class="mt-0"></v-checkbox>
-                <v-btn @click="openCreateItemDialog" Depressed>New Item</v-btn>
+                <v-select v-model="selectedHeaders" :items="headers" label="Select Columns" multiple outlined
+                    return-object>
+                </v-select>
+                <v-btn @click="openCreateItemDialog" Depressed class="ma-2">New Item</v-btn>
             </v-row>
             <v-data-table v-model="selectedItems" :headers="showHeaders" :items="items" :dense="true" single-select
                 loading-text="loading ..." :multi-sort="true" class="elevation-1"
@@ -30,25 +30,25 @@
                     <tr>
                         <td v-for="header in showHeaders" :key="header.value">
                             <v-radio-group v-model="header.filterKeyword" v-if="header.value === 'type'" dense
-                                hide-details :readonly="!expandFilter">
+                                hide-details>
                                 <v-radio v-for="item in ['all', 'manual', 'automatic']" :key="item" :label="item"
-                                    :value="item" v-show="expandFilter || item === header.filterKeyword">
+                                    :value="item">
                                 </v-radio>
                             </v-radio-group>
                             <v-radio-group v-model="header.filterKeyword" v-else-if="header.value === 'status'" dense
                                 hide-details>
                                 <v-radio v-for="item in ['all', 'valid', 'invalid']" :key="item" :label="item"
-                                    :value="item" v-show="expandFilter || item === header.filterKeyword">
+                                    :value="item">
                                 </v-radio>
                             </v-radio-group>
                             <v-radio-group v-model="header.filterKeyword" v-else-if="header.value === 'flag'" dense
                                 hide-details>
                                 <v-radio v-for="item in ['all', 'flag', 'unflag']" :key="item" :label="item"
-                                    :value="item" v-show="expandFilter || item === header.filterKeyword">
+                                    :value="item">
                                 </v-radio>
                             </v-radio-group>
                             <template v-else-if="header.value === 'document' || header.value === 'actions'"></template>
-                            <v-text-field v-model="header.filterKeyword" type="text" label="keyword" v-else
+                            <v-text-field v-model="header.filterKeyword" type="text" placeholder="keyword" v-else
                                 hide-details>
                             </v-text-field>
 
@@ -77,7 +77,7 @@
                             <v-row>
                                 <v-col cols="12" sm="6" md="2" v-for="header in headers" :key="header.value">
                                     <v-text-field v-model="editedItem[header.value]" :label="header.text"
-                                        v-if="isEditableOnDialog(header.value)" disabled>
+                                        v-if="isReadOnlyOnDialog(header.value)" disabled>
                                     </v-text-field>
                                     <v-text-field v-model="editedItem[header.value]" :label="header.text"
                                         v-else-if="isRequiredOnDialog(header.value)" :rules="[rules.required]">
@@ -122,7 +122,6 @@
                     selectedItems: [],
                     filteredItems: [],
                     selectedHeaders: [],
-                    expandFilter: false,
                     headers: [
                         { text: 'Raw Material', value: 'rawMaterial', hidden: false, filter: this.rawMaterialFilter, filterKeyword: '' },
                         { text: 'Name', value: 'name', hidden: false, filter: this.nameFilter, filterKeyword: '' },
@@ -228,8 +227,8 @@
                         })
                     })
                 },
-                isEditableOnDialog(key) {
-                    const keys = ['id', 'type', 'status', 'flag']
+                isReadOnlyOnDialog(key) {
+                    const keys = ['type', 'status', 'flag']
                     return keys.includes(key)
                 },
                 isHiddenOnDialog(key) {
