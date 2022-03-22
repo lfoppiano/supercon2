@@ -479,12 +479,12 @@
                         await this.createItem()
                     }
                     this.loadItems()
-                    this.close()
                 },
                 async createItem() {
                     const url = '{{ url_for("supercon.create_record") }}'
                     try {
                         await axios.post(url, this.editedItem)
+                        this.close()
                     } catch (e) {
                         console.error(e)
                         window.alert(JSON.stringify(e.response.data))
@@ -504,11 +504,12 @@
                     delete this.editedItem.type
                     try {
                         await axios.put(url, this.editedItem)
+                        this.close()
                     } catch (e) {
                         console.error(e)
                         window.alert(JSON.stringify(e.response.data))
                     } finally {
-                        //
+
                     }
                 },
             },
