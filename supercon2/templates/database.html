@@ -29,7 +29,19 @@
                 <template v-slot:body.prepend>
                     <tr>
                         <td v-for="header in showHeaders" :key="header.value">
-                            <v-radio-group v-model="header.filterKeyword" v-if="header.value === 'flag'" dense
+                            <v-radio-group v-model="header.filterKeyword" v-if="header.value === 'type'" dense
+                                hide-details>
+                                <v-radio v-for="item in ['all', 'manual', 'automatic']" :key="item" :label="item"
+                                    :value="item">
+                                </v-radio>
+                            </v-radio-group>
+                            <v-radio-group v-model="header.filterKeyword" v-else-if="header.value === 'status'" dense
+                                hide-details>
+                                <v-radio v-for="item in ['all', 'valid', 'invalid']" :key="item" :label="item"
+                                    :value="item">
+                                </v-radio>
+                            </v-radio-group>
+                            <v-radio-group v-model="header.filterKeyword" v-else-if="header.value === 'flag'" dense
                                 hide-details>
                                 <v-radio v-for="item in ['all', 'flag', 'unflag']" :key="item" :label="item"
                                     :value="item">
@@ -65,12 +77,14 @@
                             <v-row>
                                 <v-col cols="12" sm="6" md="2" v-for="header in headers" :key="header.value">
                                     <v-text-field v-model="editedItem[header.value]" :label="header.text"
-                                        v-if="isReadableOnlyOnDialog(header.value)" disabled>
+                                        v-if="isReadOnlyOnDialog(header.value)" disabled>
                                     </v-text-field>
                                     <v-text-field v-model="editedItem[header.value]" :label="header.text"
                                         v-else-if="isRequiredOnDialog(header.value)" :rules="[rules.required]">
                                     </v-text-field>
-                                    <template v-else-if="isHiddenOnDialog(header.value)"></template>
+                                    <v-text-field v-model="editedItem[header.value]" :label="header.text"
+                                        v-else-if="isHiddenOnDialog(header.value)" disabled v-show="false">
+                                    </v-text-field>
                                     <v-text-field v-model="editedItem[header.value]" :label="header.text" v-else>
                                     </v-text-field>
                                 </v-col>
@@ -144,9 +158,9 @@
                         { text: 'Journal', value: 'journal', hidden: true, filter: this.journalFilter, filterKeyword: '' },
                         { text: 'Year', value: 'year', hidden: false, filter: this.yearFilter, filterKeyword: '' },
                         // CONFIRM: check column locations for type, status and flag
+                        { text: 'Type', value: 'type', hidden: false, filter: this.typeFilter, filterKeyword: 'all' },
+                        { text: 'Status', value: 'status', sortable: false, hidden: false, filter: this.statusFilter, filterKeyword: 'all' },
                         { text: 'Flag', value: 'flag', sortable: false, hidden: false, filter: this.flagFilter, filterKeyword: 'all' },
-                        { text: 'Type', value: 'type', hidden: true },
-                        { text: 'Status', value: 'status', sortable: false, hidden: true },
                         { text: 'View Document', value: 'document', sortable: false, hidden: false },
                         { text: 'Actions', value: 'actions', sortable: false, hidden: false },
                         // { text: 'Doc URL', value: 'doc_url', hidden: true},
@@ -213,12 +227,12 @@
                         })
                     })
                 },
-                isReadableOnlyOnDialog(key) {
-                    const keys = ['flag']
+                isReadOnlyOnDialog(key) {
+                    const keys = ['type', 'status', 'flag']
                     return keys.includes(key)
                 },
                 isHiddenOnDialog(key) {
-                    const keys = ['type', 'status', 'document', 'actions']
+                    const keys = ['document', 'actions']
                     return keys.includes(key)
                 },
                 isRequiredOnDialog(key) {
@@ -391,6 +405,24 @@
                     }
                     return target.indexOf(keyword) > -1
                 },
+                typeFilter(value, search, item) {
+                    const keyword = this.headerObject.type.filterKeyword
+                    switch (keyword) {
+                        case 'all':
+                            return true
+                        default:
+                            return item.type === keyword
+                    }
+                },
+                statusFilter(value, search, item) {
+                    const keyword = this.headerObject.status.filterKeyword
+                    switch (keyword) {
+                        case 'all':
+                            return true
+                        default:
+                            return item.status === keyword
+                    }
+                },
                 flagFilter(value, search, item) {
                     const keyword = this.headerObject.flag.filterKeyword
                     switch (keyword) {
@@ -435,7 +467,8 @@
                 openCreateItemDialog() {
                     this.editedItem = {}
                     this.dialog = true
-                },
+                }
+                ,
                 close() {
                     this.dialog = false
                 },
