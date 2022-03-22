@@ -19,7 +19,6 @@
             <v-select v-model="selectedHeaders" :items="headers" label="Select Columns" multiple outlined return-object>
             </v-select>
             <v-row justify="space-between" class="ma-0">
-                <v-checkbox v-model="expandFilter" label="expand filter" class="mt-0"></v-checkbox>
                 <v-btn @click="openCreateItemDialog" Depressed>New Item</v-btn>
             </v-row>
             <v-data-table v-model="selectedItems" :headers="showHeaders" :items="items" :dense="true" single-select
@@ -32,7 +31,7 @@
                             <v-radio-group v-model="header.filterKeyword" v-if="header.value === 'flag'" dense
                                 hide-details>
                                 <v-radio v-for="item in ['all', 'flag', 'unflag']" :key="item" :label="item"
-                                    :value="item" v-show="expandFilter || item === header.filterKeyword">
+                                    :value="item">
                                 </v-radio>
                             </v-radio-group>
                             <template v-else-if="header.value === 'document' || header.value === 'actions'"></template>
@@ -108,7 +107,6 @@
                     selectedItems: [],
                     filteredItems: [],
                     selectedHeaders: [],
-                    expandFilter: false,
                     headers: [
                         { text: 'Raw Material', value: 'rawMaterial', hidden: false, filter: this.rawMaterialFilter, filterKeyword: '' },
                         { text: 'Name', value: 'name', hidden: false, filter: this.nameFilter, filterKeyword: '' },
