@@ -16,10 +16,11 @@
     <v-app id="app">
         <v-container fluid>
             <h2>Supercon2 "automatically extracted database" tabular view</h2>
-            <v-select v-model="selectedHeaders" :items="headers" label="Select Columns" multiple outlined return-object>
-            </v-select>
             <v-row justify="space-between" class="ma-0">
-                <v-btn @click="openCreateItemDialog" Depressed>New Item</v-btn>
+                <v-select v-model="selectedHeaders" :items="headers" label="Select Columns" multiple outlined
+                    return-object>
+                </v-select>
+                <v-btn @click="openCreateItemDialog" Depressed class="ma-2">New Item</v-btn>
             </v-row>
             <v-data-table v-model="selectedItems" :headers="showHeaders" :items="items" :dense="true" single-select
                 loading-text="loading ..." :multi-sort="true" class="elevation-1"
