@@ -4,6 +4,8 @@
 
   * [Introduction](#introduction)
   * [Service](#service)
+    + [Getting started](#getting-started)
+    + [API documentation](#api-documentation)
   * [Process](#process)
     + [Scripts](#scripts)
 
@@ -111,22 +113,28 @@ The API documentation is provided by apiflask OpenAPI (swagger) implementation.
  | `/docs`   | Serve the OpenAPI documentation via swagger-UI |
 
 
-Following a API documentation summary:
+Following an API documentation summary:
 
-| URL                                  | Method    | Description                                                        |
-|--------------------------------------|-----------|--------------------------------------------------------------------|
-| `/stats`                             | GET       | Return statistics                                                  |
- | `/records`                           | GET       | Return the list of records                                         |
- | `/records/<type>`                    | GET       | Return the list of records of a specific type `automatic`/`manual` |
- | `/records/<type>/<year>`             | GET       | Return the list of records of a specific type + year               |
- | `/records/<type>/<publisher>/<year>` | GET       | Return the list of records of a specific type + publisher + year   |
-| `/record/<id>`                       | GET       | Return the single record                                           |  
-| `/record/flags/<id>`                 | GET       | Return the flags of a single record                                | 
-| `/record/flag/<id>`                  | PATCH/PUT | Flag a record                                                      |  
-| `/record/unflag/<id>`                | PATCH/PUT | Unflag  a record                                                   |   
-| `/document/<hash>`                   | GET       | Load the template to show the PDF with annotations                 |
-| `/annotation/<hash>`                 | GET       | Return the single document JSON representation                     |
-| `/pdf/<hash>`                        | GET       | Return the PDF document corresponding to the identifier            |
+| URL                                  | Method     | Description                                                                      |
+|--------------------------------------|------------|----------------------------------------------------------------------------------|
+| `/stats`                             | GET        | Return statistics                                                                |
+ | `/records`                           | GET        | Return the list of records                                                       |
+ | `/records/<type>`                    | GET        | Return the list of records of a specific type `automatic`/`manual`               |
+ | `/records/<type>/<year>`             | GET        | Return the list of records of a specific type + year                             |
+ | `/records/<type>/<publisher>/<year>` | GET        | Return the list of records of a specific type + publisher + year                 |
+| `/record/<id>`                       | GET        | Return the single record                                                         |  
+| `/record/<id>`                       | PUT/PATCH  | Update the record                                                                |  
+| `/record`                            | POST       | Create a new record                                                              |  
+| `/record/<id>`                       | DELETE     | Remove a record by its id                                                        |  
+| `/record/<id>/flags`                 | GET        | Return the flags of a single record                                              | 
+| `/record/<id>/flag`                  | PATCH/PUT  | Flag a record                                                                    |  
+| `/record/<id>/unflag`                | PATCH/PUT  | Unflag  a record                                                                 |   
+| `/document/<hash>`                   | GET        | Load the template to show the PDF with annotations                               |
+| `/annotation/<hash>`                 | GET        | Return the single document JSON representation                                   |
+| `/pdf/<hash>`                        | GET        | Return the PDF document corresponding to the identifier                          |
+| `/training/data/<id>`                | GET        | Get the training data by identifier                                              |
+| `/training/data`                     | GET        | Get the list of all training                                                     |
+| `/training/data/status/<status>`     | GET        | Get the training data by status (of the training data: new, exported, corrected) |
 
 ## Process
 
