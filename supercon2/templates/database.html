@@ -47,7 +47,7 @@
                                     :value="item">
                                 </v-radio>
                             </v-radio-group>
-                            <template v-else-if="header.value === 'document' || header.value === 'actions'"></template>
+                            <template v-else-if="header.value === 'actions'"></template>
                             <v-text-field v-model="header.filterKeyword" type="text" placeholder="keyword" v-else
                                 hide-details>
                             </v-text-field>
@@ -55,9 +55,9 @@
                         </td>
                     </tr>
                 </template>
-                <template v-slot:item.document="{ item }">
+                <template v-slot:item.hash="{ item }">
                     <a :href="'./document/' + item.hash" target="_blank" :style="{'text-decoration': 'none'}">
-                        View
+                        [[ item.hash ]]
                     </a>
                 </template>
                 <template v-slot:item.flag="{ item }">
@@ -110,6 +110,7 @@
     <script src="https://cdn.jsdelivr.net/npm/axios@0.26.1/dist/axios.min.js"></script>
     <script>
         new Vue({
+            delimiters: ['[[', ']]'],
             el: '#app',
             vuetify: new Vuetify(),
             data() {
@@ -161,7 +162,6 @@
                         { text: 'Type', value: 'type', hidden: false, filter: this.typeFilter, filterKeyword: 'all' },
                         { text: 'Status', value: 'status', sortable: false, hidden: false, filter: this.statusFilter, filterKeyword: 'all' },
                         { text: 'Flag', value: 'flag', sortable: false, hidden: false, filter: this.flagFilter, filterKeyword: 'all' },
-                        { text: 'View Document', value: 'document', sortable: false, hidden: false },
                         { text: 'Actions', value: 'actions', sortable: false, hidden: false },
                         // { text: 'Doc URL', value: 'doc_url', hidden: true},
                         // { text: 'ID', value: 'id', hidden: true},
