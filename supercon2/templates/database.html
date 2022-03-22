@@ -65,7 +65,7 @@
                             <v-row>
                                 <v-col cols="12" sm="6" md="2" v-for="header in headers" :key="header.value">
                                     <v-text-field v-model="editedItem[header.value]" :label="header.text"
-                                        v-if="isEditableOnDialog(header.value)" disabled>
+                                        v-if="isReadableOnlyOnDialog(header.value)" disabled>
                                     </v-text-field>
                                     <v-text-field v-model="editedItem[header.value]" :label="header.text"
                                         v-else-if="isRequiredOnDialog(header.value)" :rules="[rules.required]">
@@ -214,9 +214,8 @@
                         })
                     })
                 },
-                // TODO: this method name should be isNotEditableOnDialog
-                isEditableOnDialog(key) {
-                    const keys = ['id', 'flag']
+                isReadableOnlyOnDialog(key) {
+                    const keys = ['flag']
                     return keys.includes(key)
                 },
                 isHiddenOnDialog(key) {
