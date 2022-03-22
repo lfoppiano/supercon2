@@ -25,7 +25,7 @@
             <v-data-table v-model="selectedItems" :headers="showHeaders" :items="items" :dense="true" single-select
                 loading-text="loading ..." :multi-sort="true" class="elevation-1"
                 @current-items="hasChangedCurrentItems" :page.sync="page" :items-per-page="itemsPerPage"
-                @page-count="hasChangedPageCount" @click:row="clickRow">
+                :sort-by="['hash']" @page-count="hasChangedPageCount" @click:row="clickRow">
                 <template v-slot:body.prepend>
                     <tr>
                         <td v-for="header in showHeaders" :key="header.value">
@@ -149,7 +149,7 @@
                         { text: 'Subsection', value: 'subsection', hidden: true, filter: this.subsectionFilter, filterKeyword: '' },
                         { text: 'Path', value: 'path', hidden: true, filter: this.pathFilter, filterKeyword: '' },
                         { text: 'Filename', value: 'filename', hidden: true, filter: this.filenameFilter, filterKeyword: '' },
-                        { text: 'Hash', value: 'hash', hidden: true, filter: this.hashFilter, filterKeyword: '' },
+                        { text: 'Document', value: 'hash', hidden: false, filter: this.hashFilter, filterKeyword: '' },
                         { text: 'Timestamp', value: 'timestamp', hidden: true, filter: this.timestampFilter, filterKeyword: '' },
                         { text: 'DOI', value: 'doi', hidden: false, filter: this.doiFilter, filterKeyword: '' },
                         { text: 'Authors', value: 'authors', width: 300, hidden: true, filter: this.authorsFilter, filterKeyword: '' },
