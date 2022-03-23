@@ -1,8 +1,8 @@
-import copy
 from collections import OrderedDict
 from datetime import datetime
 
 from bson import ObjectId
+from deepdiff import DeepDiff
 from pymongo import DESCENDING
 
 
@@ -23,11 +23,27 @@ def collect_corrections(corrected_formula, corrected_tc, corrected_pressure):
     return corrections
 
 
-def write_correction(doc, corrections, collection, dry_run: bool = False, skip_none=True, remove_trailing_space=True) -> ObjectId:
+def find_differences(new, old, ignored_fields=[]):
+
+    differences = DeepDiff(new, old, ignore_order=True,
+                           exclude_paths={"root['type']", "root['status']", "root['_id']", "root['previous']"})
+
+    return differences
+
+
+def write_correction(doc, corrections, collection, dry_run: bool = False, skip_none=True,
+                     remove_trailing_space=True) -> ObjectId:
     """Write corrections into the database"""
 
     new_doc = post_process_fields(doc, remove_trailing_space, skip_none)
     correction_clean = post_process_fields(corrections, remove_trailing_space, skip_none)
+
+    differences = find_differences(new_doc, correction_clean)
+
+    if len(differences) == 0:
+        raise Exception(
+            "The updated record is the same as the original one. "
+            "Spaces are being removed. Are you sure you didn't add just spaces? ")
 
     for field, value in correction_clean.items():
         new_doc[field] = value

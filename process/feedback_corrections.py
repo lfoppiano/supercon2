@@ -15,6 +15,9 @@ from process.grobid_client_generic import GrobidClientGeneric
 # supercon_sakai_original: database containing the original records corrected by sakai-san
 
 # This part will be implemented in the service
+from supercon2.service import rolling_back
+
+
 def create_training_data_from_passage(passage):
     if 'spans' not in passage or 'text' not in passage:
         return None
@@ -112,9 +115,14 @@ def process(corrections_file, database, dry_run=False):
             if len(corrections.keys()) == 0:
                 print("This record was identified as to be corrected, but found no usable data.")
             else:
-                new_doc_id = write_correction(doc, corrections, tabular_collection, dry_run=dry_run)
-
-                write_raw_training_data(doc, new_doc_id, document_collection, training_data_collection)
+                new_id = None
+                training_data_id = None
+                try:
+                    new_id = write_correction(doc, corrections, tabular_collection, dry_run=dry_run)
+                    training_data_id = write_raw_training_data(doc, new_id, document_collection, training_data_collection)
+                except Exception as e:
+                    print("There was an exception. Rolling back. ")
+                    rolling_back(new_id, doc['_id'], training_data_id, tabular_collection, training_data_collection)
 
 
 if __name__ == '__main__':

@@ -1,5 +1,6 @@
 from unittest.mock import MagicMock
 
+import pytest
 from bson import ObjectId
 
 from commons.correction_utils import post_process_fields
@@ -100,7 +101,10 @@ def test_update_record_with_failure_should_rollback(mongodb, mocker: MagicMock):
 
     original_identifier = '61e136f56e3ec3a715592988'
     original_identifier_object_id = ObjectId(original_identifier)
-    inserted_id = _update_record(original_identifier_object_id, new_record, mongodb)
+
+    inserted_id = None
+    with pytest.raises(Exception):
+        inserted_id = _update_record(original_identifier_object_id, new_record, mongodb)
 
     assert inserted_id is None
 

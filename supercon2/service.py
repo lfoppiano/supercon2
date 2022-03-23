@@ -146,6 +146,9 @@ def _update_record(object_id: ObjectId, record: Union[Record, dict], db):
     document_collection = db.get_collection("document")
     training_data_collection = db.get_collection("training_data")
 
+    if 'id' in record:
+        del record['id']
+
     old_record = tabular_collection.find_one({"_id": object_id})
     if old_record['status'] == "obsolete":
         latest_record = find_latest(old_record, tabular_collection)
@@ -161,25 +164,26 @@ def _update_record(object_id: ObjectId, record: Union[Record, dict], db):
         training_data_id = write_raw_training_data(old_record, new_id, document_collection, training_data_collection)
         return new_id
     except Exception as e:
-
-        print("Exception", e, "Rolling back.")
-        # Roll back
-        if training_data_id is not None:
-            training_data_collection.delete_one({"_id": training_data_id})
-
-        if new_id is not None:
-            tabular_collection.delete_one({"_id": new_id})
-            tabular_collection.update_one(
-                {'_id': old_record['_id']},
-                {
-                    "$set": {"status": "valid"},
-                    "$unset": {"previous": ""}
-                }
-            )
-
-        return None
+        # Roll back!
+        print("Exception:", e, "Rolling back.")
+        rolling_back(new_id, old_record['_id'], training_data_id, tabular_collection, training_data_collection)
+        raise e
 
 
+def rolling_back(new_id, old_id, training_data_id, tabular_collection, training_data_collection):
+
+    if training_data_id is not None:
+        training_data_collection.delete_one({"_id": training_data_id})
+
+    if new_id is not None:
+        tabular_collection.delete_one({"_id": new_id})
+        tabular_collection.update_one(
+            {'_id': old_id},
+            {
+                "$set": {"status": "valid"},
+                "$unset": {"previous": ""}
+            }
+        )
 
 
 @bp.route("/record", methods=["POST"])
