@@ -162,11 +162,11 @@ def _update_record(object_id: ObjectId, record: Record, db):
     except Exception as e:
         # Roll back
         if training_data_id is not None:
-            training_data_collection.remove({"_id": training_data_id})
+            training_data_collection.delete_one({"_id": training_data_id})
 
         if new_id is not None:
-            tabular_collection.remove({"_id": new_id})
-            tabular_collection.update(
+            tabular_collection.delete_one({"_id": new_id})
+            tabular_collection.update_one(
                 {'_id': old_record['_id']},
                 {
                     "$set": {"status": "valid"},

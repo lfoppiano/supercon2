@@ -1,7 +1,7 @@
 Flask==2.0.2
-pymongo
+pymongo==4.0.2
 requests
-tqdm
+tqdm == 4.63.0
 pyyaml
 pytest
 pytest-mongodb
@@ -9,4 +9,4 @@ pytest-mock
 numpy
 pandas
 openpyxl
-apiflask
+apiflask==0.12.0
