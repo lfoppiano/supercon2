@@ -5,7 +5,7 @@ ENV LANG C.UTF-8
 RUN apt-get update && \
     apt-get -y --no-install-recommends install \
     git \
-    python3.9 python3.9-venv python3.9-dev python3.9-distutil build-essential gcc\
+    python3.10 python3.10-venv python3.10-dev python3.10-distutil build-essential gcc\
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
