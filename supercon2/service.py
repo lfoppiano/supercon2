@@ -1,5 +1,5 @@
-from datetime import datetime
 import json
+from datetime import datetime
 
 import gridfs
 from apiflask import APIBlueprint, abort, output, input
@@ -7,10 +7,9 @@ from bson import ObjectId
 from bson.errors import InvalidId
 from flask import render_template, Response, url_for
 
-from commons.label_studio_commons import to_label_studio_format_single
 from commons.correction_utils import write_correction, write_raw_training_data
+from commons.label_studio_commons import to_label_studio_format_single
 from commons.mongo_utils import connect_mongo
-
 from process.utils import json_serial
 from supercon2.schemas import Publishers, Record, Years, Flag, RecordParamsIn, UpdatedRecord
 from supercon2.utils import load_config_yaml
@@ -122,7 +121,7 @@ def update_record(id, record: Record):
     try:
         new_id = _update_record(object_id, record, db=db)
     except Exception as e:
-        abort(400,  str(e))
+        abort(400, str(e))
 
     return_info = UpdatedRecord()
     return_info.id = new_id
@@ -149,7 +148,8 @@ def _update_record(object_id: ObjectId, record: Record, db):
     old_record = tabular_collection.find_one({"_id": object_id})
     if old_record['status'] == "obsolete":
         latest_record = find_latest(old_record, tabular_collection)
-        message = "The record with id " + str(object_id) + " is obsolete. The latest updated record of the chain is" + str(
+        message = "The record with id " + str(
+            object_id) + " is obsolete. The latest updated record of the chain is" + str(
             latest_record['_id'])
         raise Exception(message)
 
@@ -158,6 +158,7 @@ def _update_record(object_id: ObjectId, record: Record, db):
     try:
         new_id = write_correction(old_record, record, tabular_collection)
         training_data_id = write_raw_training_data(old_record, new_id, document_collection, training_data_collection)
+        return new_id
     except Exception as e:
         # Roll back
         if training_data_id is not None:
@@ -165,11 +166,17 @@ def _update_record(object_id: ObjectId, record: Record, db):
 
         if new_id is not None:
             tabular_collection.remove({"_id": new_id})
-            tabular_collection.update_one({"_id", old_record['_id']},
-                                          {"$set": {"status": "valid"}, "$unset": {"previous": 1}})
+            tabular_collection.update(
+                {'_id': old_record['_id']},
+                {
+                    "$set": {"status": "valid"},
+                    "$unset": {"previous": ""}
+                }
+            )
+
+        return None
 
 
-    return new_id
 
 
 @bp.route("/record", methods=["POST"])
@@ -443,6 +450,7 @@ def export_training_data_by_type(status):
 
     return Response(json.dumps(new_format, default=json_serial), mimetype="application/json")
 
+
 def get_span_start(type):
     return '<span class="label ' + type + '">'
 
@@ -469,8 +477,9 @@ def get_training_data_list():
         start = 0
         for span in sorted_spans:
             type = span['type'].replace("<", "").replace(">", "")
-            annotated_text += text[start: span['offset_start']] + get_span_start(type) + text[span['offset_start']: span[
-                'offset_end']] + get_span_end()
+            annotated_text += text[start: span['offset_start']] + get_span_start(type) + text[
+                                                                                         span['offset_start']: span[
+                                                                                             'offset_end']] + get_span_end()
             start = span['offset_end']
 
         annotated_text += text[start: len(text)]
