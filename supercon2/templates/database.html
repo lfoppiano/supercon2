@@ -68,7 +68,7 @@
                     <v-checkbox :input-value="item.flag" @click="toggleFlag(item)"></v-checkbox>
                 </template>
                 <template v-slot:item.actions="{ item }">
-                    <v-icon small class="mr-2" @click="openEditItemDialog(item)">
+                    <v-icon small class="mr-2" @click="openEditItemDialog(item)" title="Open edit dialog">
                         mdi-pencil
                     </v-icon>
                 </template>
