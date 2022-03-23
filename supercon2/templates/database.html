@@ -25,7 +25,7 @@
             <v-data-table v-model="selectedItems" :headers="showHeaders" :items="items" :dense="true" single-select
                 loading-text="loading ..." :multi-sort="true" class="elevation-1"
                 @current-items="hasChangedCurrentItems" :page.sync="page" :items-per-page="itemsPerPage"
-                :sort-by="['hash']" @page-count="hasChangedPageCount" @click:row="clickRow">
+                :sort-by.sync="sortBy" @page-count="hasChangedPageCount" @click:row="clickRow">
                 <template v-slot:body.prepend>
                     <tr>
                         <td v-for="header in showHeaders" :key="header.value">
@@ -48,9 +48,13 @@
                                 </v-radio>
                             </v-radio-group>
                             <template v-else-if="header.value === 'actions'"></template>
-                            <v-text-field v-model="header.filterKeyword" type="text" placeholder="keyword" v-else
-                                hide-details>
-                            </v-text-field>
+                            <template v-else>
+                                <v-text-field v-model="header.filterKeyword" type="text" placeholder="keyword"
+                                    hide-details>
+                                </v-text-field>
+                                <v-switch v-model="headerObject[header.value].shouldHideEmpty" title="Hide empty">
+                                </v-switch>
+                            </template>
 
                         </td>
                     </tr>
@@ -120,44 +124,45 @@
                     page: 1,
                     pageCount: 0,
                     itemsPerPage: 10,
+                    sortBy: ['hash'],
                     selectedItems: [],
                     filteredItems: [],
                     selectedHeaders: [],
                     headers: [
-                        { text: 'Raw Material', value: 'rawMaterial', hidden: false, filter: this.rawMaterialFilter, filterKeyword: '' },
-                        { text: 'Name', value: 'name', hidden: false, filter: this.nameFilter, filterKeyword: '' },
-                        { text: 'Formula', value: 'formula', hidden: false, filter: this.formulaFilter, filterKeyword: '' },
-                        { text: 'Space Group', value: 'spaceGroup', hidden: true, filter: this.spaceGroupFilter, filterKeyword: '' },
+                        { text: 'Raw Material', value: 'rawMaterial', hidden: false, filter: this.rawMaterialFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Name', value: 'name', hidden: false, filter: this.nameFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Formula', value: 'formula', hidden: false, filter: this.formulaFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Space Group', value: 'spaceGroup', hidden: true, filter: this.spaceGroupFilter, filterKeyword: '', shouldHideEmpty: false },
                         // { text: 'Space Group ID', value: 'spaceGroupId', hidden: true },
-                        { text: 'Crystal Structure', value: 'crystalStructure', hidden: true, filter: this.crystalStructureFilter, filterKeyword: '' },
+                        { text: 'Crystal Structure', value: 'crystalStructure', hidden: true, filter: this.crystalStructureFilter, filterKeyword: '', shouldHideEmpty: false },
                         // { text: 'Crystal Structure ID', value: 'crystalStructureId', hidden: true },
-                        { text: 'Unit Cell Type', value: 'unitCellType', hidden: true, filter: this.unitCellTypeFilter, filterKeyword: '' },
+                        { text: 'Unit Cell Type', value: 'unitCellType', hidden: true, filter: this.unitCellTypeFilter, filterKeyword: '', shouldHideEmpty: false },
                         // { text: 'Unit Cell Type ID', value: 'unitCellTypeId', hidden: true },
-                        { text: 'Doping', value: 'doping', hidden: false, filter: this.dopingFilter, filterKeyword: '' },
-                        { text: 'Shape', value: 'shape', hidden: false, filter: this.shapeFilter, filterKeyword: '' },
-                        { text: 'Variables', value: 'variables', hidden: true, filter: this.variablesFilter, filterKeyword: '' },
-                        { text: 'Material Class', value: 'materialClass', hidden: false, filter: this.materialClassFilter, filterKeyword: '' },
-                        { text: 'Fabrication', value: 'fabrication', hidden: true, filter: this.fabricationFilter, filterKeyword: '' },
-                        { text: 'Substrate', value: 'substrate', hidden: true, filter: this.substrateFilter, filterKeyword: '' },
-                        { text: 'Critical Temperature', value: 'criticalTemperature', hidden: false, filter: this.criticalTemperatureFilter, filterKeyword: '' },
+                        { text: 'Doping', value: 'doping', hidden: false, filter: this.dopingFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Shape', value: 'shape', hidden: false, filter: this.shapeFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Variables', value: 'variables', hidden: true, filter: this.variablesFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Material Class', value: 'materialClass', hidden: false, filter: this.materialClassFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Fabrication', value: 'fabrication', hidden: true, filter: this.fabricationFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Substrate', value: 'substrate', hidden: true, filter: this.substrateFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Critical Temperature', value: 'criticalTemperature', hidden: false, filter: this.criticalTemperatureFilter, filterKeyword: '', shouldHideEmpty: false },
                         // { text: 'Critical TemperatureId', value: 'criticalTemperatureId', hidden: true },
-                        { text: 'Applied Pressure', value: 'appliedPressure', hidden: false, filter: this.appliedPressureFilter, filterKeyword: '' },
+                        { text: 'Applied Pressure', value: 'appliedPressure', hidden: false, filter: this.appliedPressureFilter, filterKeyword: '', shouldHideEmpty: false },
                         // { text: 'Applied Pressure ID', value: 'appliedPressureId', hidden: true },
-                        { text: 'Critical Temperature Measurement Method', value: 'criticalTemperatureMeasurementMethod', hidden: true, filter: this.criticalTemperatureMeasurementMethodFilter, filterKeyword: '' },
+                        { text: 'Critical Temperature Measurement Method', value: 'criticalTemperatureMeasurementMethod', hidden: true, filter: this.criticalTemperatureMeasurementMethodFilter, filterKeyword: '', shouldHideEmpty: false },
                         // { text: 'Critical Temperature Measurement MethodId', value: 'criticalTemperatureMeasurementMethodId', hidden: true },
-                        { text: 'Link Type', value: 'linkType', hidden: true, filter: this.linkTypeFilter, filterKeyword: '' },
-                        { text: 'Section', value: 'section', hidden: true, filter: this.sectionFilter, filterKeyword: '' },
-                        { text: 'Subsection', value: 'subsection', hidden: true, filter: this.subsectionFilter, filterKeyword: '' },
-                        { text: 'Path', value: 'path', hidden: true, filter: this.pathFilter, filterKeyword: '' },
-                        { text: 'Filename', value: 'filename', hidden: true, filter: this.filenameFilter, filterKeyword: '' },
-                        { text: 'Document', value: 'hash', hidden: false, filter: this.hashFilter, filterKeyword: '' },
-                        { text: 'Timestamp', value: 'timestamp', hidden: true, filter: this.timestampFilter, filterKeyword: '' },
-                        { text: 'DOI', value: 'doi', hidden: false, filter: this.doiFilter, filterKeyword: '' },
-                        { text: 'Authors', value: 'authors', width: 300, hidden: true, filter: this.authorsFilter, filterKeyword: '' },
-                        { text: 'Title', value: 'title', width: 500, hidden: true, filter: this.titleFilter, filterKeyword: '' },
-                        { text: 'Publisher', value: 'publisher', hidden: true, filter: this.publisherFilter, filterKeyword: '' },
-                        { text: 'Journal', value: 'journal', hidden: true, filter: this.journalFilter, filterKeyword: '' },
-                        { text: 'Year', value: 'year', hidden: false, filter: this.yearFilter, filterKeyword: '' },
+                        { text: 'Link Type', value: 'linkType', hidden: true, filter: this.linkTypeFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Section', value: 'section', hidden: true, filter: this.sectionFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Subsection', value: 'subsection', hidden: true, filter: this.subsectionFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Path', value: 'path', hidden: true, filter: this.pathFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Filename', value: 'filename', hidden: true, filter: this.filenameFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Document', value: 'hash', hidden: false, filter: this.hashFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Timestamp', value: 'timestamp', hidden: true, filter: this.timestampFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'DOI', value: 'doi', hidden: false, filter: this.doiFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Authors', value: 'authors', width: 300, hidden: true, filter: this.authorsFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Title', value: 'title', width: 500, hidden: true, filter: this.titleFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Publisher', value: 'publisher', hidden: true, filter: this.publisherFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Journal', value: 'journal', hidden: true, filter: this.journalFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Year', value: 'year', hidden: false, filter: this.yearFilter, filterKeyword: '', shouldHideEmpty: false },
                         // CONFIRM: check column locations for type, status and flag
                         { text: 'Type', value: 'type', hidden: false, filter: this.typeFilter, filterKeyword: 'all' },
                         { text: 'Status', value: 'status', sortable: false, hidden: false, filter: this.statusFilter, filterKeyword: 'all' },
@@ -313,91 +318,93 @@
                     }
                 },
                 rawMaterialFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.rawMaterial.filterKeyword, item.rawMaterial)
+                    return this.keywordFilter(this.headerObject.rawMaterial, item.rawMaterial)
                 },
                 nameFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.name.filterKeyword, item.name)
+                    return this.keywordFilter(this.headerObject.name, item.name)
                 },
                 formulaFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.formula.filterKeyword, item.formula)
+                    return this.keywordFilter(this.headerObject.formula, item.formula)
                 },
                 spaceGroupFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.spaceGroup.filterKeyword, item.spaceGroup)
+                    return this.keywordFilter(this.headerObject.spaceGroup, item.spaceGroup)
                 },
                 crystalStructureFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.crystalStructure.filterKeyword, item.crystalStructure)
+                    return this.keywordFilter(this.headerObject.crystalStructure, item.crystalStructure)
                 },
                 unitCellTypeFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.unitCellType.filterKeyword, item.unitCellType)
+                    return this.keywordFilter(this.headerObject.unitCellType, item.unitCellType)
                 },
                 dopingFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.doping.filterKeyword, item.doping)
+                    return this.keywordFilter(this.headerObject.doping, item.doping)
                 },
                 shapeFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.shape.filterKeyword, item.shape)
+                    return this.keywordFilter(this.headerObject.shape, item.shape)
                 },
                 variablesFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.variables.filterKeyword, item.variables)
+                    return this.keywordFilter(this.headerObject.variables, item.variables)
                 },
                 materialClassFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.materialClass.filterKeyword, item.materialClass)
+                    return this.keywordFilter(this.headerObject.materialClass, item.materialClass)
                 },
                 fabricationFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.fabrication.filterKeyword, item.fabrication)
+                    return this.keywordFilter(this.headerObject.fabrication, item.fabrication)
                 },
                 substrateFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.substrate.filterKeyword, item.substrate)
+                    return this.keywordFilter(this.headerObject.substrate, item.substrate)
                 },
                 criticalTemperatureFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.criticalTemperature.filterKeyword, item.criticalTemperature)
+                    return this.keywordFilter(this.headerObject.criticalTemperature, item.criticalTemperature)
                 },
                 appliedPressureFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.appliedPressure.filterKeyword, item.appliedPressure)
+                    return this.keywordFilter(this.headerObject.appliedPressure, item.appliedPressure)
                 },
                 criticalTemperatureMeasurementMethodFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.criticalTemperatureMeasurementMethod.filterKeyword, item.criticalTemperatureMeasurementMethod)
+                    return this.keywordFilter(this.headerObject.criticalTemperatureMeasurementMethod, item.criticalTemperatureMeasurementMethod)
                 },
                 linkTypeFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.linkType.filterKeyword, item.linkType)
+                    return this.keywordFilter(this.headerObject.linkType, item.linkType)
                 },
                 sectionFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.section.filterKeyword, item.section)
+                    return this.keywordFilter(this.headerObject.section, item.section)
                 },
                 subsectionFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.subsection.filterKeyword, item.subsection)
+                    return this.keywordFilter(this.headerObject.subsection, item.subsection)
                 },
                 pathFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.path.filterKeyword, item.path)
+                    return this.keywordFilter(this.headerObject.path, item.path)
                 },
                 filenameFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.filename.filterKeyword, item.filename)
+                    return this.keywordFilter(this.headerObject.filename, item.filename)
                 },
                 hashFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.hash.filterKeyword, item.hash)
+                    return this.keywordFilter(this.headerObject.hash, item.hash)
                 },
                 timestampFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.timestamp.filterKeyword, item.timestamp)
+                    return this.keywordFilter(this.headerObject.timestamp, item.timestamp)
                 },
                 doiFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.doi.filterKeyword, item.doi)
+                    return this.keywordFilter(this.headerObject.doi, item.doi)
                 },
                 authorsFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.authors.filterKeyword, item.authors)
+                    return this.keywordFilter(this.headerObject.authors, item.authors)
                 },
                 titleFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.title.filterKeyword, item.title)
+                    return this.keywordFilter(this.headerObject.title, item.title)
                 },
                 publisherFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.publisher.filterKeyword, item.publisher)
+                    return this.keywordFilter(this.headerObject.publisher, item.publisher)
                 },
                 journalFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.journal.filterKeyword, item.journal)
+                    return this.keywordFilter(this.headerObject.journal, item.journal)
                 },
                 yearFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.year.filterKeyword, item.year)
+                    return this.keywordFilter(this.headerObject.year, item.year)
                 },
-                keywordFilter(keyword, target) {
-                    if (!keyword) {
+                keywordFilter(header, target) {
+                    const keyword = header.filterKeyword
+                    const shouldHideEmpty = header.shouldHideEmpty
+                    if (!keyword && !shouldHideEmpty) {
                         return true
                     }
                     if (!target) {
