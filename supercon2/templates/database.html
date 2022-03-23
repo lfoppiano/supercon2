@@ -397,10 +397,10 @@
                     return this.keywordFilter(this.headerObject.year.filterKeyword, item.year)
                 },
                 keywordFilter(keyword, target) {
-                    if (keyword === null || keyword === '') {
+                    if (!keyword) {
                         return true
                     }
-                    if (target === null || target === '') {
+                    if (!target) {
                         return false
                     }
                     return target.indexOf(keyword) > -1
