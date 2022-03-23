@@ -31,9 +31,27 @@
                         <td v-for="header in showHeaders" :key="header.value">
                             <v-radio-group v-model="header.filterKeyword" v-if="header.value === 'type'" dense
                                 hide-details>
-                                <v-radio v-for="item in ['all', 'manual', 'automatic']" :key="item" :label="item"
-                                    :value="item">
-                                </v-radio>
+                                <v-row class="pb-2">
+                                    <v-radio dense value="all" class="ma-0">
+                                    </v-radio>
+                                    <v-icon small title="all" @click="header.filterKeyword = 'all'">
+                                        mdi-filter-off
+                                    </v-icon>
+                                </v-row>
+                                <v-row class="pb-2">
+                                    <v-radio dense value="manual" class="ma-0">
+                                    </v-radio>
+                                    <v-icon small title="manual" @click="header.filterKeyword = 'manual'">
+                                        mdi-human
+                                    </v-icon>
+                                </v-row>
+                                <v-row class="pb-2">
+                                    <v-radio dense value="automatic" class="ma-0">
+                                    </v-radio>
+                                    <v-icon small title="automatic" @click="header.filterKeyword = 'automatic'">
+                                        mdi-robot
+                                    </v-icon>
+                                </v-row>
                             </v-radio-group>
                             <v-radio-group v-model="header.filterKeyword" v-else-if="header.value === 'status'" dense
                                 hide-details>
