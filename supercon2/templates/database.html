@@ -31,7 +31,7 @@
                         <td v-for="header in showHeaders" :key="header.value">
                             <v-radio-group v-model="header.filterKeyword" v-if="header.value === 'type'" dense
                                 hide-details>
-                                <v-row class="pb-2" v-for="radio in headerObject.type.radioGroup">
+                                <v-row class="pb-1" v-for="radio in headerObject.type.radioGroup">
                                     <v-radio dense :value="radio.value" class="ma-0">
                                     </v-radio>
                                     <v-icon small :title="radio.value" @click="header.filterKeyword = radio.value">
@@ -41,15 +41,23 @@
                             </v-radio-group>
                             <v-radio-group v-model="header.filterKeyword" v-else-if="header.value === 'status'" dense
                                 hide-details>
-                                <v-radio v-for="item in ['all', 'valid', 'invalid']" :key="item" :label="item"
-                                    :value="item">
-                                </v-radio>
+                                <v-row class="pb-1" v-for="radio in headerObject.status.radioGroup">
+                                    <v-radio dense :value="radio.value" class="ma-0">
+                                    </v-radio>
+                                    <v-icon small :title="radio.value" @click="header.filterKeyword = radio.value">
+                                        [[ radio.icon ]]
+                                    </v-icon>
+                                </v-row>
                             </v-radio-group>
                             <v-radio-group v-model="header.filterKeyword" v-else-if="header.value === 'flag'" dense
                                 hide-details>
-                                <v-radio v-for="item in ['all', 'flag', 'unflag']" :key="item" :label="item"
-                                    :value="item">
-                                </v-radio>
+                                <v-row class="pb-1" v-for="radio in headerObject.flag.radioGroup">
+                                    <v-radio dense :value="radio.value" class="ma-0">
+                                    </v-radio>
+                                    <v-icon small :title="radio.value" @click="header.filterKeyword = radio.value">
+                                        [[ radio.icon ]]
+                                    </v-icon>
+                                </v-row>
                             </v-radio-group>
                             <template v-else-if="header.value === 'actions'"></template>
                             <template v-else>
@@ -181,8 +189,32 @@
                                 icon: 'mdi-robot'
                             },]
                         },
-                        { text: 'Status', value: 'status', sortable: false, hidden: false, filter: this.statusFilter, filterKeyword: 'all' },
-                        { text: 'Flag', value: 'flag', sortable: false, hidden: false, filter: this.flagFilter, filterKeyword: 'all' },
+                        {
+                            text: 'Status', value: 'status', sortable: false, hidden: false, filter: this.statusFilter, filterKeyword: 'all',
+                            radioGroup: [{
+                                value: 'all',
+                                icon: 'mdi-filter-off'
+                            }, {
+                                value: 'valid',
+                                icon: 'mdi-thumb-up'
+                            }, {
+                                value: 'invalid',
+                                icon: 'mdi-thumb-down'
+                            },]
+                        },
+                        {
+                            text: 'Flag', value: 'flag', sortable: false, hidden: false, filter: this.flagFilter, filterKeyword: 'all',
+                            radioGroup: [{
+                                value: 'all',
+                                icon: 'mdi-filter-off'
+                            }, {
+                                value: 'flag',
+                                icon: 'mdi-flag'
+                            }, {
+                                value: 'unflag',
+                                icon: 'mdi-flag-off'
+                            },]
+                        },
                         { text: 'Actions', value: 'actions', sortable: false, hidden: false },
                         // { text: 'Doc URL', value: 'doc_url', hidden: true},
                         // { text: 'ID', value: 'id', hidden: true},
