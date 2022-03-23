@@ -1,4 +1,5 @@
 import copy
+from collections import OrderedDict
 from datetime import datetime
 
 from bson import ObjectId
@@ -22,12 +23,13 @@ def collect_corrections(corrected_formula, corrected_tc, corrected_pressure):
     return corrections
 
 
-def write_correction(doc, corrections, collection, dry_run: bool = False) -> ObjectId:
+def write_correction(doc, corrections, collection, dry_run: bool = False, skip_none=True, remove_trailing_space=True) -> ObjectId:
     """Write corrections into the database"""
 
-    new_doc = copy.copy(doc)
+    new_doc = post_process_fields(doc, remove_trailing_space, skip_none)
+    correction_clean = post_process_fields(corrections, remove_trailing_space, skip_none)
 
-    for field, value in corrections.items():
+    for field, value in correction_clean.items():
         new_doc[field] = value
 
     doc['status'] = "obsolete"  ## 'obsolete' means that another record is taking over
@@ -37,8 +39,11 @@ def write_correction(doc, corrections, collection, dry_run: bool = False) -> Obj
     new_doc['type'] = 'manual'
     new_doc['status'] = 'valid'
     new_doc['timestamp'] = datetime.utcnow()
-    del new_doc['_id']
-    del new_doc['id']
+
+    # Cleanup
+    for x in ['id', '_id']:
+        if x in new_doc:
+            del new_doc['_id']
 
     if dry_run:
         print("Updating record with id: ", doc['_id'],
@@ -60,6 +65,21 @@ def write_correction(doc, corrections, collection, dry_run: bool = False) -> Obj
         new_doc_id = result.inserted_id
 
     return new_doc_id
+
+
+def post_process_fields(doc, remove_trailing_space=True, skip_none=True):
+    """Remove trailing spaces and None fields"""
+
+    new_doc = OrderedDict()
+
+    for field, value in doc.items():
+        if value is None and skip_none:
+            continue
+        elif type(value) is str and remove_trailing_space:
+            new_doc[field] = str.strip(value)
+        else:
+            new_doc[field] = value
+    return new_doc
 
 
 def write_raw_training_data(doc, new_doc_id, document_collection, training_data_collection) -> ObjectId:

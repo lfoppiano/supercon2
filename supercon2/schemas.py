@@ -23,6 +23,7 @@ class UpdatedRecord(Schema):
     id = String()
     description = String(default=None)
 
+
 class Record(Schema):
     id = String()
     rawMaterial = String()

@@ -1,5 +1,6 @@
 import json
 from datetime import datetime
+from typing import Union
 
 import gridfs
 from apiflask import APIBlueprint, abort, output, input
@@ -113,7 +114,7 @@ def get_stats():
 @bp.route("/record/<id>", methods=["PUT", "PATCH"])
 @input(Record)
 @output(UpdatedRecord)
-def update_record(id, record: Record):
+def update_record(id, record: Union[Record, dict]):
     object_id = validateObjectId(id)
     validate_record(record)
     db = connect_and_get_db()
@@ -140,7 +141,7 @@ def find_latest(current_record, collection):
         return find_latest(next_record, collection)
 
 
-def _update_record(object_id: ObjectId, record: Record, db):
+def _update_record(object_id: ObjectId, record: Union[Record, dict], db):
     tabular_collection = db.get_collection("tabular")
     document_collection = db.get_collection("document")
     training_data_collection = db.get_collection("training_data")
@@ -160,6 +161,8 @@ def _update_record(object_id: ObjectId, record: Record, db):
         training_data_id = write_raw_training_data(old_record, new_id, document_collection, training_data_collection)
         return new_id
     except Exception as e:
+
+        print("Exception", e, "Rolling back.")
         # Roll back
         if training_data_id is not None:
             training_data_collection.delete_one({"_id": training_data_id})

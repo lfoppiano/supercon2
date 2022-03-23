@@ -2,6 +2,7 @@ from unittest.mock import MagicMock
 
 from bson import ObjectId
 
+from commons.correction_utils import post_process_fields
 from supercon2.service import _update_record
 
 
@@ -114,3 +115,45 @@ def test_update_record_with_failure_should_rollback(mongodb, mocker: MagicMock):
     assert old_record_from_db['type'] == "automatic"
 
     assert training_data_after == training_data_before
+
+
+def test_post_process_fields_remove_None():
+    input = {"a": None, "B": "value"}
+    output = post_process_fields(input, skip_none=True)
+
+    assert list(output.keys())[0] == 'B'
+
+
+def test_post_process_fields_keep_None():
+    input = {"a": None, "B": "value"}
+    output = post_process_fields(input, skip_none=False)
+
+    assert list(output.keys())[0] == 'a'
+    assert list(output.keys())[1] == 'B'
+
+
+def test_post_process_fields_remove_trailing():
+    input = {"a": "bjjab     ", "B": "value"}
+    output = post_process_fields(input, remove_trailing_space=True)
+
+    assert output['a'] == "bjjab"
+    assert output['B'] == "value"
+
+
+def test_post_process_fields_keep_trailing():
+    input = {"a": "bjjab     ", "B": "value"}
+    output = post_process_fields(input, remove_trailing_space=False)
+
+    assert output['a'] == "bjjab     "
+    assert output['B'] == "value"
+
+
+def test_post_process_fields_remove_trailing_with_non_str():
+    object_id = ObjectId("61e136f56e3ec3a715592988")
+    input = {"a": "bjjab", "B": "value", "id": object_id, "c": None}
+    output = post_process_fields(input, skip_none=True, remove_trailing_space=True)
+
+    assert output['a'] == "bjjab"
+    assert output['B'] == "value"
+    assert 'c' not in output
+    assert output['id'] == object_id
