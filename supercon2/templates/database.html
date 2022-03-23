@@ -459,11 +459,12 @@
                 keywordFilter(header, target) {
                     const keyword = header.filterKeyword
                     const shouldHideEmpty = header.shouldHideEmpty
-                    // HACK: if target is null, the trim method fails.
-                    if (target === null) {
+                    if (typeof target === 'string') {
+                        target = target.trim()
+                    } else {
+                        // if target is null or undefined, the trim method fails.
                         target = ''
                     }
-                    target = target.trim()
                     if (!keyword && !shouldHideEmpty) {
                         return true
                     }
