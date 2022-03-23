@@ -10,3 +10,4 @@ numpy
 pandas
 openpyxl
 apiflask==0.12.0
+deepdiff
