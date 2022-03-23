@@ -177,7 +177,7 @@
                         { text: 'Year', value: 'year', hidden: false, filter: this.yearFilter, filterKeyword: '', shouldHideEmpty: false },
                         // CONFIRM: check column locations for type, status and flag
                         {
-                            text: 'Type', value: 'type', hidden: false, filter: this.typeFilter, filterKeyword: 'all',
+                            text: 'Type', value: 'type', hidden: false, filter: this.typeFilter, filterKeyword: 'all', width: 80,
                             radioGroup: [{
                                 value: 'all',
                                 icon: 'mdi-filter-off'
@@ -190,7 +190,7 @@
                             },]
                         },
                         {
-                            text: 'Status', value: 'status', sortable: false, hidden: false, filter: this.statusFilter, filterKeyword: 'all',
+                            text: 'Status', value: 'status', sortable: false, hidden: false, filter: this.statusFilter, filterKeyword: 'all', width: 80,
                             radioGroup: [{
                                 value: 'all',
                                 icon: 'mdi-filter-off'
@@ -203,7 +203,7 @@
                             },]
                         },
                         {
-                            text: 'Flag', value: 'flag', sortable: false, hidden: false, filter: this.flagFilter, filterKeyword: 'all',
+                            text: 'Flag', value: 'flag', sortable: false, hidden: false, filter: this.flagFilter, filterKeyword: 'all', width: 80,
                             radioGroup: [{
                                 value: 'all',
                                 icon: 'mdi-filter-off'
