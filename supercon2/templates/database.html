@@ -77,7 +77,8 @@
                     </a>
                 </template>
                 <template v-slot:item.flag="{ item }">
-                    <v-checkbox :input-value="item.flag" @click="toggleFlag(item)"></v-checkbox>
+                    <v-checkbox :input-value="item.flag" @click="toggleFlag(item)" :disabled="flagIsNotWritable(item)">
+                    </v-checkbox>
                 </template>
                 <template v-slot:item.actions="{ item }">
                     <v-icon small class="mr-2" @click="openEditItemDialog(item)" title="Open edit dialog">
@@ -566,6 +567,9 @@
                     } finally {
 
                     }
+                },
+                flagIsNotWritable(record) {
+                    return record.type === 'manual' && record.status === 'valid'
                 },
             },
             created() {
