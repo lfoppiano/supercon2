@@ -450,7 +450,7 @@
                     return this.keywordFilter(this.headerObject.year, item.year)
                 },
                 keywordFilter(header, target) {
-                    const keyword = header.filterKeyword
+                    const keyword = header.filterKeyword.trim()
                     const shouldHideEmpty = header.shouldHideEmpty
                     if (!keyword && !shouldHideEmpty) {
                         return true
