@@ -73,8 +73,8 @@
                 </template>
                 <template v-slot:item.hash="{ item }">
                     <a :href="'./document/' + item.hash" target="_blank" :style="{'text-decoration': 'none'}">
-                        [[ item.hash ]]
-                    </a>
+                            [[ item.hash ]]
+                        </a>
                 </template>
                 <template v-slot:item.flag="{ item }">
                     <v-checkbox :input-value="item.flag" @click="toggleFlag(item)" :disabled="flagIsNotWritable(item)">
@@ -451,8 +451,13 @@
                     return this.keywordFilter(this.headerObject.year, item.year)
                 },
                 keywordFilter(header, target) {
-                    const keyword = header.filterKeyword.trim()
+                    const keyword = header.filterKeyword
                     const shouldHideEmpty = header.shouldHideEmpty
+                    // HACK: if target is null, the trim method fails.
+                    if (target === null) {
+                        target = ''
+                    }
+                    target = target.trim()
                     if (!keyword && !shouldHideEmpty) {
                         return true
                     }
