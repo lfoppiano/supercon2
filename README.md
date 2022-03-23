@@ -2,76 +2,100 @@
 
 ## Table of Contents
 
-  * [Introduction](#introduction)
-  * [Service](#service)
+* [Introduction](#introduction)
+* [Service](#service)
+    + [Overview](#overview)
+    + [Record reporting (flagging interface)](#record-reporting-or-flagging)
+    + [Record correction](#record-correction)
     + [Getting started](#getting-started)
     + [API documentation](#api-documentation)
-  * [Process](#process)
+* [Process](#process)
     + [Scripts](#scripts)
-
 
 ## Introduction
 
-SuperCon 2 is the evolution of [SuperCon](http://supercon.nims.go.jp) as database of superconductors materials. 
-Differently from SuperCon, SuperCon 2 has been created automatically from scientific literature on superconductor materials research.
+SuperCon 2 is the evolution of [SuperCon](http://supercon.nims.go.jp) as database of superconductors materials.
+Differently from SuperCon, SuperCon 2 has been created automatically from scientific literature on superconductor
+materials research.
 
-This repository contains: 
- - SuperCon 2 service, which provides the API and the interface for visualising and editing material and properties extracted from superconductors-related papers.
- - The process to create the SuperCon 2 database from scratch, using [Grobid Superconductor](https://github.com/lfoppiano/grobid-superconductors) to extract materials information from large quantities of PDFs.
+This repository contains:
+
+- SuperCon 2 service, which provides the API and the interface for visualising and editing material and properties
+  extracted from superconductors-related papers.
+- The process to create the SuperCon 2 database from scratch,
+  using [Grobid Superconductor](https://github.com/lfoppiano/grobid-superconductors) to extract materials information
+  from large quantities of PDFs.
 
 **Work in progress**
 
-## Service 
+## Service
 
-The `supercon2` service provides the following features: 
- - Visualisation of records of extracted materials-properties, with filtering, sorting 
-   
-    ![record-list.png](docs/images/record-list.png)
+![record-list.png](docs/images/supercon2-overview.png)
 
- - Visualisation of "augmented" PDFs with highlight annotations of materials and properties
-   
-    ![pdf-view.png](docs/images/pdf-view.png)
+### Overview
 
- - Flagging of invalid records: records can be marked as valid/invalid manually
-   
-    ![flagged-records.png](docs/images/flagged-records.png)
+The `supercon2` service provides the following features:
 
- - Add/Edit/Remove of records.
-   
-    ![edit-record.png](docs/images/edit-record.png)
- 
- - Automatic collection of training data: when a record has been corrected the information of the sentence, spans (the annotations) and tokens (the tokens, including layout information, fonts, and other perpenducular features) are collected
-   
-   ![training-data-view.png](docs/images/training-data-view.png)
+- Visualisation of records of extracted materials-properties, with filtering, sorting
+- Visualisation of "augmented" PDFs with highlight annotations of materials and properties
+- Flagging of invalid records: records can be marked as valid/invalid manually
+- Add/Edit/Remove of records.
+- Automatic collection of training data: when a record has been corrected the information of the sentence, spans (the
+  annotations) and tokens (the tokens, including layout information, fonts, and other perpenducular features) are
+  collected
 
+[//]: # (![training-data-view.png]&#40;docs/images/training-data-view.png&#41;)
+[//]: # (![pdf-view.png]&#40;docs/images/pdf-view.png&#41;)
+
+
+### Record reporting (or flagging)
+
+The "Record flagging/reporting" is a functionality that allow users and curator to quickly report invalid records. By
+clicking on the flagging checkbox the record is marked as invalid and can be excluded from the database without being
+removed.
+
+![flagging_interface.png](docs/images/flagging_interface.png)
+
+The curators have the possibility to identify such records and correct them or remove them from the database at later
+stage.
+![flagged-records.png](docs/images/flagged-records.png)
+
+### Record correction
+
+The interface allow the correction of records 
+
+![edit-record.png](docs/images/edit-record.png)
 
 ### Getting started
 
 #### Docker
 
-Docker can be built with: 
+Docker can be built with:
 
 > docker build -t lfoppiano/supercon2:1.2 --file Dockerfile .
 
-and run: 
+and run:
 
-> docker run  -rm -p 8080 -v ./supercon2/config-docker.yaml:/opt/service/supercon2/config.yaml:ro lfoppiano/supercon2:1.2
+> docker run -rm -p 8080 -v ./supercon2/config-docker.yaml:/opt/service/supercon2/config.yaml:ro lfoppiano/supercon2:1.2
 
-For connecting to mongodb is possible to connect directly to the mongodb IP (to be specified in `config-docker.yaml`), if this is not possible then it's recommended to use docker-compose.
+For connecting to mongodb is possible to connect directly to the mongodb IP (to be specified in `config-docker.yaml`),
+if this is not possible then it's recommended to use docker-compose.
 
 #### Docker compose
 
-The docker compose is going to mount the volume `resources/mongo` as `/data/db` in the container. And mapping the mongodb container with port 27018 (to avoid conflicts with the default mongodb port). 
+The docker compose is going to mount the volume `resources/mongo` as `/data/db` in the container. And mapping the
+mongodb container with port 27018 (to avoid conflicts with the default mongodb port).
 
-The configuration file `supercon2/config-docker.yaml` is also mapped in the supercon2 container `/opt/service/supercon2/config.yaml`
+The configuration file `supercon2/config-docker.yaml` is also mapped in the supercon2
+container `/opt/service/supercon2/config.yaml`
 
-Docker compose is executed by running:  
+Docker compose is executed by running:
 
-> docker-compose up 
+> docker-compose up
 
-and shut down: 
+and shut down:
 
-> docker-compose down 
+> docker-compose down
 
 #### Local development
 
@@ -88,13 +112,13 @@ check that pip is the correct one in the conda environment:
 which pip
 ```
 
-pip should be something like `....supercon2/bin/pip`. If not you should unset it with: 
+pip should be something like `....supercon2/bin/pip`. If not you should unset it with:
 
 ```
 unset pip
 ```
 
-To run the service you can use: 
+To run the service you can use:
 
 ```
 python -m supercon2 --config supercon2/config.json
@@ -102,26 +126,26 @@ python -m supercon2 --config supercon2/config.json
 
 ### API documentation
 
-The application supports custom `root_path`, which can be configured from the `config.yaml` file. All the API is served under the custom `root_path`. 
+The application supports custom `root_path`, which can be configured from the `config.yaml` file. All the API is served
+under the custom `root_path`.
 
-The API documentation is provided by apiflask OpenAPI (swagger) implementation. 
+The API documentation is provided by apiflask OpenAPI (swagger) implementation.
 
 | URL       | Description                                    |
 |-----------|------------------------------------------------|
 | `/spec`   | Serve the OpenAPI documentation as YAML        |
- | `/redoc`  | Serve the OpenAPI documentation via redoc      |
- | `/docs`   | Serve the OpenAPI documentation via swagger-UI |
-
+| `/redoc`  | Serve the OpenAPI documentation via redoc      |
+| `/docs`   | Serve the OpenAPI documentation via swagger-UI |
 
 Following an API documentation summary:
 
 | URL                                  | Method     | Description                                                                      |
 |--------------------------------------|------------|----------------------------------------------------------------------------------|
 | `/stats`                             | GET        | Return statistics                                                                |
- | `/records`                           | GET        | Return the list of records                                                       |
- | `/records/<type>`                    | GET        | Return the list of records of a specific type `automatic`/`manual`               |
- | `/records/<type>/<year>`             | GET        | Return the list of records of a specific type + year                             |
- | `/records/<type>/<publisher>/<year>` | GET        | Return the list of records of a specific type + publisher + year                 |
+| `/records`                           | GET        | Return the list of records                                                       |
+| `/records/<type>`                    | GET        | Return the list of records of a specific type `automatic`/`manual`               |
+| `/records/<type>/<year>`             | GET        | Return the list of records of a specific type + year                             |
+| `/records/<type>/<publisher>/<year>` | GET        | Return the list of records of a specific type + publisher + year                 |
 | `/record/<id>`                       | GET        | Return the single record                                                         |  
 | `/record/<id>`                       | PUT/PATCH  | Update the record                                                                |  
 | `/record`                            | POST       | Create a new record                                                              |  
@@ -138,14 +162,15 @@ Following an API documentation summary:
 
 ## Process
 
-The processes are composed by a set of python scripts that were built under the following principles: 
- - versioning
- - skip/force reprocessing
- - simple logging (successes and failures divided by process steps)
+The processes are composed by a set of python scripts that were built under the following principles:
+
+- versioning
+- skip/force reprocessing
+- simple logging (successes and failures divided by process steps)
 
 #### Scripts
 
-##### PDF processing and extraction 
+##### PDF processing and extraction
 
 Extract superconductor materials and properties and save them on MongoDB - extraction
 
@@ -164,15 +189,15 @@ optional arguments:
   --verbose             Print all log information
 ```
 
-Example: 
+Example:
+
 ```
 python -m process.supercon_batch_mongo_extraction --config ./process/config.yaml --input <your_pdf_input_directory>
 ```
 
-
 ##### Conversion from document representation to material-properties records
 
-Process extracted documents and compute the tabular format: 
+Process extracted documents and compute the tabular format:
 
 ```
 usage: supercon_batch_mongo_compute_table.py [-h] --config CONFIG [--num-threads NUM_THREADS] [--database DATABASE] [--force] [--verbose]
@@ -188,15 +213,16 @@ optional arguments:
   --verbose             Print all log information
 
 ```
-Example: 
+
+Example:
+
 ```
 python -m process.supercon_batch_mongo_compute_table --config ./process/config.yaml
 ```
 
-##### Feedback manual corrections from Excel to the database 
+##### Feedback manual corrections from Excel to the database
 
 Feedback to supercon2 corrections from an Excel file
-
 
 ```
 usage: feedback_corrections.py [-h] --corrections CORRECTIONS --config CONFIG [--dry-run] [--database DATABASE] [--verbose]
@@ -212,7 +238,9 @@ optional arguments:
   --verbose             Print all log information
 
 ```
-Example: 
+
+Example:
+
 ```
 python -m process.supercon_batch_mongo_compute_table --config ./process/config.yaml
 ```
