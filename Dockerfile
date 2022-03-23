@@ -1,11 +1,11 @@
-FROM python:rc-slim
+FROM python:3.10-slim
 
 ENV LANG C.UTF-8
 
 RUN apt-get update && \
     apt-get -y --no-install-recommends install \
     git \
-    python3.10 python3.10-venv python3.10-dev python3.10-distutil build-essential gcc\
+    build-essential gcc\
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -26,7 +26,7 @@ RUN git rev-parse --short HEAD > /opt/service/resources/version.txt
 RUN rm -rf ./.git
 
 ENV VIRTUAL_ENV=/opt/service/venv
-RUN python3.9 -m venv $VIRTUAL_ENV
+RUN python3 -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 RUN pip --version
 
