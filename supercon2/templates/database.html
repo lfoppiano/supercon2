@@ -62,7 +62,7 @@
                             <template v-else-if="header.value === 'actions'"></template>
                             <template v-else>
                                 <v-text-field v-model="header.filterKeyword" type="text" placeholder="keyword"
-                                    hide-details>
+                                    hide-details clearable>
                                 </v-text-field>
                                 <v-switch v-model="headerObject[header.value].shouldHideEmpty" title="Hide empty">
                                 </v-switch>
@@ -72,9 +72,15 @@
                     </tr>
                 </template>
                 <template v-slot:item.hash="{ item }">
-                    <a :href="'./document/' + item.hash" target="_blank" :style="{'text-decoration': 'none'}">
+                    <v-row>
+                        <a :href="'./document/' + item.hash" target="_blank" :style="{'text-decoration': 'none'}"
+                            class="ma-1">
                             [[ item.hash ]]
                         </a>
+                        <v-icon @click="headerObject.hash.filterKeyword = item.hash">
+                            mdi-content-paste
+                        </v-icon>
+                    </v-row>
                 </template>
                 <template v-slot:item.flag="{ item }">
                     <v-checkbox :input-value="item.flag" @click="toggleFlag(item)" :disabled="flagIsNotWritable(item)">
@@ -168,7 +174,7 @@
                         { text: 'Subsection', value: 'subsection', hidden: true, filter: this.subsectionFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'Path', value: 'path', hidden: true, filter: this.pathFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'Filename', value: 'filename', hidden: true, filter: this.filenameFilter, filterKeyword: '', shouldHideEmpty: false },
-                        { text: 'Document', value: 'hash', hidden: false, filter: this.hashFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Document', value: 'hash', hidden: false, filter: this.hashFilter, filterKeyword: '', width: 120, shouldHideEmpty: false },
                         { text: 'Timestamp', value: 'timestamp', hidden: true, filter: this.timestampFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'DOI', value: 'doi', hidden: false, filter: this.doiFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'Authors', value: 'authors', width: 300, hidden: true, filter: this.authorsFilter, filterKeyword: '', shouldHideEmpty: false },
