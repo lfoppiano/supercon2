@@ -457,14 +457,9 @@
                     return this.keywordFilter(this.headerObject.year, item.year)
                 },
                 keywordFilter(header, target) {
-                    const keyword = header.filterKeyword
+                    const keyword = this.sanitizeString(header.filterKeyword)
+                    target = this.sanitizeString(target)
                     const shouldHideEmpty = header.shouldHideEmpty
-                    if (typeof target === 'string') {
-                        target = target.trim()
-                    } else {
-                        // if target is null or undefined, the trim method fails.
-                        target = ''
-                    }
                     if (!keyword && !shouldHideEmpty) {
                         return true
                     }
@@ -472,6 +467,13 @@
                         return false
                     }
                     return target.indexOf(keyword) > -1
+                },
+                sanitizeString(target) {
+                    if (typeof target === 'string') {
+                        return target.trim()
+                    } else {
+                        return ''
+                    }
                 },
                 typeFilter(value, search, item) {
                     const keyword = this.headerObject.type.filterKeyword
