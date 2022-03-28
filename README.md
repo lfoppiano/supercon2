@@ -36,22 +36,86 @@ This repository contains:
 
 The `supercon2` service provides the following features:
 
-- Visualisation of records of extracted materials-properties, with filtering, sorting
-- Visualisation of "augmented" PDFs with highlight annotations of materials and properties
-- Flagging of invalid records: records can be marked as valid/invalid manually
-- Add/Edit/Remove of records.
+- Visualisation of materials-properties records as a table, with search/filtering, sorting, selection of non-empty values
+- Visualisation of "augmented" PDFs with highlight of the annotations identifying materials and properties
+- Reporting of incorrect/invalid records (**record flagging**): records can be marked as incorrect manually
+- Correction of Incorrect records (**record correction**): users can correct incorrect records or add missing records.
 - Automatic collection of training data: when a record has been corrected the information of the sentence, spans (the
   annotations) and tokens (the tokens, including layout information, fonts, and other perpenducular features) are
   collected
 
+**Design principles** 
+ - each document is identified by an 8-character hash code. To save space we do not allow to store multiple version of the same paper (paper with the same hash).  
+ - each record is linked to the document by the document hash
+ - correcting a record will generate a new record and link it to the original, so that will be possible, in future to undo modifications 
+
+The technical details of the curation interface can be found [here](docs/correction_workflow.md).
+
+**Terminology** 
+ - **Incorrect** = wrong (e.g. 3 K extracted instead of 30K is incorrect) [Ref](https://forum.wordreference.com/threads/invalid-incorrect-wrong.2776284/post-14029941)
+ - **Invalid** = wrong through being inappropriate to the situation (e.g. Tm or T curie extracted as superconducting critical temperature is invalid) [Ref](https://forum.wordreference.com/threads/invalid-incorrect-wrong.2776284/post-14029941)
+ - **Flagging** = In programming, a "yes/no" indicator used to represent the current status of something. [Ref](https://www.pcmag.com/encyclopedia/term/flagging)
+
+ 
+**Future plans**
+ - Invalid record remove [#43](https://github.com/lfoppiano/supercon2/issues/43)
+ - Undo/redo functionality: possibility to revert incorrect edits and modification of the database 
+ - Versioning of documents 
+
+
 [//]: # (![training-data-view.png]&#40;docs/images/training-data-view.png&#41;)
 [//]: # (![pdf-view.png]&#40;docs/images/pdf-view.png&#41;)
 
+### Interface features
 
-### Record reporting (or flagging)
+Here a list of the main features, please notice that they **can all be used simultaneously**. 
 
-The "Record flagging/reporting" is a functionality that allow users and curator to quickly report invalid records. By
-clicking on the flagging checkbox the record is marked as invalid and can be excluded from the database without being
+#### Filtering 
+
+By entering keywords in each column is possible to filter records by multiple filters
+
+![](docs/images/filter-by-keywords.png)
+
+#### Filter by document
+There is a shortcut for identify only records belonging to a specific document (see column Document) 
+
+![](docs/images/filter-by-document-1.png)
+
+In the following figure only record of document `11d82...` are shown: 
+
+![](docs/images/filter-by-document-2.png)
+
+
+#### Change which columns to visualise
+
+The default view does not show all the attribute of the database 
+
+![](docs/images/modify-visualised-columns-1.png)
+
+it's possible to extend the table by using the "select columns" feature:
+
+![](docs/images/modify-visualised-columns-2.png)
+
+#### Hide empty/blank values 
+It's possible to show only **records for which certain column(s) contains non-blank characters (spaces, break lines, tabs, etc..): 
+
+![](docs/images/visualise-non-empty-fields-1.png)
+in this example the user sees only records of materials with "Applied pressure": 
+![](docs/images/visualise-non-empty-fields-2.png)
+
+such filters can be "combined" on multiple columns (e.g. formula + applied pressure): 
+![](docs/images/visualise-non-empty-fields-3.png)
+
+#### multi column sorting
+
+The interface supports multicolumn sorting, the number indicate the priority, the arrow the order (ascendent or descendent): 
+![](docs/images/multicolumn-sorting.png)
+
+### Workflows 
+#### Record reporting (or flagging)
+
+The "Record reporting" allows users and curator to quickly report incorrect or invalid records. 
+By clicking on the flagging checkbox the record is marked as invalid and can be excluded from the database without being
 removed.
 
 ![flagging_interface.png](docs/images/flagging_interface.png)
@@ -62,7 +126,9 @@ stage.
 
 ### Record correction
 
-The interface allow the correction of records 
+The interface allow the correction of records independently if they are valid or incorrect: 
+
+![edit-record.png](docs/images/edit-interface.png)
 
 ![edit-record.png](docs/images/edit-record.png)
 
