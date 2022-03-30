@@ -3,3 +3,7 @@ mongo:
 #  server: "falcon.nims.go.jp:27017"
   db: "supercon_tmp"
 #  db: "supercon_dev_1203"
+
+label-studio:
+  url: "http://localhost:8081/"
+  token: "ADD_TOKEN_FROM_LABEL_STUDIO"
