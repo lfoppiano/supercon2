@@ -11,3 +11,4 @@ pandas
 openpyxl
 apiflask==0.12.0
 deepdiff
+label-studio-sdk

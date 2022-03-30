@@ -7,7 +7,7 @@ def to_label_studio_format_single(text: str, spans: list) -> list:
     sentence_structure['data'] = {
         "text": text
     }
-    sentence_structure['predictions'] = [
+    sentence_structure['annotations'] = [
         {
             'model_version': '1',
             'result': [
