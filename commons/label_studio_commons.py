@@ -7,11 +7,11 @@ def to_label_studio_format_single(text: str, spans: list) -> list:
     sentence_structure['data'] = {
         "text": text
     }
-    sentence_structure['annotations'] = [
+    sentence_structure['predictions'] = [
         {
             'model_version': '1',
             'result': [
-                {'id': id_,
+                {'id': str(id_),
                  'from_name': 'label',
                  'to_name': 'text',
                  'type': 'labels',

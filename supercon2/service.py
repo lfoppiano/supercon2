@@ -463,6 +463,16 @@ def get_training_data_by_status(status, db):
     return new_format, ids
 
 
+def get_training_data_by_id_and_status(record_id, status, db):
+    id = validateObjectId(record_id)
+    training_data_collection = db.get_collection("training_data")
+    training_data = training_data_collection.find_one({'_id': id, 'status': status}, {'tokens': 0})
+    if not training_data:
+        return None, None
+    new_structure = to_label_studio_format_single(training_data['text'], training_data['spans'])
+    return new_structure, training_data['_id']
+
+
 def get_span_start(type):
     return '<span class="label ' + type + '">'
 
@@ -498,6 +508,7 @@ def get_training_data_list():
         training_output.append({
             "id": str(training_data_item['_id']),
             "text": text,
+            "status": training_data_item['status'],
             "annotated_text": annotated_text,
             "hash": training_data_item['hash'],
             "corrected_record_id": training_data_item['corrected_record_id']
@@ -625,8 +636,16 @@ def post_tasks_to_label_studio_project(project_id):
     return Response(json.dumps(result_response, default=json_serial), mimetype="application/json")
 
 
+
 @bp.route("/label/studio/project/<project_id>/record/<record_id>", methods=['POST', 'PUT'])
 def post_task_to_label_studio_project(project_id, record_id):
+    db = connect_and_get_db()
+    task_to_send, task_id = get_training_data_by_id_and_status(record_id, 'new', db)
+
+    if not task_to_send:
+        abort(404, "No available training data to send. The requested record is not available"
+                   " or it had been sent already. ")
+
     authentication_token = get_label_studio_token()
 
     from label_studio_sdk import Client
@@ -642,11 +661,23 @@ def post_task_to_label_studio_project(project_id, record_id):
     if project is None:
         abort(404, "No project were found.")
 
-    output_project_format = {
-        'params': project.params,
-        'parsed_label_config': project.parsed_label_config,
-        'tasks': project.tasks,
-        'tasks_ids': project.tasks_ids
+    try:
+        result = project.import_tasks(task_to_send)
+    except Exception as e:
+        abort(e.response.status_code, message="Error when sending data to label studio",
+              detail=json.loads(e.response.text)['detail'])
+
+    if len(result) != 1:
+        abort(500, "One result is expected but not obtained. Something was lost on the way. ")
+
+    training_data_collection = db.get_collection("training_data")
+    op_result = training_data_collection.update_one({'_id': task_id}, {'$set': {'status': 'in_progress', 'task_id': result[0]}})
+
+    result_response = {
+        'ids_mapping': [
+            {str(task_id): result[0]}
+        ],
+        'modified': op_result.modified_count
     }
 
-    return Response(json.dumps(output_project_format, default=json_serial), mimetype="application/json")
+    return Response(json.dumps(result_response, default=json_serial), mimetype="application/json")
