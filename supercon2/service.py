@@ -451,11 +451,6 @@ def get_biblio_by_hash(hash):
     return last_document['biblio']
 
 
-
-
-
-
-
 @bp.route('/training/data/status/<status>')
 def export_training_data_by_status(status):
     db = connect_and_get_db()
@@ -649,7 +644,6 @@ def post_tasks_to_label_studio_project(project_id):
     return Response(json.dumps(result_response, default=json_serial), mimetype="application/json")
 
 
-
 @bp.route("/label/studio/project/<project_id>/record/<record_id>", methods=['POST', 'PUT'])
 def post_task_to_label_studio_project(project_id, record_id):
     db = connect_and_get_db()
@@ -684,7 +678,8 @@ def post_task_to_label_studio_project(project_id, record_id):
         abort(500, "One result is expected but not obtained. Something was lost on the way. ")
 
     training_data_collection = db.get_collection("training_data")
-    op_result = training_data_collection.update_one({'_id': task_id}, {'$set': {'status': 'in_progress', 'task_id': result[0]}})
+    op_result = training_data_collection.update_one({'_id': task_id},
+                                                    {'$set': {'status': 'in_progress', 'task_id': result[0]}})
 
     result_response = {
         'ids_mapping': [
