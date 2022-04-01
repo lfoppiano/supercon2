@@ -89,6 +89,7 @@ def get_stats():
         {"$sort": {"count_docs": -1}}
     ]
     by_publisher = tabular_collection.aggregate(pipeline_group_by_publisher)
+    by_publisher_fixed = replace_empty_key(by_publisher)
 
     pipeline_group_by_year = [
         {"$match": {"type": "automatic", "status": "valid"}},
@@ -98,6 +99,7 @@ def get_stats():
         {"$sort": {"count_docs": -1}}
     ]
     by_year = tabular_collection.aggregate(pipeline_group_by_year)
+    by_year_fixed = replace_empty_key(by_year)
 
     pipeline_group_by_journal = [
         {"$match": {"type": "automatic", "status": "valid"}},
@@ -107,8 +109,18 @@ def get_stats():
         {"$sort": {"count_docs": -1}}
     ]
     by_journal = tabular_collection.aggregate(pipeline_group_by_journal)
+    by_journal_fixed = replace_empty_key(by_journal)
 
-    return render_template("stats.html", by_publisher=by_publisher, by_year=by_year, by_journal=by_journal)
+    return render_template("stats.html", by_publisher=by_publisher_fixed, by_year=by_year_fixed, by_journal=by_journal_fixed)
+
+
+def replace_empty_key(input):
+    output = [{k: v for k, v in item.items()} for item in input]
+    for pub in output:
+        if pub['_id'] == "":
+            pub['_id'] = 'N/A'
+            break
+    return output
 
 
 @bp.route("/record/<id>", methods=["PUT", "PATCH"])
