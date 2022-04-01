@@ -17,8 +17,11 @@
 <v-app id="app">
     <v-container fluid>
         <h2>Supercon2 training data viewer</h2>
-        <v-select v-model="selectedHeaders" :items="headers" label="Select Columns" multiple outlined return-object>
-        </v-select>
+        <v-row justify="space-between" class="ma-0">
+            <v-select v-model="selectedHeaders" :items="headers" label="Select Columns" multiple outlined
+                      return-object></v-select>
+            <v-btn @click="send_all_to_label_studio" Depressed class="ma-2">Send all</v-btn>
+        </v-row>
         <!-- TODO: height 800px should be dynamic? up to a user screen size?  -->
         <v-data-table
                 :headers="showHeaders"
@@ -31,6 +34,11 @@
                 height="800">
             <template v-slot:item.annotated_text="{ item }">
                 <span v-html="item.annotated_text"></span>
+            </template>
+            <template v-slot:item.actions="{ item }">
+                <v-icon small class="mr-2" @click="send_record_to_label_studio(item)" title="Send to label-studio">
+                    mdi-send-outline
+                </v-icon>
             </template>
         </v-data-table>
         <p><span style="color:#848484;">contributors - 2022</span></p>
@@ -47,10 +55,11 @@
             return {
                 selectedHeaders: [],
                 headers: [
-                    {text: 'id', value: 'id', hidden: true},
-                    {text: 'text', value: 'annotated_text', hidden: false},
-                    {text: 'status', value: 'status', hidden: false},
-                    {text: 'hash', value: 'hash', hidden: false}
+                    {text: 'Id', value: 'id', sortable: false, hidden: true},
+                    {text: 'Text', value: 'annotated_text', sortable: false, hidden: false},
+                    {text: 'Status', value: 'status', sortable: true, hidden: false},
+                    {text: 'Document', value: 'hash', sortable: true, hidden: false},
+                    {text: 'Actions', value: 'actions', sortable: false, hidden: false},
                 ],
                 items: []
             }
@@ -66,7 +75,33 @@
                 this.items = data.data
             })
         },
-        methods: {},
+        methods: {
+            async send_record_to_label_studio(item) {
+                let url = '{{ url_for("supercon.post_task_to_label_studio_project", project_id="project_id", record_id="record_id") }}'
+                url = url.replace(
+                    "project_id",
+                    "3"
+                )
+                url = url.replace(
+                    "record_id",
+                    item.id
+                )
+
+                const headers = {
+                    "Authentication": "Token 8a35f1f444d69498b356c348ba866d9df9fd8c33"
+                };
+
+                try {
+                    await axios.post(url, {}, {headers})
+                    this.close()
+                } catch (e) {
+                    console.error(e)
+                    window.alert(JSON.stringify(e.response.data))
+                } finally {
+                    item.status='in_progress'
+                }
+            },
+        },
         created() {
             this.selectedHeaders = this.headers.filter(h => !h.hidden)
         },
