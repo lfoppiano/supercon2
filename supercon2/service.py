@@ -442,6 +442,7 @@ def export_training_data(id):
 
     return single_training_data
 
+
 @bp.route('/annotation/<hash>/biblio')
 def get_biblio_by_hash(hash):
     db = connect_and_get_db()
