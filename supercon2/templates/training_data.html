@@ -20,7 +20,7 @@
         <v-row justify="space-between" class="ma-0">
             <v-select v-model="selectedHeaders" :items="headers" label="Select Columns" multiple outlined
                       return-object></v-select>
-            <v-btn @click="send_all_to_label_studio" Depressed class="ma-2">Send all</v-btn>
+            <v-btn @click="send_all_new_records_to_label_studio" Depressed class="ma-2">Send all</v-btn>
         </v-row>
         <!-- TODO: height 800px should be dynamic? up to a user screen size?  -->
         <v-data-table
@@ -94,11 +94,34 @@
                 try {
                     await axios.post(url, {}, {headers})
                     this.close()
+                    item.status='in_progress'
                 } catch (e) {
                     console.error(e)
                     window.alert(JSON.stringify(e.response.data))
                 } finally {
+                    //
+                }
+            },
+            async send_all_new_records_to_label_studio(item) {
+                let url = '{{ url_for("supercon.post_tasks_to_label_studio_project", project_id="project_id") }}'
+                url = url.replace(
+                    "project_id",
+                    "3"
+                )
+
+                const headers = {
+                    "Authentication": "Token 8a35f1f444d69498b356c348ba866d9df9fd8c33"
+                };
+
+                try {
+                    await axios.post(url, {}, {headers})
+                    this.close()
                     item.status='in_progress'
+                } catch (e) {
+                    console.error(e)
+                    window.alert(JSON.stringify(e.response.data))
+                } finally {
+                    //
                 }
             },
         },
