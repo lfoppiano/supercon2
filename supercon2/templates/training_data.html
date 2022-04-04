@@ -70,12 +70,17 @@
             }
         },
         mounted() {
-            const url = '{{ url_for("supercon.get_training_data_list") }}'
-            axios.get(url).then((data) => {
-                this.items = data.data
-            })
+            this.loadItems();
         },
         methods: {
+            loadItems() {
+                const url = '{{ url_for("supercon.get_training_data_list") }}'
+                axios.get(url)
+                    .then((data) => {
+                            this.items = data.data
+                        }
+                    )
+            },
             async send_record_to_label_studio(item) {
                 let url = '{{ url_for("supercon.post_task_to_label_studio_project", project_id="project_id", record_id="record_id") }}'
                 url = url.replace(
@@ -93,15 +98,16 @@
 
                 try {
                     await axios.post(url, {}, {headers})
-                    this.close()
-                    item.status='in_progress'
+                    {#item.status='in_progress'#}
+                    this.loadItems()
                 } catch (e) {
                     console.error(e)
                     window.alert(JSON.stringify(e.response.data))
                 } finally {
                     //
                 }
-            },
+            }
+            ,
             async send_all_new_records_to_label_studio(item) {
                 let url = '{{ url_for("supercon.post_tasks_to_label_studio_project", project_id="project_id") }}'
                 url = url.replace(
@@ -115,19 +121,21 @@
 
                 try {
                     await axios.post(url, {}, {headers})
-                    this.close()
-                    item.status='in_progress'
+                    {#item.status='in_progress'#}
+                    this.loadItems()
                 } catch (e) {
                     console.error(e)
                     window.alert(JSON.stringify(e.response.data))
                 } finally {
                     //
                 }
-            },
+            }
+            ,
         },
         created() {
             this.selectedHeaders = this.headers.filter(h => !h.hidden)
-        },
+        }
+        ,
     })
 </script>
 
