@@ -66,6 +66,18 @@ def flag_as_correct(doc_id, collection, dry_run=False):
     return collection.update_one({'_id': doc_id}, {'$set': changes})
 
 
+def flag_as_invalid(doc_id, collection, dry_run):
+    if dry_run:
+        print("Flagging document with id ", doc_id, "as invalid (should not have been extracted). ")
+        return
+
+    status = 'invalid'
+    type = 'manual'
+
+    changes = {'status': status, 'type': type}
+    return collection.update_one({'_id': doc_id}, {'$set': changes})
+
+
 def process(corrections_file, database, dry_run=False):
     tabular_collection = database.get_collection("tabular")
     document_collection = database.get_collection("document")
@@ -86,14 +98,14 @@ def process(corrections_file, database, dry_run=False):
         sub_section = row[9] if str(row[9]) != 'nan' else None
         hash = row[10]
 
-        documents = tabular_collection.find({"hash": hash, "status": "valid"})
+        # Iterate on the database records
+        documents = tabular_collection.find({"hash": hash, "type": "automatic", "status": "valid"})
 
         for doc in documents:
-            if status == "correct":
-                flag_as_correct(doc['_id'], tabular_collection, dry_run=dry_run)
+            if doc['rawMaterial'] != raw_material:
                 continue
 
-            if doc['rawMaterial'] != raw_material:
+            if doc['formula'] != formula:
                 continue
 
             if doc["criticalTemperature"] != tc:
@@ -108,8 +120,20 @@ def process(corrections_file, database, dry_run=False):
             if doc["subsection"] != sub_section:
                 continue
 
-            print("Found record corresponding to material:", doc['rawMaterial'])
+            print("Found record corresponding to material:", doc['_id'], ": ")
+            print("- Raw material ", doc['rawMaterial'], "->", raw_material)
+            print("- Formula ", doc['formula'], "->", formula)
+            print("- Applied pressure ", doc['appliedPressure'], "->", pressure)
+            print("- section ", doc['section'], "->", section)
+            print("- subsection ", doc['subsection'], "->", sub_section)
 
+            if status == "correct":
+                flag_as_correct(doc['_id'], tabular_collection, dry_run=dry_run)
+                break
+            elif status == "invalid":
+                flag_as_invalid(doc['_id'], tabular_collection, dry_run)
+
+            # At this point the record was corrected in the excel, so I apply the corrections
             corrections = collect_corrections(corrected_formula, corrected_tc, corrected_pressure)
 
             if len(corrections.keys()) == 0:
@@ -120,6 +144,7 @@ def process(corrections_file, database, dry_run=False):
                 try:
                     new_id = write_correction(doc, corrections, tabular_collection, dry_run=dry_run)
                     training_data_id = write_raw_training_data(doc, new_id, document_collection, training_data_collection)
+                    break
                 except Exception as e:
                     print("There was an exception. Rolling back. ")
                     rolling_back(new_id, doc['_id'], training_data_id, tabular_collection, training_data_collection)
