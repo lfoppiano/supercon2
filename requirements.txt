@@ -1,4 +1,4 @@
-Flask==2.0.2
+Flask==2.1.2
 pymongo==4.0.2
 requests
 tqdm == 4.63.0
