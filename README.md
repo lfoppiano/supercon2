@@ -184,7 +184,13 @@ pip should be something like `....supercon2/bin/pip`. If not you should unset it
 unset pip
 ```
 
-To run the service you can use:
+Install dependencies: 
+
+```
+pip install -r requirements.txt
+```
+
+Finally, to run the service you can use: 
 
 ```
 python -m supercon2 --config supercon2/config.json
