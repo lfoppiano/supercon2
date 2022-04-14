@@ -55,7 +55,7 @@ Table 2 illustrate the type of errors
 
 ## Rules
 
-There are two types that a curator can do when checking the data:  
+There are two types of actions that a curator can do when checking the data:  
 
 1. data reporting or flagging
 2. data correction
@@ -79,6 +79,12 @@ In the following example the temperature of about 1234 K has been extracted. Thi
 
 ![](images/example-wrong-synthetised-temperature.jpg)
 <div style="text-align: center;">Figure 2: Example of invalid extracted temperature. </div>
+
+#### Composition extraction 
+[LF] This specific case should be clarified [Ref](https://github.com/lfoppiano/supercon2/issues/71#issuecomment-1098751198)
+
+![](images/example-wrong-composition-recognition.jpg)
+<div style="text-align: center;">Figure 3: Example </div>
 
 ## Glossary
 
