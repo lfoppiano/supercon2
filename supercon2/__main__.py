@@ -41,4 +41,4 @@ if __name__ == '__main__':
 
     app.register_blueprint(bp, url_prefix=root_path)
 
-    app.run(host=args.host, port=args.port, debug=args.debug, threading=True)
+    app.run(host=args.host, port=args.port, debug=args.debug, threaded=True)
