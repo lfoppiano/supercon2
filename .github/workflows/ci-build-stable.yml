@@ -3,7 +3,7 @@ name: Build stable
 on: [push]
 
 concurrency: 
-  group: gradle
+  group: stable
   cancel-in-progress: true
 
 
