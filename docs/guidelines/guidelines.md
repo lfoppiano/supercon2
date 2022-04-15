@@ -3,10 +3,13 @@
 ## Table of Contents
 
 * [Introduction](#introduction)
-* [Glossary](#glossary)
 * [General principles](#general-principles)
+   + [Units](#units)
+   + [Record status](#record-status)
+   + [Error types](#error-types)
 * [Rules](#rules)
 * [Error types](#error-types)
+* [Glossary](#glossary)
 
 
 ## Introduction
@@ -26,6 +29,8 @@ Both "Record status" and "Error types" will be covered in [Rules](#rules) with e
 As a general rule the Units are kept in the data, although GPa and K are the most common units for `applied pressure` and `superconducting critical temperature`, there are still several cases of valid papers mentioning other units, e.g., `kbar` or `MPa`. 
 
 ### Record status
+
+This are concepts. Add the status flow. 
 
 | Status  | Definition                                                                     |
 |---------|--------------------------------------------------------------------------------|
