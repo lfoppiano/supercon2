@@ -22,16 +22,28 @@ config = []
 @bp.route('/version')
 def get_version():
     version = None
+    revision = None
     if version is None:
-        try:
-            with open("resources/version.txt", 'r') as fv:
-                file_version = fv.readline()
-            version = file_version.strip() if file_version != "" and file_version is not None else "unknown"
-        except:
-            version = "unknown"
+        version = read_info_from_file("resources/version.txt")
 
-    info_json = {"name": "supercon2", "version": version}
+    if revision is None:
+        revision = read_info_from_file("resources/revision.txt")
+
+    info_json = {"name": "supercon2", "version": version + "-" + str(revision)}
     return info_json
+
+
+def read_info_from_file(file, default="unknown"):
+    version = default
+    try:
+        with open(file, 'r') as fv:
+            file_version = fv.readline()
+
+        version = file_version.strip() if file_version != "" and file_version is not None else default
+    except:
+        pass
+
+    return version
 
 
 @bp.route('/')
@@ -111,7 +123,8 @@ def get_stats():
     by_journal = tabular_collection.aggregate(pipeline_group_by_journal)
     by_journal_fixed = replace_empty_key(by_journal)
 
-    return render_template("stats.html", by_publisher=by_publisher_fixed, by_year=by_year_fixed, by_journal=by_journal_fixed)
+    return render_template("stats.html", by_publisher=by_publisher_fixed, by_year=by_year_fixed,
+                           by_journal=by_journal_fixed)
 
 
 def replace_empty_key(input):
@@ -183,7 +196,6 @@ def _update_record(object_id: ObjectId, record: Union[Record, dict], db):
 
 
 def rolling_back(new_id, old_id, training_data_id, tabular_collection, training_data_collection):
-
     if training_data_id is not None:
         training_data_collection.delete_one({"_id": training_data_id})
 
