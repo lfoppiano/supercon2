@@ -1,4 +1,5 @@
 import argparse
+import sys
 from pathlib import Path
 
 import waitress
@@ -16,8 +17,7 @@ def create_app(root_path):
 
     print("root_path:", root_path)
 
-    static_path = root_path + '/static'
-    app = APIFlask(__name__, static_url_path=static_path, spec_path=final_root_path + '/spec',
+    app = APIFlask(__name__, static_url_path=final_root_path + '/static', spec_path=final_root_path + '/spec',
                    docs_path=final_root_path + '/docs', redoc_path=final_root_path + '/redoc')
     app.config['OPENAPI_VERSION'] = '3.0.2'
     app.config['SPEC_FORMAT'] = 'json'
@@ -41,6 +41,8 @@ if __name__ == '__main__':
                         default='config.yaml')
     parser.add_argument("--debug", action="store_true", required=False, default=False,
                         help="Activate the debug mode for the service")
+    parser.add_argument("--env", type=str, choices=["development", "production"], required=False,
+                        default="development")
 
     args = parser.parse_args()
 
@@ -50,5 +52,14 @@ if __name__ == '__main__':
 
     app = create_app(root_path)
 
-    # app.run(host=args.host, port=args.port, debug=args.debug, threaded=True)
-    waitress.serve(app)
+    env = args.env
+    if env == "development":
+        app.run(host=args.host, port=args.port, debug=args.debug, threaded=True)
+    elif env == "production":
+        listening_address = args.host + ":" + str(args.port)
+        waitress.serve(app, listen=listening_address)
+    else:
+        print("Wrong environment value. ")
+        parser.print_help()
+        sys.exit(-1)
+
