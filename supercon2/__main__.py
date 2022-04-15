@@ -1,16 +1,37 @@
 import argparse
 from pathlib import Path
 
+import waitress
 from apiflask import APIFlask
 
 from supercon2 import service
 from supercon2.service import bp
 from supercon2.utils import load_config_yaml
 
+
+def create_app(root_path):
+    final_root_path = root_path
+    if root_path == "/" and ('root-path' in service.config and service.config['root-path'] is not None):
+        final_root_path = service.config['root-path']
+
+    print("root_path:", root_path)
+
+    static_path = root_path + '/static'
+    app = APIFlask(__name__, static_url_path=static_path, spec_path=final_root_path + '/spec',
+                   docs_path=final_root_path + '/docs', redoc_path=final_root_path + '/redoc')
+    app.config['OPENAPI_VERSION'] = '3.0.2'
+    app.config['SPEC_FORMAT'] = 'json'
+    app.tags = ['supercon']
+
+    app.register_blueprint(bp, url_prefix=final_root_path)
+
+    return app
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description="Run the supercon2 service.")
-    parser.add_argument("--host", type=str, default='0.0.0.0',
+        description="Run the SuperCon2 service.")
+    parser.add_argument("--host", type=str, default='127.0.0.1',
                         help="Host of the service.")
     parser.add_argument("--port", type=str, default=8080,
                         help="Port of the service.")
@@ -27,18 +48,7 @@ if __name__ == '__main__':
 
     root_path = args.root_path
 
-    if root_path == "/" and ('root-path' in service.config and service.config['root-path'] is not None):
-        root_path = service.config['root-path']
+    app = create_app(root_path)
 
-    print("root_path:", root_path)
-
-    static_path = root_path + '/static'
-    app = APIFlask(__name__, static_url_path=static_path, spec_path=root_path + '/spec',
-                   docs_path=root_path + '/docs', redoc_path=root_path + '/redoc')
-    app.config['OPENAPI_VERSION'] = '3.0.2'
-    app.config['SPEC_FORMAT'] = 'json'
-    app.tags = ['supercon']
-
-    app.register_blueprint(bp, url_prefix=root_path)
-
-    app.run(host=args.host, port=args.port, debug=args.debug, threaded=True)
+    # app.run(host=args.host, port=args.port, debug=args.debug, threaded=True)
+    waitress.serve(app)
