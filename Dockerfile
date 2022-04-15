@@ -22,7 +22,7 @@ COPY resources/version.txt /opt/service/resources/
 
 # extract version
 COPY .git ./.git
-RUN git rev-parse --short HEAD > /opt/service/resources/version.txt
+RUN git rev-parse --short HEAD > /opt/service/resources/revision.txt
 RUN rm -rf ./.git
 
 ENV VIRTUAL_ENV=/opt/service/venv
