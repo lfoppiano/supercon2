@@ -12,3 +12,4 @@ openpyxl
 apiflask==0.12.0
 deepdiff
 xlrd
+waitress==2.1.1
