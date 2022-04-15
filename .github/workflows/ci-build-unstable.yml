@@ -3,7 +3,7 @@ name: Build unstable
 on: [push]
 
 concurrency: 
-  group: gradle
+  group: unstable
   cancel-in-progress: true
 
 
