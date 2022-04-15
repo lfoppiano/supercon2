@@ -31,7 +31,7 @@ def create_app(root_path):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description="Run the SuperCon2 service.")
-    parser.add_argument("--host", type=str, default='127.0.0.1',
+    parser.add_argument("--host", type=str, default='0.0.0.0',
                         help="Host of the service.")
     parser.add_argument("--port", type=str, default=8080,
                         help="Port of the service.")
