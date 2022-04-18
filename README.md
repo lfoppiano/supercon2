@@ -294,12 +294,14 @@ python -m process.supercon_batch_mongo_compute_table --config ./process/config.y
 
 ##### Feedback manual corrections from Excel to the database
 
-Feedback to supercon2 corrections from an Excel file
+Feedback to SuperCon 2 the corrections from an Excel file
 
 ```
-usage: feedback_corrections.py [-h] --corrections CORRECTIONS --config CONFIG [--dry-run] [--database DATABASE] [--verbose]
+usage: feedback_corrections.py [-h] --corrections CORRECTIONS --config CONFIG [--dry-run] [--database DATABASE] [--verbose] [--report-file REPORT_FILE]
 
-optional arguments:
+Feedback to SuperCon2 corrections from an Excel file
+
+options:
   -h, --help            show this help message and exit
   --corrections CORRECTIONS
                         Correction file (csv or excel)
@@ -308,11 +310,34 @@ optional arguments:
   --database DATABASE, -db DATABASE
                         Force the database name which is normally read from the configuration file
   --verbose             Print all log information
+  --report-file REPORT_FILE
+                        Dump report in a file. If the file exists it's overriden
 
 ```
 
 Example:
 
 ```
-python -m process.supercon_batch_mongo_compute_table --config ./process/config.yaml
+ python -m process.feedback_corrections --config ./process/config.yaml
 ```
+
+
+The report is a JSON file as a list of elements, each composed by 5 fields: 
+
+
+```json
+  {
+    "id": "61e136f56e3ec3a715592989",
+    "new_id": "625cf7c9e05ef9d3ccff8b5d",
+    "status": "wrong",
+    "action": "update",
+    "hash": "48ba234393"
+  }
+```
+
+The items are as follows: 
+ - `id` contains the identifier of the original document 
+ - `new_id` provides the new id obtained by creating a new updated record. The old record is marked as "obsolete" and linked to the new one. 
+ - `status` indicate the status as provided in the excel file. Currently there are 4 main status values: `wrong`, `correct`, `invalid`, `missing`. More details [here](https://github.com/lfoppiano/supercon2/blob/feature/guidelines/docs/guidelines/guidelines.md#record-status).
+ - `action`: the action that was applied on the database, usually it can be `insert` or `update` (Note: update + new_id != None => Upsert, a new record was created and the old was marked as `obsolete`)
+ - `hash`: the document hash. If the record was not matching and it's inserted because marked as corrected in the Excel, the hash will be `0000000000`. 
