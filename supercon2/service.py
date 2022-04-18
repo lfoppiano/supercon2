@@ -191,11 +191,11 @@ def _update_record(object_id: ObjectId, record: Union[Record, dict], db):
     except Exception as e:
         # Roll back!
         print("Exception:", e, "Rolling back.")
-        rolling_back(new_id, old_record['_id'], training_data_id, tabular_collection, training_data_collection)
+        roll_back(new_id, old_record['_id'], training_data_id, tabular_collection, training_data_collection)
         raise e
 
 
-def rolling_back(new_id, old_id, training_data_id, tabular_collection, training_data_collection):
+def roll_back(new_id, old_id, training_data_id, tabular_collection, training_data_collection):
     if training_data_id is not None:
         training_data_collection.delete_one({"_id": training_data_id})
 
