@@ -15,10 +15,10 @@ RUN mkdir -p /opt/service/venv
 WORKDIR /opt/service
 
 COPY requirements.txt .
-COPY supercon2 /opt/service
-COPY process /opt/service
+COPY supercon2 /opt/service/supercon2
+COPY process /opt/service/process
 
-ENV VIRTUAL_ENV=/opt/linking/venv
+ENV VIRTUAL_ENV=/opt/service/venv
 RUN python3.9 -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 RUN pip --version
@@ -28,4 +28,4 @@ RUN pip install -r ./requirements.txt
 
 EXPOSE 8080
 
-CMD ["python3", "-m", "supercond2", "--config", "supercon2/config.yaml"]
+CMD ["python3", "-m", "supercon2", "--config", "supercon2/config.yaml"]
