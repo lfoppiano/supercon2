@@ -54,6 +54,8 @@ if __name__ == '__main__':
 
     env = args.env
     if env == "development":
+        # force development env
+        app.env = 'development'
         app.run(host=args.host, port=args.port, debug=args.debug, threaded=True)
     elif env == "production":
         listening_address = args.host + ":" + str(args.port)
