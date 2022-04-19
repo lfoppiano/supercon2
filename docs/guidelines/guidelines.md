@@ -3,6 +3,7 @@
 ## Table of Contents
 
 * [Introduction](#introduction)
+* [Data model](#data-model)
 * [General principles](#general-principles)
    + [Units](#units)
    + [Record status](#record-status)
@@ -18,6 +19,10 @@ This document describes the general principles and rules to follow to amend data
 SuperCon 2 is a database of superconductors materials and properties extracted automatically from scientific literature.
 
 The guidelines assume that the user know well the SuperCon 2 application. The documentation on how to use SuperCon 2 is in ...
+
+## Data Model 
+
+This section describes the different information that are stored in the database 
 
 ## General principles
 
