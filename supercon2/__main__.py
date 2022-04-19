@@ -5,12 +5,16 @@ from pathlib import Path
 import waitress
 from apiflask import APIFlask
 
+from commons.mongo_utils import ensure_indexes
 from supercon2 import service
 from supercon2.service import bp
 from supercon2.utils import load_config_yaml
 
 
 def create_app(root_path):
+    ensure_indexes(service.config)
+    print("Ensuring indexes completed..")
+
     final_root_path = root_path
     if root_path == "/" and ('root-path' in service.config and service.config['root-path'] is not None):
         final_root_path = service.config['root-path']
