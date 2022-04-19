@@ -59,7 +59,6 @@ Table 2 illustrate the type of errors
 | Tc classification      | The temperature is not correctly classified as "superconductors critical temperature" (e.g. Curie temperature, Magnetic temperature…)                                                                     |
 | Linking                | The material is incorrectly linked to the Tc given that the entities are correctly recognised                                                                                                             |
 | Composition resolution | When the exact composition cannot be resolved (e.g. the stochiometric values cannot be resolved)                                                                                                          |
-| Reference needed       | ???                                                                                                                                                                                                       |
 <div style="text-align: center;">Table 2: List of error types, sorted by their occurrence in the data flow. </div>
 
 
