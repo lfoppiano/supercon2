@@ -166,7 +166,6 @@ and shut down:
 #### Local development
 
 We recommend to use CONDA
-
 ```
 conda create -n supercon2 pip python=3.9
 conda activate supercon2
@@ -190,10 +189,20 @@ Install dependencies:
 pip install -r requirements.txt
 ```
 
+Install mongodb (the exact command will depends on the OS) 
+
+Load sample data on the database supercon2
+```
+unzip resources/data/supercon_sample.zip -d resources/data
+
+mongorestore localhost:27017/supercon_sample resources/data/supercon_sample
+```
+**NOTE**: make sure the `db` entry is correctly set to `supercon_sample` in `supercon2/config.yaml`,  
+
 Finally, to run the service you can use: 
 
 ```
-python -m supercon2 --config supercon2/config.json
+python -m supercon2 --config supercon2/config.yaml
 ```
 
 ### API documentation
