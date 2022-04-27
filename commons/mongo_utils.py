@@ -24,17 +24,21 @@ def ensure_indexes(config):
 
     db.document.create_index([("hash", pymongo.ASCENDING), ("timestamp", pymongo.ASCENDING)])
     db.document.create_index("hash")
-    db.document.create_index([("type", pymongo.TEXT), ("status", pymongo.TEXT)])
+    db.document.create_index([("type", pymongo.ASCENDING), ("status", pymongo.ASCENDING)])
     db.document.create_index("timestamp")
     db.document.create_index("biblio.year")
     db.document.create_index("biblio.journal")
     db.document.create_index("biblio.publisher")
 
-    db.tabular.create_index([("type", pymongo.TEXT), ("status", pymongo.TEXT)])
+    db.tabular.create_index([("type", pymongo.ASCENDING), ("status", pymongo.ASCENDING)])
     db.tabular.create_index(
         [("hash", pymongo.ASCENDING), ("timestamp", pymongo.ASCENDING), ("type", pymongo.ASCENDING)])
     db.tabular.create_index([("hash", pymongo.ASCENDING), ("timestamp", pymongo.ASCENDING)])
     db.tabular.create_index("hash")
+    db.tabular.create_index([("doi", pymongo.ASCENDING)])
+    db.tabular.create_index([("title", pymongo.ASCENDING)])
+    db.tabular.create_index([("author", pymongo.ASCENDING)])
+    db.tabular.create_index([("year", pymongo.ASCENDING)])
 
     db.binary.chunks.create_index([("files_id", pymongo.ASCENDING), ("n", pymongo.ASCENDING)])
 
