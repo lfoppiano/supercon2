@@ -715,6 +715,16 @@ def post_task_to_label_studio_project(project_id, record_id):
     return Response(json.dumps(result_response, default=json_serial), mimetype="application/json")
 
 
+@bp.route("/training/data/<id>", methods=['DELETE'])
+def delete_training_data_record(id):
+    db = connect_and_get_db()
+    training_data_collection = db.get_collection("training_data")
+
+    object_id = validateObjectId(id)
+    result = training_data_collection.delete_one({"_id": object_id})
+
+    return Response(json.dumps({"deleted": result.deleted_count}, default=json_serial), mimetype="application/json")
+
 # @bp.after_request
 # def add_header(r):
 #     """

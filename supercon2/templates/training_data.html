@@ -39,6 +39,9 @@
                 <v-icon small class="mr-2" @click="send_record_to_label_studio(item)" title="Send to label-studio">
                     mdi-send-outline
                 </v-icon>
+                <v-icon small class="mr-2" @click="remove_training_data_record(item)" title="Remove record">
+                    mdi-delete-outline
+                </v-icon>
             </template>
         </v-data-table>
         <p><span style="color:#848484;">&copy; Contributors, 2022 |</span> <span id="version" style="color:#848484;">unknown version</span></p>
@@ -129,8 +132,25 @@
                 } finally {
                     //
                 }
+            },
+            async remove_training_data_record(item) {
+                let url = '{{ url_for("supercon.delete_training_data_record", id="record_id") }}'
+                url = url.replace(
+                    "record_id",
+                    item.id
+                )
+
+                try {
+                    await axios.delete(url, {})
+                    {#item.status='in_progress'#}
+                    this.loadItems()
+                } catch (e) {
+                    console.error(e)
+                    window.alert(JSON.stringify(e.response.data))
+                } finally {
+                    //
+                }
             }
-            ,
         },
         created() {
             this.selectedHeaders = this.headers.filter(h => !h.hidden)
