@@ -1,8 +1,9 @@
 mongo:
   server: "localhost:27017"
-#  server: "falcon.nims.go.jp:27017"
-  db: "supercon_tmp"
-#  db: "supercon_dev_1203"
+  #  server: "falcon.nims.go.jp:27017"
+  #  db: "supercon_tmp"
+  #  db: "supercon_dev_4"
+  db: "supercon_sample"
 
 label-studio:
   url: "http://localhost:8081/"

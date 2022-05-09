@@ -1,4 +1,4 @@
-Flask==2.0.2
+Flask==2.1.1
 pymongo==4.0.2
 requests
 tqdm == 4.63.0
@@ -11,4 +11,6 @@ pandas
 openpyxl
 apiflask==0.12.0
 deepdiff
+xlrd
+waitress==2.1.1
 label-studio-sdk

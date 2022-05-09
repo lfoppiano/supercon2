@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
-    <title>Supercon 2 list of processed articles</title>
+    <title>SuperCon2 | Training data viewer</title>
     <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
@@ -16,7 +16,7 @@
 <body>
 <v-app id="app">
     <v-container fluid>
-        <h2>Supercon2 training data viewer</h2>
+        <h2>SuperCon<sup>2</sup> | Training data viewer</h2>
         <v-row justify="space-between" class="ma-0">
             <v-select v-model="selectedHeaders" :items="headers" label="Select Columns" multiple outlined
                       return-object></v-select>
@@ -41,7 +41,7 @@
                 </v-icon>
             </template>
         </v-data-table>
-        <p><span style="color:#848484;">contributors - 2022</span></p>
+        <p><span style="color:#848484;">&copy; Contributors, 2022 |</span> <span id="version" style="color:#848484;">unknown version</span></p>
     </v-container>
 </v-app>
 <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>

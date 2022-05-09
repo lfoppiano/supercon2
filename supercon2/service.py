@@ -23,16 +23,28 @@ config = []
 @bp.route('/version')
 def get_version():
     version = None
+    revision = None
     if version is None:
-        try:
-            with open("resources/version.txt", 'r') as fv:
-                file_version = fv.readline()
-            version = file_version.strip() if file_version != "" and file_version is not None else "unknown"
-        except:
-            version = "unknown"
+        version = read_info_from_file("resources/version.txt")
 
-    info_json = {"name": "supercon2", "version": version}
+    if revision is None:
+        revision = read_info_from_file("resources/revision.txt")
+
+    info_json = {"name": "supercon2", "version": version + "-" + str(revision)}
     return info_json
+
+
+def read_info_from_file(file, default="unknown"):
+    version = default
+    try:
+        with open(file, 'r') as fv:
+            file_version = fv.readline()
+
+        version = file_version.strip() if file_version != "" and file_version is not None else default
+    except:
+        pass
+
+    return version
 
 
 @bp.route('/')
@@ -112,8 +124,8 @@ def get_stats():
     by_journal = tabular_collection.aggregate(pipeline_group_by_journal)
     by_journal_fixed = replace_empty_key(by_journal)
 
-    return render_template("stats.html", by_publisher=by_publisher_fixed, by_year=by_year_fixed, by_journal=by_journal_fixed)
-
+    return render_template("stats.html", by_publisher=by_publisher_fixed, by_year=by_year_fixed,
+                           by_journal=by_journal_fixed)
 
 def replace_empty_key(input):
     output = [{k: v for k, v in item.items()} for item in input]
@@ -179,11 +191,11 @@ def _update_record(object_id: ObjectId, record: Union[Record, dict], db):
     except Exception as e:
         # Roll back!
         print("Exception:", e, "Rolling back.")
-        rolling_back(new_id, old_record['_id'], training_data_id, tabular_collection, training_data_collection)
+        roll_back(new_id, old_record['_id'], training_data_id, tabular_collection, training_data_collection)
         raise e
 
 
-def rolling_back(new_id, old_id, training_data_id, tabular_collection, training_data_collection):
+def roll_back(new_id, old_id, training_data_id, tabular_collection, training_data_collection):
     if training_data_id is not None:
         training_data_collection.delete_one({"_id": training_data_id})
 
@@ -701,3 +713,16 @@ def post_task_to_label_studio_project(project_id, record_id):
     }
 
     return Response(json.dumps(result_response, default=json_serial), mimetype="application/json")
+
+
+# @bp.after_request
+# def add_header(r):
+#     """
+#     Add headers to both force latest IE rendering engine or Chrome Frame,
+#     and also to cache the rendered page for 10 minutes.
+#     """
+#     r.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+#     r.headers["Pragma"] = "no-cache"
+#     r.headers["Expires"] = "0"
+#     r.headers['Cache-Control'] = 'public, max-age=0'
+#     return r
