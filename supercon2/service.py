@@ -440,8 +440,10 @@ def unflag_record(id):
 
 
 @bp.route('/config', methods=['GET'])
-def get_config(config_file='config.yaml'):
-    return load_config_yaml(config_file)
+def get_config():
+    return config
+# def get_config(config_file='config.yaml'):
+#     return load_config_yaml(config_file)
 
 
 @bp.route('/training_data', methods=['GET'])

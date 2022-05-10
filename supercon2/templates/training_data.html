@@ -20,7 +20,8 @@
         <v-row justify="space-between" class="ma-0">
             <v-select v-model="selectedHeaders" :items="headers" label="Select Columns" multiple outlined
                       return-object></v-select>
-            <v-btn @click="send_all_new_records_to_label_studio" Depressed class="ma-2">Send all</v-btn>
+            <v-btn @click="send_all_new_records_to_label_studio" Depressed class="ma-1">Send all</v-btn>
+            <v-btn @click="open_dialog_token" Depressed class="ma-1">Token</v-btn>
         </v-row>
         <!-- TODO: height 800px should be dynamic? up to a user screen size?  -->
         <v-data-table
@@ -44,7 +45,37 @@
                 </v-icon>
             </template>
         </v-data-table>
-        <p><span style="color:#848484;">&copy; Contributors, 2022 |</span> <span id="version" style="color:#848484;">unknown version</span></p>
+        <p><span style="color:#848484;">&copy; Contributors, 2022 |</span> <span id="version" style="color:#848484;">unknown version</span>
+        </p>
+        <v-dialog v-model="tokenDialog" max-width="500">
+            <v-card>
+                <v-card-text>
+                    <v-container>
+                        <v-row>The Token is required for authenticating correctly with Label-studio. It can be copied
+                            from the user account page.
+                            The information is stored in the local session storage which will be cleaned up when the tab will
+                                be closed.
+                        </v-row>
+                        <v-row>
+                            <v-text-field v-model="token" label="Token"></v-text-field>
+                        </v-row>
+                        <v-row>
+                            <v-text-field v-model="project_id" label="Project Id"></v-text-field>
+                        </v-row>
+                    </v-container>
+                </v-card-text>
+
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn color="blue darken-1" text @click="close_dialog_token">
+                        Cancel
+                    </v-btn>
+                    <v-btn color="blue darken-1" text @click="save_token">
+                        Save
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
     </v-container>
 </v-app>
 <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
@@ -56,6 +87,10 @@
         vuetify: new Vuetify(),
         data() {
             return {
+                tokenDialog: false,
+                config: {},
+                token: null,
+                project_id: null,
                 selectedHeaders: [],
                 headers: [
                     {text: 'Id', value: 'id', sortable: false, hidden: true},
@@ -72,6 +107,24 @@
                 return this.headers.filter(s => this.selectedHeaders.includes(s));
             }
         },
+        async beforeMount() {
+            let url = '{{ url_for("supercon.get_config") }}'
+            try {
+                const result = await axios.get(url, {})
+                this.config = result.data
+
+                let project_id = this.config['label-studio']['project_id']
+                if (project_id !== null && project_id !== undefined) {
+                    this.project_id = project_id
+                    sessionStorage.setItem('ProjectId', this.project_id);
+                }
+
+            } catch (e) {
+                console.error(e)
+                window.alert(JSON.stringify(e.response.data))
+            } finally {
+            }
+        },
         mounted() {
             this.loadItems();
         },
@@ -84,24 +137,65 @@
                         }
                     )
             },
+            open_dialog_token() {
+                let token = sessionStorage.getItem('Token');
+                if (token !== null && token !== undefined) {
+                    this.token = token;
+                }
+
+                let project_id = sessionStorage.getItem('ProjectId');
+                if (project_id !== null && project_id !== undefined) {
+                    this.project_id = project_id;
+                }
+
+                this.tokenDialog = true
+            },
+            close_dialog_token() {
+                this.tokenDialog = false
+            },
+            save_token() {
+                console.log(this.token)
+                sessionStorage.setItem('Token', this.token);
+                sessionStorage.setItem('ProjectId', this.project_id);
+                this.close_dialog_token()
+            },
+            retrieve_token() {
+                let token = sessionStorage.getItem('Token');
+
+                {#if (token === null || token === undefined) {#}
+                {#this.open_dialog_token()#}
+                {#token = sessionStorage.getItem('Token');#}
+                {#if (token === null || token === undefined) {#}
+                {#window.alert("There is a problem with the token, either it's incorrect or it was not correctly stored retrieved from the local session storage. ")#}
+
+                return token;
+            },
             async send_record_to_label_studio(item) {
                 let url = '{{ url_for("supercon.post_task_to_label_studio_project", project_id="project_id", record_id="record_id") }}'
-                url = url.replace(
-                    "project_id",
-                    "3"
-                )
                 url = url.replace(
                     "record_id",
                     item.id
                 )
 
+                let project_id = sessionStorage.getItem("ProjectId")
+                if (project_id === null || project_id === undefined) {
+                    window.alert("Invalid or unspecified project Id, please set it up in the local page.")
+                }
+
+                url = url.replace(
+                    "project_id",
+                    project_id
+                )
+
+
+                let token = this.retrieve_token(item)
+
                 const headers = {
-                    "Authentication": "Token 8a35f1f444d69498b356c348ba866d9df9fd8c33"
+                    "Authentication": "Token " + token
                 };
 
                 try {
                     await axios.post(url, {}, {headers})
-                    {#item.status='in_progress'#}
                     this.loadItems()
                 } catch (e) {
                     console.error(e)
@@ -109,22 +203,27 @@
                 } finally {
                     //
                 }
-            }
-            ,
+            },
             async send_all_new_records_to_label_studio(item) {
                 let url = '{{ url_for("supercon.post_tasks_to_label_studio_project", project_id="project_id") }}'
+                let project_id = sessionStorage.getItem("ProjectId")
+                if (project_id === null || project_id === undefined) {
+                    window.alert("Invalid or unspecified project Id, please set it up in the local page.")
+                }
+
                 url = url.replace(
                     "project_id",
-                    "3"
+                    project_id
                 )
 
+                let token = this.retrieve_token()
+
                 const headers = {
-                    "Authentication": "Token 8a35f1f444d69498b356c348ba866d9df9fd8c33"
+                    "Authentication": "Token " + token
                 };
 
                 try {
                     await axios.post(url, {}, {headers})
-                    {#item.status='in_progress'#}
                     this.loadItems()
                 } catch (e) {
                     console.error(e)
@@ -142,7 +241,6 @@
 
                 try {
                     await axios.delete(url, {})
-                    {#item.status='in_progress'#}
                     this.loadItems()
                 } catch (e) {
                     console.error(e)

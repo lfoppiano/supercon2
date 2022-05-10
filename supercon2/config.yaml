@@ -1,10 +1,11 @@
 mongo:
   server: "localhost:27017"
   #  server: "falcon.nims.go.jp:27017"
-  #  db: "supercon_tmp"
+  db: "supercon_tmp"
   #  db: "supercon_dev_4"
-  db: "supercon_sample"
+  #  db: "supercon_sample"
 
 label-studio:
-  url: "http://localhost:8081/"
+  url: "http://falcon.nims.go.jp/label-studio"
   token: "ADD_TOKEN_FROM_LABEL_STUDIO"
+  project_id: "1"
