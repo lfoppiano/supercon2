@@ -8,822 +8,605 @@
     <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.5.95/css/materialdesignicons.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/vuetify@2.6.3/dist/vuetify.min.css" rel="stylesheet">
-    <link rel="icon" type="image/x-icon" href={{ url_for('static', filename='resources/img/favicon.ico' ) }}/>
-    <link rel="shortcut icon" type="image/x-icon" href={{ url_for('static', filename='resources/img/favicon.ico' ) }}/>
+    <link rel="icon" type="image/x-icon" href={{ url_for('static', filename='resources/img/favicon.ico' ) }} />
+    <link rel="shortcut icon" type="image/x-icon" href={{ url_for('static', filename='resources/img/favicon.ico' ) }} />
 </head>
 
 <body>
-<v-app id="app">
-    <v-container fluid>
-        <h2>SuperCon<sup>2</sup> | Database</h2>
-        <v-row justify="space-between" class="ma-0">
-            <v-select v-model="selectedHeaders" :items="headers" label="Select Columns" multiple outlined
-                      return-object>
-            </v-select>
-            <v-btn @click="openCreateItemDialog" Depressed class="ma-2">New Item</v-btn>
-        </v-row>
-        <v-data-table v-model="selectedItems" :headers="showHeaders" :items="items" :dense="true" single-select
-                      loading-text="loading ..." :multi-sort="true" class="elevation-1"
-                      @current-items="hasChangedCurrentItems" :page.sync="page" :items-per-page="itemsPerPage"
-                      :sort-by.sync="sortBy" @page-count="hasChangedPageCount" @click:row="clickRow">
-            <template v-slot:body.prepend>
-                <tr>
-                    <td v-for="header in showHeaders" :key="header.value">
-                        <v-radio-group v-model="header.filterKeyword" v-if="header.value === 'type'" dense
-                                       hide-details>
-                            <v-row class="pb-1" v-for="radio in headerObject.type.radioGroup">
-                                <v-radio dense :value="radio.value" class="ma-0">
-                                </v-radio>
-                                <v-icon small :title="radio.value" @click="header.filterKeyword = radio.value">
-                                    [[ radio.icon ]]
-                                </v-icon>
-                            </v-row>
-                        </v-radio-group>
-                        <v-radio-group v-model="header.filterKeyword" v-else-if="header.value === 'status'" dense
-                                       hide-details>
-                            <v-row class="pb-1" v-for="radio in headerObject.status.radioGroup">
-                                <v-radio dense :value="radio.value" class="ma-0">
-                                </v-radio>
-                                <v-icon small :title="radio.value" @click="header.filterKeyword = radio.value">
-                                    [[ radio.icon ]]
-                                </v-icon>
-                            </v-row>
-                        </v-radio-group>
-                        <v-radio-group v-model="header.filterKeyword" v-else-if="header.value === 'flag'" dense
-                                       hide-details>
-                            <v-row class="pb-1" v-for="radio in headerObject.flag.radioGroup">
-                                <v-radio dense :value="radio.value" class="ma-0">
-                                </v-radio>
-                                <v-icon small :title="radio.value" @click="header.filterKeyword = radio.value">
-                                    [[ radio.icon ]]
-                                </v-icon>
-                            </v-row>
-                        </v-radio-group>
-                        <template v-else-if="header.value === 'actions'"></template>
-                        <template v-else>
-                            <v-text-field v-model="header.filterKeyword" type="text" placeholder="keyword"
-                                          hide-details clearable>
-                            </v-text-field>
-                            <v-switch v-model="headerObject[header.value].shouldHideEmpty" title="Hide empty">
-                            </v-switch>
-                        </template>
+    <v-app id="app">
+        <v-container fluid>
+            <h2>SuperCon<sup>2</sup> | Database</h2>
+            <v-row justify="space-between" class="ma-0">
+                <v-select v-model="selectedHeaders" :items="headers" label="Select Columns" multiple outlined
+                    return-object>
+                </v-select>
+                <v-btn @click="openCreateItemDialog" Depressed class="ma-2">New Item</v-btn>
+            </v-row>
+            <v-data-table v-model="selectedItems" :headers="showHeaders" :items="items" :dense="true" single-select
+                loading-text="loading ..." :multi-sort="true" class="elevation-1"
+                @current-items="hasChangedCurrentItems" :page.sync="page" :items-per-page="itemsPerPage"
+                :sort-by.sync="sortBy" @page-count="hasChangedPageCount" @click:row="clickRow">
+                <template v-slot:body.prepend>
+                    <tr>
+                        <td v-for="header in showHeaders" :key="header.value">
+                            <v-radio-group v-model="header.filterKeyword" v-if="header.value === 'type'" dense
+                                hide-details>
+                                <v-row class="pb-1" v-for="radio in headerObject.type.radioGroup">
+                                    <v-radio dense :value="radio.value" class="ma-0">
+                                    </v-radio>
+                                    <v-icon small :title="radio.value" @click="header.filterKeyword = radio.value">
+                                        [[ radio.icon ]]
+                                    </v-icon>
+                                </v-row>
+                            </v-radio-group>
+                            <v-radio-group v-model="header.filterKeyword" v-else-if="header.value === 'status'" dense
+                                hide-details>
+                                <v-row class="pb-1" v-for="radio in headerObject.status.radioGroup">
+                                    <v-radio dense :value="radio.value" class="ma-0">
+                                    </v-radio>
+                                    <v-icon small :title="radio.value" @click="header.filterKeyword = radio.value">
+                                        [[ radio.icon ]]
+                                    </v-icon>
+                                </v-row>
+                            </v-radio-group>
+                            <v-radio-group v-model="header.filterKeyword" v-else-if="header.value === 'flag'" dense
+                                hide-details>
+                                <v-row class="pb-1" v-for="radio in headerObject.flag.radioGroup">
+                                    <v-radio dense :value="radio.value" class="ma-0">
+                                    </v-radio>
+                                    <v-icon small :title="radio.value" @click="header.filterKeyword = radio.value">
+                                        [[ radio.icon ]]
+                                    </v-icon>
+                                </v-row>
+                            </v-radio-group>
+                            <template v-else-if="header.value === 'actions'"></template>
+                            <template v-else>
+                                <v-text-field v-model="header.filterKeyword" type="text" placeholder="keyword"
+                                    hide-details clearable>
+                                </v-text-field>
+                                <v-switch v-model="headerObject[header.value].shouldHideEmpty" title="Hide empty">
+                                </v-switch>
+                            </template>
 
-                    </td>
-                </tr>
-            </template>
-            <template v-slot:item.hash="{ item }">
-                <v-row>
-                    <a :href="'./document/' + item.hash" target="_blank" :style="{'text-decoration': 'none'}"
-                       class="ma-1">
-                        [[ item.hash ]]
-                    </a>
-                    <v-icon @click="headerObject.hash.filterKeyword = item.hash">
-                        mdi-content-paste
+                        </td>
+                    </tr>
+                </template>
+                <template v-slot:item.hash="{ item }">
+                    <v-row>
+                        <a :href="'./document/' + item.hash" target="_blank" :style="{'text-decoration': 'none'}"
+                            class="ma-1">
+                            [[ item.hash ]]
+                        </a>
+                        <v-icon @click="headerObject.hash.filterKeyword = item.hash">
+                            mdi-content-paste
+                        </v-icon>
+                    </v-row>
+                </template>
+                <template v-slot:item.flag="{ item }">
+                    <v-checkbox :input-value="item.flag" @click="toggleFlag(item)" :disabled="flagIsNotWritable(item)">
+                    </v-checkbox>
+                </template>
+                <template v-slot:item.actions="{ item }">
+                    <v-icon small class="mr-2" @click="openEditItemDialog(item)" title="Open edit dialog">
+                        mdi-pencil
                     </v-icon>
-                </v-row>
-            </template>
-            <template v-slot:item.flag="{ item }">
-                <v-checkbox :input-value="item.flag" @click="toggleFlag(item)" :disabled="flagIsNotWritable(item)">
-                </v-checkbox>
-            </template>
-            <template v-slot:item.actions="{ item }">
-                <v-icon small class="mr-2" @click="openEditItemDialog(item)" title="Open edit dialog">
-                    mdi-pencil
-                </v-icon>
-            </template>
-        </v-data-table>
-        <p><span style="color:#848484;">&copy; Contributors, 2022 |</span> <span id="version" style="color:#848484;"
-                                                                                 v-html="version"></span></p>
-        <v-dialog v-model="dialog">
-            <v-card>
-                <v-card-text>
-                    <v-container>
-                        <v-row>
-                            <v-col cols="12" sm="6" md="2" v-for="header in headers" :key="header.value">
-                                <v-text-field v-model="editedItem[header.value]" :label="header.text"
-                                              v-if="isReadOnlyOnDialog(header.value)" disabled>
-                                </v-text-field>
-                                <v-text-field v-model="editedItem[header.value]" :label="header.text"
-                                              v-else-if="isRequiredOnDialog(header.value)" :rules="[rules.required]">
-                                </v-text-field>
-                                <v-text-field v-model="editedItem[header.value]" :label="header.text"
-                                              v-else-if="isHiddenOnDialog(header.value)" disabled v-show="false">
-                                </v-text-field>
-                                <v-text-field v-model="editedItem[header.value]" :label="header.text" v-else>
-                                </v-text-field>
-                            </v-col>
-                        </v-row>
-                    </v-container>
-                </v-card-text>
+                </template>
+            </v-data-table>
+            <p><span style="color:#848484;">&copy; Contributors, 2022 |</span> <span id="version" style="color:#848484;" v-html="version"></span></p>
+            <v-dialog v-model="dialog">
+                <v-card>
+                    <v-card-text>
+                        <v-container>
+                            <v-row>
+                                <v-col cols="12" sm="6" md="2" v-for="header in headers" :key="header.value">
+                                    <v-text-field v-model="editedItem[header.value]" :label="header.text"
+                                        v-if="isReadOnlyOnDialog(header.value)" disabled>
+                                    </v-text-field>
+                                    <v-text-field v-model="editedItem[header.value]" :label="header.text"
+                                        v-else-if="isRequiredOnDialog(header.value)" :rules="[rules.required]">
+                                    </v-text-field>
+                                    <v-text-field v-model="editedItem[header.value]" :label="header.text"
+                                        v-else-if="isHiddenOnDialog(header.value)" disabled v-show="false">
+                                    </v-text-field>
+                                    <v-text-field v-model="editedItem[header.value]" :label="header.text" v-else>
+                                    </v-text-field>
+                                </v-col>
+                            </v-row>
+                        </v-container>
+                    </v-card-text>
 
-                <v-card-actions>
-                    <v-spacer></v-spacer>
-                    <v-btn color="blue darken-1" text @click="close">
-                        Cancel
-                    </v-btn>
-                    <v-btn color="blue darken-1" text @click="save" :disabled="!saveIsValidated">
-                        Save
-                    </v-btn>
-                </v-card-actions>
-            </v-card>
-        </v-dialog>
-    </v-container>
-</v-app>
-<script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/vuetify@2.6.3/dist/vuetify.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/axios@0.26.1/dist/axios.min.js"></script>
-<script>
-    new Vue({
-        delimiters: ['[[', ']]'],
-        el: '#app',
-        vuetify: new Vuetify(),
-        data() {
-            return {
-                dialog: false,
-                version: 'unknown version',
-                editedItem: {},
-                page: 1,
-                pageCount: 0,
-                itemsPerPage: 10,
-                sortBy: ['hash'],
-                selectedItems: [],
-                filteredItems: [],
-                selectedHeaders: [],
-                headers: [
-                    {
-                        text: 'Raw Material',
-                        value: 'rawMaterial',
-                        hidden: false,
-                        filter: this.rawMaterialFilter,
-                        filterKeyword: '',
-                        shouldHideEmpty: false
-                    },
-                    {
-                        text: 'Name',
-                        value: 'name',
-                        hidden: false,
-                        filter: this.nameFilter,
-                        filterKeyword: '',
-                        shouldHideEmpty: false
-                    },
-                    {
-                        text: 'Formula',
-                        value: 'formula',
-                        hidden: false,
-                        filter: this.formulaFilter,
-                        filterKeyword: '',
-                        shouldHideEmpty: false
-                    },
-                    {
-                        text: 'Space Group',
-                        value: 'spaceGroup',
-                        hidden: true,
-                        filter: this.spaceGroupFilter,
-                        filterKeyword: '',
-                        shouldHideEmpty: false
-                    },
-                    // { text: 'Space Group ID', value: 'spaceGroupId', hidden: true },
-                    {
-                        text: 'Crystal Structure',
-                        value: 'crystalStructure',
-                        hidden: true,
-                        filter: this.crystalStructureFilter,
-                        filterKeyword: '',
-                        shouldHideEmpty: false
-                    },
-                    // { text: 'Crystal Structure ID', value: 'crystalStructureId', hidden: true },
-                    {
-                        text: 'Unit Cell Type',
-                        value: 'unitCellType',
-                        hidden: true,
-                        filter: this.unitCellTypeFilter,
-                        filterKeyword: '',
-                        shouldHideEmpty: false
-                    },
-                    // { text: 'Unit Cell Type ID', value: 'unitCellTypeId', hidden: true },
-                    {
-                        text: 'Doping',
-                        value: 'doping',
-                        hidden: false,
-                        filter: this.dopingFilter,
-                        filterKeyword: '',
-                        shouldHideEmpty: false
-                    },
-                    {
-                        text: 'Shape',
-                        value: 'shape',
-                        hidden: false,
-                        filter: this.shapeFilter,
-                        filterKeyword: '',
-                        shouldHideEmpty: false
-                    },
-                    {
-                        text: 'Variables',
-                        value: 'variables',
-                        hidden: true,
-                        filter: this.variablesFilter,
-                        filterKeyword: '',
-                        shouldHideEmpty: false
-                    },
-                    {
-                        text: 'Material Class',
-                        value: 'materialClass',
-                        hidden: false,
-                        filter: this.materialClassFilter,
-                        filterKeyword: '',
-                        shouldHideEmpty: false
-                    },
-                    {
-                        text: 'Fabrication',
-                        value: 'fabrication',
-                        hidden: true,
-                        filter: this.fabricationFilter,
-                        filterKeyword: '',
-                        shouldHideEmpty: false
-                    },
-                    {
-                        text: 'Substrate',
-                        value: 'substrate',
-                        hidden: true,
-                        filter: this.substrateFilter,
-                        filterKeyword: '',
-                        shouldHideEmpty: false
-                    },
-                    {
-                        text: 'Critical Temperature',
-                        value: 'criticalTemperature',
-                        hidden: false,
-                        filter: this.criticalTemperatureFilter,
-                        filterKeyword: '',
-                        shouldHideEmpty: false
-                    },
-                    // { text: 'Critical TemperatureId', value: 'criticalTemperatureId', hidden: true },
-                    {
-                        text: 'Applied Pressure',
-                        value: 'appliedPressure',
-                        hidden: false,
-                        filter: this.appliedPressureFilter,
-                        filterKeyword: '',
-                        shouldHideEmpty: false
-                    },
-                    // { text: 'Applied Pressure ID', value: 'appliedPressureId', hidden: true },
-                    {
-                        text: 'Critical Temperature Measurement Method',
-                        value: 'criticalTemperatureMeasurementMethod',
-                        hidden: false,
-                        filter: this.criticalTemperatureMeasurementMethodFilter,
-                        filterKeyword: '',
-                        shouldHideEmpty: false
-                    },
-                    // { text: 'Critical Temperature Measurement MethodId', value: 'criticalTemperatureMeasurementMethodId', hidden: true },
-                    {
-                        text: 'Link Type',
-                        value: 'linkType',
-                        hidden: true,
-                        filter: this.linkTypeFilter,
-                        filterKeyword: '',
-                        shouldHideEmpty: false
-                    },
-                    {
-                        text: 'Section',
-                        value: 'section',
-                        hidden: true,
-                        filter: this.sectionFilter,
-                        filterKeyword: '',
-                        shouldHideEmpty: false
-                    },
-                    {
-                        text: 'Subsection',
-                        value: 'subsection',
-                        hidden: true,
-                        filter: this.subsectionFilter,
-                        filterKeyword: '',
-                        shouldHideEmpty: false
-                    },
-                    {
-                        text: 'Path',
-                        value: 'path',
-                        hidden: true,
-                        filter: this.pathFilter,
-                        filterKeyword: '',
-                        shouldHideEmpty: false
-                    },
-                    {
-                        text: 'Filename',
-                        value: 'filename',
-                        hidden: true,
-                        filter: this.filenameFilter,
-                        filterKeyword: '',
-                        shouldHideEmpty: false
-                    },
-                    {
-                        text: 'Document',
-                        value: 'hash',
-                        hidden: false,
-                        filter: this.hashFilter,
-                        filterKeyword: '',
-                        width: 120,
-                        shouldHideEmpty: false
-                    },
-                    {
-                        text: 'Timestamp',
-                        value: 'timestamp',
-                        hidden: true,
-                        filter: this.timestampFilter,
-                        filterKeyword: '',
-                        shouldHideEmpty: false
-                    },
-                    {
-                        text: 'DOI',
-                        value: 'doi',
-                        hidden: false,
-                        filter: this.doiFilter,
-                        filterKeyword: '',
-                        shouldHideEmpty: false
-                    },
-                    {
-                        text: 'Authors',
-                        value: 'authors',
-                        width: 300,
-                        hidden: true,
-                        filter: this.authorsFilter,
-                        filterKeyword: '',
-                        shouldHideEmpty: false
-                    },
-                    {
-                        text: 'Title',
-                        value: 'title',
-                        width: 500,
-                        hidden: true,
-                        filter: this.titleFilter,
-                        filterKeyword: '',
-                        shouldHideEmpty: false
-                    },
-                    {
-                        text: 'Publisher',
-                        value: 'publisher',
-                        hidden: true,
-                        filter: this.publisherFilter,
-                        filterKeyword: '',
-                        shouldHideEmpty: false
-                    },
-                    {
-                        text: 'Journal',
-                        value: 'journal',
-                        hidden: true,
-                        filter: this.journalFilter,
-                        filterKeyword: '',
-                        shouldHideEmpty: false
-                    },
-                    {
-                        text: 'Year',
-                        value: 'year',
-                        hidden: false,
-                        filter: this.yearFilter,
-                        filterKeyword: '',
-                        shouldHideEmpty: false
-                    },
-                    // CONFIRM: check column locations for type, status and flag
-                    {
-                        text: 'Type',
-                        value: 'type',
-                        hidden: true,
-                        filter: this.typeFilter,
-                        filterKeyword: 'all',
-                        width: 80,
-                        radioGroup: [{
-                            value: 'all',
-                            icon: 'mdi-filter-off'
-                        }, {
-                            value: 'manual',
-                            icon: 'mdi-human'
-                        }, {
-                            value: 'automatic',
-                            icon: 'mdi-robot'
-                        },]
-                    },
-                    {
-                        text: 'Status',
-                        value: 'status',
-                        sortable: false,
-                        hidden: true,
-                        filter: this.statusFilter,
-                        filterKeyword: 'all',
-                        width: 80,
-                        radioGroup: [{
-                            value: 'all',
-                            icon: 'mdi-filter-off'
-                        }, {
-                            value: 'valid',
-                            icon: 'mdi-thumb-up'
-                        }, {
-                            value: 'invalid',
-                            icon: 'mdi-thumb-down'
-                        },]
-                    },
-                    {
-                        text: 'Flag',
-                        value: 'flag',
-                        sortable: false,
-                        hidden: false,
-                        filter: this.flagFilter,
-                        filterKeyword: 'all',
-                        width: 80,
-                        radioGroup: [{
-                            value: 'all',
-                            icon: 'mdi-filter-off'
-                        }, {
-                            value: 'flag',
-                            icon: 'mdi-flag'
-                        }, {
-                            value: 'unflag',
-                            icon: 'mdi-flag-off'
-                        },]
-                    },
-                    {text: 'Actions', value: 'actions', sortable: false, hidden: false},
-                    // { text: 'Doc URL', value: 'doc_url', hidden: true},
-                    // { text: 'ID', value: 'id', hidden: true},
-                    // { text: 'Material ID', value: 'materialId', hidden: true},
-                    // { text: 'Sentence', value: 'sentence', width: 500, hidden: true},
-                ],
-                items: [],
-                rules: {
-                    required: value => !!value || 'Required.',
-                },
-            }
-        },
-        computed: {
-            showHeaders() {
-                return this.headers.filter(s => this.selectedHeaders.includes(s));
-            },
-            selectedItem() {
-                return this.selectedItems[0]
-            },
-            pageIsFirst() {
-                return this.page === 1
-            },
-            pageIsLast() {
-                return this.page === this.pageCount
-            },
-            rowNumber() {
-                const ids = this.filteredItems.map(item => item.id)
-                return this.selectedItems.length === 1 ? ids.indexOf(this.selectedItem.id) : undefined
-            },
-            lastFilteredItem() {
-                return this.filteredItems[this.filteredItems.length - 1]
-            },
-            firstFilteredItem() {
-                return this.filteredItems[0]
-            },
-            saveIsValidated() {
-                return this.editedItem.doi && this.editedItem.hash
-            },
-            headerObject() {
-                return Object.fromEntries(new Map(
-                    this.headers.map(header => {
-                        return [header.value, header]
-                    })
-                ))
-            },
-        },
-        mounted() {
-            this.loadItems()
-            document.addEventListener('keydown', this.onKeyDown)
-        },
-        beforeDestroy() {
-            document.removeEventListener('keydown', this.onKeyDown)
-        },
-        async beforeMount() {
-            let url = '{{ url_for("supercon.get_version") }}'
-            try {
-                const result = await axios.get(url, {})
-                this.version = result.data['version']
-
-            } catch (e) {
-                console.error(e)
-                window.alert(JSON.stringify(e.response.data))
-            } finally {
-
-            }
-        },
-        methods: {
-            loadItems() {
-                const url =
-                    '{{ url_for("supercon.get_records_from_form_data") }}'
-                axios.get(url).then((data) => {
-                    this.items = data.data.map((item) => {
-                        return {
-                            ...item, ...{flag: item.status === 'invalid' && item.type === 'manual'}
-                        }
-                    })
-                })
-            },
-            isReadOnlyOnDialog(key) {
-                const keys = ['timestamp', 'type', 'status', 'flag']
-                return keys.includes(key)
-            },
-            isHiddenOnDialog(key) {
-                const keys = ['document', 'actions']
-                return keys.includes(key)
-            },
-            isRequiredOnDialog(key) {
-                const keys = ['doi', 'hash']
-                return keys.includes(key)
-            },
-            hasChangedPageCount(pageCount) {
-                this.pageCount = pageCount
-            },
-            clickRow(item, event) {
-                event.select(!event.isSelected)
-            },
-            hasChangedCurrentItems(items) {
-                this.filteredItems = items
-            },
-            async onKeyDown(event) {
-                // disable shortcuts when in an input field
-                if (event.srcElement.nodeName.indexOf('INPUT') > -1) {
-                    return
-                }
-                // disable shortcuts when edit dialog opens
-                if (this.dialog) {
-                    return
-                }
-                switch (event.key) {
-                    case 'ArrowDown':
-                        event.preventDefault()
-                        switch (this.rowNumber) {
-                            case undefined:
-                                this.selectedItems = [this.firstFilteredItem]
-                                break
-                            // the row number is the last of the filtered items
-                            case this.filteredItems.length - 1:
-                                if (!this.pageIsLast) {
-                                    this.page++
-                                    this.selectedItems = []
-                                }
-                                break
-                            default:
-                                // move to next row
-                                this.selectedItems = [this.filteredItems[this.rowNumber + 1]]
-                        }
-                        break
-                    case 'ArrowUp':
-                        event.preventDefault()
-                        switch (this.rowNumber) {
-                            case undefined:
-                                this.selectedItems = [this.lastFilteredItem]
-                                break
-                            case 0:
-                                if (!this.pageIsFirst) {
-                                    this.page--
-                                    this.selectedItems = []
-                                }
-                                break
-                            default:
-                                // move to previous row
-                                this.selectedItems = [this.filteredItems[this.rowNumber - 1]]
-                        }
-                        break
-                    case 'Enter':
-                        await this.toggleFlag(this.selectedItem)
-                        break
-                    // e stands for "edit item"
-                    case 'e':
-                        event.preventDefault()
-                        if (this.selectedItems.length > 0) {
-                            this.openEditItemDialog(this.selectedItem)
-                        }
-                        break
-                    // n stands for "new item"
-                    case 'n':
-                        event.preventDefault()
-                        this.openCreateItemDialog()
-                        break
-                    default:
-                        break;
-                }
-            },
-            rawMaterialFilter(_, __, item) {
-                return this.keywordFilter(this.headerObject.rawMaterial, item.rawMaterial)
-            },
-            nameFilter(_, __, item) {
-                return this.keywordFilter(this.headerObject.name, item.name)
-            },
-            formulaFilter(_, __, item) {
-                return this.keywordFilter(this.headerObject.formula, item.formula)
-            },
-            spaceGroupFilter(_, __, item) {
-                return this.keywordFilter(this.headerObject.spaceGroup, item.spaceGroup)
-            },
-            crystalStructureFilter(_, __, item) {
-                return this.keywordFilter(this.headerObject.crystalStructure, item.crystalStructure)
-            },
-            unitCellTypeFilter(_, __, item) {
-                return this.keywordFilter(this.headerObject.unitCellType, item.unitCellType)
-            },
-            dopingFilter(_, __, item) {
-                return this.keywordFilter(this.headerObject.doping, item.doping)
-            },
-            shapeFilter(_, __, item) {
-                return this.keywordFilter(this.headerObject.shape, item.shape)
-            },
-            variablesFilter(_, __, item) {
-                return this.keywordFilter(this.headerObject.variables, item.variables)
-            },
-            materialClassFilter(_, __, item) {
-                return this.keywordFilter(this.headerObject.materialClass, item.materialClass)
-            },
-            fabricationFilter(_, __, item) {
-                return this.keywordFilter(this.headerObject.fabrication, item.fabrication)
-            },
-            substrateFilter(_, __, item) {
-                return this.keywordFilter(this.headerObject.substrate, item.substrate)
-            },
-            criticalTemperatureFilter(_, __, item) {
-                return this.keywordFilter(this.headerObject.criticalTemperature, item.criticalTemperature)
-            },
-            appliedPressureFilter(_, __, item) {
-                return this.keywordFilter(this.headerObject.appliedPressure, item.appliedPressure)
-            },
-            criticalTemperatureMeasurementMethodFilter(_, __, item) {
-                return this.keywordFilter(this.headerObject.criticalTemperatureMeasurementMethod, item.criticalTemperatureMeasurementMethod)
-            },
-            linkTypeFilter(_, __, item) {
-                return this.keywordFilter(this.headerObject.linkType, item.linkType)
-            },
-            sectionFilter(_, __, item) {
-                return this.keywordFilter(this.headerObject.section, item.section)
-            },
-            subsectionFilter(_, __, item) {
-                return this.keywordFilter(this.headerObject.subsection, item.subsection)
-            },
-            pathFilter(_, __, item) {
-                return this.keywordFilter(this.headerObject.path, item.path)
-            },
-            filenameFilter(_, __, item) {
-                return this.keywordFilter(this.headerObject.filename, item.filename)
-            },
-            hashFilter(_, __, item) {
-                return this.keywordFilter(this.headerObject.hash, item.hash)
-            },
-            timestampFilter(_, __, item) {
-                return this.keywordFilter(this.headerObject.timestamp, item.timestamp)
-            },
-            doiFilter(_, __, item) {
-                return this.keywordFilter(this.headerObject.doi, item.doi)
-            },
-            authorsFilter(_, __, item) {
-                return this.keywordFilter(this.headerObject.authors, item.authors)
-            },
-            titleFilter(_, __, item) {
-                return this.keywordFilter(this.headerObject.title, item.title)
-            },
-            publisherFilter(_, __, item) {
-                return this.keywordFilter(this.headerObject.publisher, item.publisher)
-            },
-            journalFilter(_, __, item) {
-                return this.keywordFilter(this.headerObject.journal, item.journal)
-            },
-            yearFilter(_, __, item) {
-                return this.keywordFilter(this.headerObject.year, item.year)
-            },
-            keywordFilter(header, target) {
-                const keyword = this.sanitizeString(header.filterKeyword)
-                target = this.sanitizeString(target);
-                const shouldHideEmpty = header.shouldHideEmpty
-                if (!keyword && !shouldHideEmpty) {
-                    return true
-                }
-                if (!target) {
-                    return false
-                }
-                const target_lower = target.toLowerCase()
-                const keyword_lower = keyword.toLowerCase()
-                return target_lower.indexOf(keyword_lower) > -1
-            },
-            sanitizeString(target) {
-                if (typeof target === 'string') {
-                    return target.trim()
-                } else {
-                    return ''
-                }
-            },
-            typeFilter(value, search, item) {
-                const keyword = this.headerObject.type.filterKeyword
-                switch (keyword) {
-                    case 'all':
-                        return true
-                    default:
-                        return item.type === keyword
-                }
-            },
-            statusFilter(value, search, item) {
-                const keyword = this.headerObject.status.filterKeyword
-                switch (keyword) {
-                    case 'all':
-                        return true
-                    default:
-                        return item.status === keyword
-                }
-            },
-            flagFilter(value, search, item) {
-                const keyword = this.headerObject.flag.filterKeyword
-                switch (keyword) {
-                    case 'all':
-                        return true
-                    case 'flag':
-                        return item.flag
-                    case 'unflag':
-                        return !item.flag
-                }
-            },
-            async toggleFlag(record) {
-                let url = ''
-                if (record.flag) {
-                    url =
-                        '{{ url_for("supercon.unflag_record", id = "id") }}'
-                } else {
-                    url = '{{ url_for("supercon.flag_record", id = "id") }}'
-                }
-                url = url.replace(
-                    "id",
-                    record.id
-                )
-                const {data: data} = await axios.patch(url)
-                this.items = Object.assign(
-                    this.items,
-                    Object.assign(
-                        this.items.find(item => item.id === record.id),
+                    <v-card-actions>
+                        <v-spacer></v-spacer>
+                        <v-btn color="blue darken-1" text @click="close">
+                            Cancel
+                        </v-btn>
+                        <v-btn color="blue darken-1" text @click="save" :disabled="!saveIsValidated">
+                            Save
+                        </v-btn>
+                    </v-card-actions>
+                </v-card>
+            </v-dialog>
+        </v-container>
+    </v-app>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@2.6.3/dist/vuetify.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios@0.26.1/dist/axios.min.js"></script>
+    <script>
+        new Vue({
+            delimiters: ['[[', ']]'],
+            el: '#app',
+            vuetify: new Vuetify(),
+            data() {
+                return {
+                    dialog: false,
+                    version: 'unknown version',
+                    editedItem: {},
+                    page: 1,
+                    pageCount: 0,
+                    itemsPerPage: 10,
+                    sortBy: ['hash'],
+                    selectedItems: [],
+                    filteredItems: [],
+                    selectedHeaders: [],
+                    headers: [
+                        { text: 'Raw Material', value: 'rawMaterial', hidden: false, filter: this.rawMaterialFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Name', value: 'name', hidden: false, filter: this.nameFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Formula', value: 'formula', hidden: false, filter: this.formulaFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Space Group', value: 'spaceGroup', hidden: true, filter: this.spaceGroupFilter, filterKeyword: '', shouldHideEmpty: false },
+                        // { text: 'Space Group ID', value: 'spaceGroupId', hidden: true },
+                        { text: 'Crystal Structure', value: 'crystalStructure', hidden: true, filter: this.crystalStructureFilter, filterKeyword: '', shouldHideEmpty: false },
+                        // { text: 'Crystal Structure ID', value: 'crystalStructureId', hidden: true },
+                        { text: 'Unit Cell Type', value: 'unitCellType', hidden: true, filter: this.unitCellTypeFilter, filterKeyword: '', shouldHideEmpty: false },
+                        // { text: 'Unit Cell Type ID', value: 'unitCellTypeId', hidden: true },
+                        { text: 'Doping', value: 'doping', hidden: false, filter: this.dopingFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Shape', value: 'shape', hidden: false, filter: this.shapeFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Variables', value: 'variables', hidden: true, filter: this.variablesFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Material Class', value: 'materialClass', hidden: false, filter: this.materialClassFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Fabrication', value: 'fabrication', hidden: true, filter: this.fabricationFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Substrate', value: 'substrate', hidden: true, filter: this.substrateFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Critical Temperature', value: 'criticalTemperature', hidden: false, filter: this.criticalTemperatureFilter, filterKeyword: '', shouldHideEmpty: false },
+                        // { text: 'Critical TemperatureId', value: 'criticalTemperatureId', hidden: true },
+                        { text: 'Applied Pressure', value: 'appliedPressure', hidden: false, filter: this.appliedPressureFilter, filterKeyword: '', shouldHideEmpty: false },
+                        // { text: 'Applied Pressure ID', value: 'appliedPressureId', hidden: true },
+                        { text: 'Critical Temperature Measurement Method', value: 'criticalTemperatureMeasurementMethod', hidden: false, filter: this.criticalTemperatureMeasurementMethodFilter, filterKeyword: '', shouldHideEmpty: false },
+                        // { text: 'Critical Temperature Measurement MethodId', value: 'criticalTemperatureMeasurementMethodId', hidden: true },
+                        { text: 'Link Type', value: 'linkType', hidden: true, filter: this.linkTypeFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Section', value: 'section', hidden: true, filter: this.sectionFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Subsection', value: 'subsection', hidden: true, filter: this.subsectionFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Path', value: 'path', hidden: true, filter: this.pathFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Filename', value: 'filename', hidden: true, filter: this.filenameFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Document', value: 'hash', hidden: false, filter: this.hashFilter, filterKeyword: '', width: 120, shouldHideEmpty: false },
+                        { text: 'Timestamp', value: 'timestamp', hidden: true, filter: this.timestampFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'DOI', value: 'doi', hidden: false, filter: this.doiFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Authors', value: 'authors', width: 300, hidden: true, filter: this.authorsFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Title', value: 'title', width: 500, hidden: true, filter: this.titleFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Publisher', value: 'publisher', hidden: true, filter: this.publisherFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Journal', value: 'journal', hidden: true, filter: this.journalFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Year', value: 'year', hidden: false, filter: this.yearFilter, filterKeyword: '', shouldHideEmpty: false },
+                        // CONFIRM: check column locations for type, status and flag
                         {
-                            type: data.type,
-                            status: data.status,
-                            flag: !record.flag,
-                        }
-                    )
-                )
-            },
-            openEditItemDialog(item) {
-                // make a deep copy so that the record is not updated in the table
-                this.editedItem = JSON.parse(JSON.stringify(item))
-                this.dialog = true
-            },
-            openCreateItemDialog() {
-                this.editedItem = {}
-                this.dialog = true
-            }
-            ,
-            close() {
-                this.dialog = false
-            },
-            async save() {
-                if (this.editedItem.id) {
-                    await this.updateItem()
-                } else {
-                    await this.createItem()
+                            text: 'Type', value: 'type', hidden: true, filter: this.typeFilter, filterKeyword: 'all', width: 80,
+                            radioGroup: [{
+                                value: 'all',
+                                icon: 'mdi-filter-off'
+                            }, {
+                                value: 'manual',
+                                icon: 'mdi-human'
+                            }, {
+                                value: 'automatic',
+                                icon: 'mdi-robot'
+                            },]
+                        },
+                        {
+                            text: 'Status', value: 'status', sortable: false, hidden: true, filter: this.statusFilter, filterKeyword: 'all', width: 80,
+                            radioGroup: [{
+                                value: 'all',
+                                icon: 'mdi-filter-off'
+                            }, {
+                                value: 'valid',
+                                icon: 'mdi-thumb-up'
+                            }, {
+                                value: 'invalid',
+                                icon: 'mdi-thumb-down'
+                            },]
+                        },
+                        {
+                            text: 'Flag', value: 'flag', sortable: false, hidden: false, filter: this.flagFilter, filterKeyword: 'all', width: 80,
+                            radioGroup: [{
+                                value: 'all',
+                                icon: 'mdi-filter-off'
+                            }, {
+                                value: 'flag',
+                                icon: 'mdi-flag'
+                            }, {
+                                value: 'unflag',
+                                icon: 'mdi-flag-off'
+                            },]
+                        },
+                        { text: 'Actions', value: 'actions', sortable: false, hidden: false },
+                        // { text: 'Doc URL', value: 'doc_url', hidden: true},
+                        // { text: 'ID', value: 'id', hidden: true},
+                        // { text: 'Material ID', value: 'materialId', hidden: true},
+                        // { text: 'Sentence', value: 'sentence', width: 500, hidden: true},
+                    ],
+                    items: [],
+                    rules: {
+                        required: value => !!value || 'Required.',
+                    },
                 }
+            },
+            computed: {
+                showHeaders() {
+                    return this.headers.filter(s => this.selectedHeaders.includes(s));
+                },
+                selectedItem() {
+                    return this.selectedItems[0]
+                },
+                pageIsFirst() {
+                    return this.page === 1
+                },
+                pageIsLast() {
+                    return this.page === this.pageCount
+                },
+                rowNumber() {
+                    const ids = this.filteredItems.map(item => item.id)
+                    return this.selectedItems.length === 1 ? ids.indexOf(this.selectedItem.id) : undefined
+                },
+                lastFilteredItem() {
+                    return this.filteredItems[this.filteredItems.length - 1]
+                },
+                firstFilteredItem() {
+                    return this.filteredItems[0]
+                },
+                saveIsValidated() {
+                    return this.editedItem.doi && this.editedItem.hash
+                },
+                headerObject() {
+                    return Object.fromEntries(new Map(
+                        this.headers.map(header => {
+                            return [header.value, header]
+                        })
+                    ))
+                },
+            },
+            mounted() {
                 this.loadItems()
+                document.addEventListener('keydown', this.onKeyDown)
             },
-            async createItem() {
-                const url = '{{ url_for("supercon.create_record") }}'
+            beforeDestroy() {
+                document.removeEventListener('keydown', this.onKeyDown)
+            },
+            async beforeMount() {
+                let url = '{{ url_for("supercon.get_version") }}'
                 try {
-                    await axios.post(url, this.editedItem)
-                    this.close()
+                    const result = await axios.get(url, {})
+                    this.version = result.data['version']
+
                 } catch (e) {
                     console.error(e)
                     window.alert(JSON.stringify(e.response.data))
                 } finally {
-                    //
+
                 }
             },
-            async updateItem() {
-                let url = '{{ url_for("supercon.update_record", id = "id") }}'
-                url = url.replace(
-                    "id",
-                    this.editedItem.id
-                )
-                // delete as non-editable item
-                delete this.editedItem.flag
-                delete this.editedItem.status
-                delete this.editedItem.type
-                try {
-                    await axios.put(url, this.editedItem)
-                    this.close()
-                } catch (e) {
-                    console.error(e)
-                    window.alert(JSON.stringify(e.response.data))
-                } finally {
-                    //
+            methods: {
+                loadItems() {
+                    const url =
+                        '{{ url_for("supercon.get_records_from_form_data") }}'
+                    axios.get(url).then((data) => {
+                        this.items = data.data.map((item) => {
+                            return {
+                                ...item, ...{ flag: item.status === 'invalid' && item.type === 'manual' }
+                            }
+                        })
+                    })
+                },
+                isReadOnlyOnDialog(key) {
+                    const keys = ['timestamp', 'type', 'status', 'flag']
+                    return keys.includes(key)
+                },
+                isHiddenOnDialog(key) {
+                    const keys = ['document', 'actions']
+                    return keys.includes(key)
+                },
+                isRequiredOnDialog(key) {
+                    const keys = ['doi', 'hash']
+                    return keys.includes(key)
+                },
+                hasChangedPageCount(pageCount) {
+                    this.pageCount = pageCount
+                },
+                clickRow(item, event) {
+                    event.select(!event.isSelected)
+                },
+                hasChangedCurrentItems(items) {
+                    this.filteredItems = items
+                },
+                async onKeyDown(event) {
+                    // disable shortcuts when in an input field
+                    if (event.srcElement.nodeName.indexOf('INPUT') > -1) {
+                        return
+                    }
+                    // disable shortcuts when edit dialog opens
+                    if (this.dialog) {
+                        return
+                    }
+                    switch (event.key) {
+                        case 'ArrowDown':
+                            event.preventDefault()
+                            switch (this.rowNumber) {
+                                case undefined:
+                                    this.selectedItems = [this.firstFilteredItem]
+                                    break
+                                // the row number is the last of the filtered items
+                                case this.filteredItems.length - 1:
+                                    if (!this.pageIsLast) {
+                                        this.page++
+                                        this.selectedItems = []
+                                    }
+                                    break
+                                default:
+                                    // move to next row
+                                    this.selectedItems = [this.filteredItems[this.rowNumber + 1]]
+                            }
+                            break
+                        case 'ArrowUp':
+                            event.preventDefault()
+                            switch (this.rowNumber) {
+                                case undefined:
+                                    this.selectedItems = [this.lastFilteredItem]
+                                    break
+                                case 0:
+                                    if (!this.pageIsFirst) {
+                                        this.page--
+                                        this.selectedItems = []
+                                    }
+                                    break
+                                default:
+                                    // move to previous row
+                                    this.selectedItems = [this.filteredItems[this.rowNumber - 1]]
+                            }
+                            break
+                        case 'Enter':
+                            await this.toggleFlag(this.selectedItem)
+                            break
+                        // e stands for "edit item"
+                        case 'e':
+                            event.preventDefault()
+                            if (this.selectedItems.length > 0) {
+                                this.openEditItemDialog(this.selectedItem)
+                            }
+                            break
+                        // n stands for "new item"
+                        case 'n':
+                            event.preventDefault()
+                            this.openCreateItemDialog()
+                            break
+                        default:
+                            break;
+                    }
+                },
+                rawMaterialFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.rawMaterial, item.rawMaterial)
+                },
+                nameFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.name, item.name)
+                },
+                formulaFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.formula, item.formula)
+                },
+                spaceGroupFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.spaceGroup, item.spaceGroup)
+                },
+                crystalStructureFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.crystalStructure, item.crystalStructure)
+                },
+                unitCellTypeFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.unitCellType, item.unitCellType)
+                },
+                dopingFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.doping, item.doping)
+                },
+                shapeFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.shape, item.shape)
+                },
+                variablesFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.variables, item.variables)
+                },
+                materialClassFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.materialClass, item.materialClass)
+                },
+                fabricationFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.fabrication, item.fabrication)
+                },
+                substrateFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.substrate, item.substrate)
+                },
+                criticalTemperatureFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.criticalTemperature, item.criticalTemperature)
+                },
+                appliedPressureFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.appliedPressure, item.appliedPressure)
+                },
+                criticalTemperatureMeasurementMethodFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.criticalTemperatureMeasurementMethod, item.criticalTemperatureMeasurementMethod)
+                },
+                linkTypeFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.linkType, item.linkType)
+                },
+                sectionFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.section, item.section)
+                },
+                subsectionFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.subsection, item.subsection)
+                },
+                pathFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.path, item.path)
+                },
+                filenameFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.filename, item.filename)
+                },
+                hashFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.hash, item.hash)
+                },
+                timestampFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.timestamp, item.timestamp)
+                },
+                doiFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.doi, item.doi)
+                },
+                authorsFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.authors, item.authors)
+                },
+                titleFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.title, item.title)
+                },
+                publisherFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.publisher, item.publisher)
+                },
+                journalFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.journal, item.journal)
+                },
+                yearFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.year, item.year)
+                },
+                keywordFilter(header, target) {
+                    const keyword = this.sanitizeString(header.filterKeyword)
+                    target = this.sanitizeString(target);
+                    const shouldHideEmpty = header.shouldHideEmpty
+                    if (!keyword && !shouldHideEmpty) {
+                        return true
+                    }
+                    if (!target) {
+                        return false
+                    }
+                    const target_lower = target.toLowerCase()
+                    const keyword_lower = keyword.toLowerCase()
+                    return target_lower.indexOf(keyword_lower) > -1
+                },
+                sanitizeString(target) {
+                    if (typeof target === 'string') {
+                        return target.trim()
+                    } else {
+                        return ''
+                    }
+                },
+                typeFilter(value, search, item) {
+                    const keyword = this.headerObject.type.filterKeyword
+                    switch (keyword) {
+                        case 'all':
+                            return true
+                        default:
+                            return item.type === keyword
+                    }
+                },
+                statusFilter(value, search, item) {
+                    const keyword = this.headerObject.status.filterKeyword
+                    switch (keyword) {
+                        case 'all':
+                            return true
+                        default:
+                            return item.status === keyword
+                    }
+                },
+                flagFilter(value, search, item) {
+                    const keyword = this.headerObject.flag.filterKeyword
+                    switch (keyword) {
+                        case 'all':
+                            return true
+                        case 'flag':
+                            return item.flag
+                        case 'unflag':
+                            return !item.flag
+                    }
+                },
+                async toggleFlag(record) {
+                    let url = ''
+                    if (record.flag) {
+                        url =
+                            '{{ url_for("supercon.unflag_record", id = "id") }}'
+                    } else {
+                        url = '{{ url_for("supercon.flag_record", id = "id") }}'
+                    }
+                    url = url.replace(
+                        "id",
+                        record.id
+                    )
+                    const { data: data } = await axios.patch(url)
+                    this.items = Object.assign(
+                        this.items,
+                        Object.assign(
+                            this.items.find(item => item.id === record.id),
+                            {
+                                type: data.type,
+                                status: data.status,
+                                flag: !record.flag,
+                            }
+                        )
+                    )
+                },
+                openEditItemDialog(item) {
+                    // make a deep copy so that the record is not updated in the table
+                    this.editedItem = JSON.parse(JSON.stringify(item))
+                    this.dialog = true
+                },
+                openCreateItemDialog() {
+                    this.editedItem = {}
+                    this.dialog = true
                 }
+                ,
+                close() {
+                    this.dialog = false
+                },
+                async save() {
+                    if (this.editedItem.id) {
+                        await this.updateItem()
+                    } else {
+                        await this.createItem()
+                    }
+                    this.loadItems()
+                },
+                async createItem() {
+                    const url = '{{ url_for("supercon.create_record") }}'
+                    try {
+                        await axios.post(url, this.editedItem)
+                        this.close()
+                    } catch (e) {
+                        console.error(e)
+                        window.alert(JSON.stringify(e.response.data))
+                    } finally {
+                        //
+                    }
+                },
+                async updateItem() {
+                    let url = '{{ url_for("supercon.update_record", id = "id") }}'
+                    url = url.replace(
+                        "id",
+                        this.editedItem.id
+                    )
+                    // delete as non-editable item
+                    delete this.editedItem.flag
+                    delete this.editedItem.status
+                    delete this.editedItem.type
+                    try {
+                        await axios.put(url, this.editedItem)
+                        this.close()
+                    } catch (e) {
+                        console.error(e)
+                        window.alert(JSON.stringify(e.response.data))
+                    } finally {
+                        //
+                    }
+                },
+                flagIsNotWritable(record) {
+                    return record.type === 'manual' && record.status === 'valid'
+                },
             },
-            flagIsNotWritable(record) {
-                return record.type === 'manual' && record.status === 'valid'
+            created() {
+                this.selectedHeaders = this.headers.filter(h => !h.hidden)
             },
-        },
-        created() {
-            this.selectedHeaders = this.headers.filter(h => !h.hidden)
-        },
-    })
-</script>
+        })
+    </script>
 
 </body>
 
