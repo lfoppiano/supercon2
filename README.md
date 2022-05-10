@@ -5,8 +5,9 @@
 * [Introduction](#introduction)
 * [Service](#service)
     + [Overview](#overview)
-    + [Record reporting (flagging interface)](#record-reporting-or-flagging)
-    + [Record correction](#record-correction)
+    + [Workflows](#workflows)
+      + [Record reporting (flagging interface)](#record-reporting-or-flagging)
+      + [Record correction](#record-correction)
     + [Getting started](#getting-started)
     + [API documentation](#api-documentation)
 * [Process](#process)
@@ -131,6 +132,22 @@ The interface allow the correction of records independently if they are valid or
 ![edit-record.png](docs/images/edit-interface.png)
 
 ![edit-record.png](docs/images/edit-record.png)
+
+### Keystrokes
+
+The interface can be managed entirely with the keyboard, which improves the efficiency of the curation work. 
+
+The table can be navigated using the arrows after having selected one row with the mouse. 
+
+The shortcuts are: 
+
+| Key        | Description                             |
+|------------|-----------------------------------------|
+| n          | Open the dialog for adding a new record |
+| e          | Edit the current record                 | 
+| arrow-up   | move one record up                      | 
+| arrow-down | move to the record down                 |
+| enter      | flag/unflag the current record          | 
 
 ### Getting started
 

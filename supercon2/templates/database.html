@@ -356,14 +356,14 @@
                         case 'Enter':
                             await this.toggleFlag(this.selectedItem)
                             break
-                        // c is an acronym for curation item
-                        case 'c':
+                        // e stands for "edit item"
+                        case 'e':
                             event.preventDefault()
                             if (this.selectedItems.length > 0) {
                                 this.openEditItemDialog(this.selectedItem)
                             }
                             break
-                        // n is an acronym for new item
+                        // n stands for "new item"
                         case 'n':
                             event.preventDefault()
                             this.openCreateItemDialog()
@@ -581,7 +581,7 @@
                         console.error(e)
                         window.alert(JSON.stringify(e.response.data))
                     } finally {
-
+                        //
                     }
                 },
                 flagIsNotWritable(record) {
