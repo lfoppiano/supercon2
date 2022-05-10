@@ -45,7 +45,8 @@
                 </v-icon>
             </template>
         </v-data-table>
-        <p><span style="color:#848484;">&copy; Contributors, 2022 |</span> <span id="version" style="color:#848484;">unknown version</span>
+
+        <p><span style="color:#848484;">&copy; Contributors, 2022 |</span> <span id="version" style="color:#848484;" v-html="version"></span></p>
         </p>
         <v-dialog v-model="tokenDialog" max-width="500">
             <v-card>
@@ -91,6 +92,7 @@
                 config: {},
                 token: null,
                 project_id: null,
+                version: "unknown version",
                 selectedHeaders: [],
                 headers: [
                     {text: 'Id', value: 'id', sortable: false, hidden: true},
@@ -250,10 +252,25 @@
                 }
             }
         },
+
+        async beforeMount() {
+            let url = '{{ url_for("supercon.get_version") }}'
+            try {
+                const result = await axios.get(url, {})
+                this.version = result.data['version']
+
+            } catch (e) {
+                console.error(e)
+                window.alert(JSON.stringify(e.response.data))
+            } finally {
+
+            }
+        },
+        methods: {},
+  
         created() {
             this.selectedHeaders = this.headers.filter(h => !h.hidden)
         }
-        ,
     })
 </script>
 

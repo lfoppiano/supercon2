@@ -92,7 +92,7 @@
                     </v-icon>
                 </template>
             </v-data-table>
-            <p><span style="color:#848484;">&copy; Contributors, 2022 |</span> <span id="version" style="color:#848484;">unknown version</span></p>
+            <p><span style="color:#848484;">&copy; Contributors, 2022 |</span> <span id="version" style="color:#848484;" v-html="version"></span></p>
             <v-dialog v-model="dialog">
                 <v-card>
                     <v-card-text>
@@ -139,6 +139,7 @@
             data() {
                 return {
                     dialog: false,
+                    version: 'unknown version',
                     editedItem: {},
                     page: 1,
                     pageCount: 0,
@@ -167,7 +168,7 @@
                         // { text: 'Critical TemperatureId', value: 'criticalTemperatureId', hidden: true },
                         { text: 'Applied Pressure', value: 'appliedPressure', hidden: false, filter: this.appliedPressureFilter, filterKeyword: '', shouldHideEmpty: false },
                         // { text: 'Applied Pressure ID', value: 'appliedPressureId', hidden: true },
-                        { text: 'Critical Temperature Measurement Method', value: 'criticalTemperatureMeasurementMethod', hidden: true, filter: this.criticalTemperatureMeasurementMethodFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Critical Temperature Measurement Method', value: 'criticalTemperatureMeasurementMethod', hidden: false, filter: this.criticalTemperatureMeasurementMethodFilter, filterKeyword: '', shouldHideEmpty: false },
                         // { text: 'Critical Temperature Measurement MethodId', value: 'criticalTemperatureMeasurementMethodId', hidden: true },
                         { text: 'Link Type', value: 'linkType', hidden: true, filter: this.linkTypeFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'Section', value: 'section', hidden: true, filter: this.sectionFilter, filterKeyword: '', shouldHideEmpty: false },
@@ -275,6 +276,19 @@
             beforeDestroy() {
                 document.removeEventListener('keydown', this.onKeyDown)
             },
+            async beforeMount() {
+                let url = '{{ url_for("supercon.get_version") }}'
+                try {
+                    const result = await axios.get(url, {})
+                    this.version = result.data['version']
+
+                } catch (e) {
+                    console.error(e)
+                    window.alert(JSON.stringify(e.response.data))
+                } finally {
+
+                }
+            },
             methods: {
                 loadItems() {
                     const url =
@@ -356,14 +370,14 @@
                         case 'Enter':
                             await this.toggleFlag(this.selectedItem)
                             break
-                        // c is an acronym for curation item
-                        case 'c':
+                        // e stands for "edit item"
+                        case 'e':
                             event.preventDefault()
                             if (this.selectedItems.length > 0) {
                                 this.openEditItemDialog(this.selectedItem)
                             }
                             break
-                        // n is an acronym for new item
+                        // n stands for "new item"
                         case 'n':
                             event.preventDefault()
                             this.openCreateItemDialog()
@@ -458,7 +472,7 @@
                 },
                 keywordFilter(header, target) {
                     const keyword = this.sanitizeString(header.filterKeyword)
-                    target = this.sanitizeString(target)
+                    target = this.sanitizeString(target);
                     const shouldHideEmpty = header.shouldHideEmpty
                     if (!keyword && !shouldHideEmpty) {
                         return true
@@ -466,7 +480,9 @@
                     if (!target) {
                         return false
                     }
-                    return target.indexOf(keyword) > -1
+                    const target_lower = target.toLowerCase()
+                    const keyword_lower = keyword.toLowerCase()
+                    return target_lower.indexOf(keyword_lower) > -1
                 },
                 sanitizeString(target) {
                     if (typeof target === 'string') {
@@ -578,7 +594,7 @@
                         console.error(e)
                         window.alert(JSON.stringify(e.response.data))
                     } finally {
-
+                        //
                     }
                 },
                 flagIsNotWritable(record) {

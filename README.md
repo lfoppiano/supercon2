@@ -132,6 +132,7 @@ The interface allow the correction of records independently if they are valid or
 
 ![edit-record.png](docs/images/edit-record.png)
 
+
 #### Training data management
 
 This section provides an overview of the collected training data. 
@@ -153,6 +154,22 @@ The `status` indicate:
 The `actions` column comprises two action-buttons: 
  - `send` the training data to label-studio 
  - `remove` the training data, in case of duplicates. **In general is always better to keep the training data even if they have been sent to label-studio already**
+
+### Keystrokes
+
+The interface can be managed entirely with the keyboard, which improves the efficiency of the curation work. 
+
+The table can be navigated using the arrows after having selected one row with the mouse. 
+
+The shortcuts are: 
+
+| Key        | Description                             |
+|------------|-----------------------------------------|
+| n          | Open the dialog for adding a new record |
+| e          | Edit the current record                 | 
+| arrow-up   | move one record up                      | 
+| arrow-down | move to the record down                 |
+| enter      | flag/unflag the current record          | 
 
 ### Getting started
 
