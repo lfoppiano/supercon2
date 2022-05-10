@@ -7,5 +7,4 @@ mongo:
 
 label-studio:
   url: "http://falcon.nims.go.jp/label-studio"
-  token: "ADD_TOKEN_FROM_LABEL_STUDIO"
   project_id: "1"

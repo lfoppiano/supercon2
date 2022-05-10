@@ -5,8 +5,10 @@
 * [Introduction](#introduction)
 * [Service](#service)
     + [Overview](#overview)
-    + [Record reporting (flagging interface)](#record-reporting-or-flagging)
-    + [Record correction](#record-correction)
+    + [Workflows](#workflows)
+      + [Record reporting (flagging interface)](#record-reporting-or-flagging)
+      + [Record correction](#record-correction)
+      + [Training data management](#training-data-management)
     + [Getting started](#getting-started)
     + [API documentation](#api-documentation)
 * [Process](#process)
@@ -62,8 +64,6 @@ The technical details of the curation interface can be found [here](docs/correct
  - Undo/redo functionality: possibility to revert incorrect edits and modification of the database 
  - Versioning of documents 
 
-
-[//]: # (![training-data-view.png]&#40;docs/images/training-data-view.png&#41;)
 [//]: # (![pdf-view.png]&#40;docs/images/pdf-view.png&#41;)
 
 ### Interface features
@@ -124,13 +124,35 @@ The curators have the possibility to identify such records and correct them or r
 stage.
 ![flagged-records.png](docs/images/flagged-records.png)
 
-### Record correction
+#### Record correction
 
 The interface allow the correction of records independently if they are valid or incorrect: 
 
 ![edit-record.png](docs/images/edit-interface.png)
 
 ![edit-record.png](docs/images/edit-record.png)
+
+#### Training data management
+
+This section provides an overview of the collected training data. 
+We follow the idea that exploiting corrections for training data is an important feature to provide improvement of the data quality and model accuracy. 
+Therefore, when a record is corrected, its original sentence, tokens and annotaions are stored in a separate space and can be sent to label-studio, which is a tool for managing annotations.
+
+The training data management looks like the following image: 
+
+![training-data-viewer.png](docs/images/training-data-viewer.png)
+
+Each row represent one training item.
+
+The `status` indicate: 
+ - `new` if the training data has been added but not yet sent to label-studio
+ - `in progress` if the training data was sent to label-studio 
+
+**NOTE** if two materials within the same sentence are corrected, the sentence will appear twice in the training data management. For this reason the data shall be selectively sent to label-studio. 
+
+The `actions` column comprises two action-buttons: 
+ - `send` the training data to label-studio 
+ - `remove` the training data, in case of duplicates. **In general is always better to keep the training data even if they have been sent to label-studio already**
 
 ### Getting started
 
