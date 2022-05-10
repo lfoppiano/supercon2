@@ -458,7 +458,7 @@
                 },
                 keywordFilter(header, target) {
                     const keyword = this.sanitizeString(header.filterKeyword)
-                    target = this.sanitizeString(target)
+                    target = this.sanitizeString(target);
                     const shouldHideEmpty = header.shouldHideEmpty
                     if (!keyword && !shouldHideEmpty) {
                         return true
@@ -466,7 +466,9 @@
                     if (!target) {
                         return false
                     }
-                    return target.indexOf(keyword) > -1
+                    const target_lower = target.toLowerCase()
+                    const keyword_lower = keyword.toLowerCase()
+                    return target_lower.indexOf(keyword_lower) > -1
                 },
                 sanitizeString(target) {
                     if (typeof target === 'string') {
