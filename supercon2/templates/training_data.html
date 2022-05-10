@@ -33,7 +33,7 @@
                 <span v-html="item.annotated_text"></span>
             </template>
         </v-data-table>
-        <p><span style="color:#848484;">&copy; Contributors, 2022 |</span> <span id="version" style="color:#848484;">unknown version</span></p>
+        <p><span style="color:#848484;">&copy; Contributors, 2022 |</span> <span id="version" style="color:#848484;" v-html="version"></span></p>
     </v-container>
 </v-app>
 <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
@@ -45,6 +45,7 @@
         vuetify: new Vuetify(),
         data() {
             return {
+                version: "unknown version",
                 selectedHeaders: [],
                 headers: [
                     {text: 'id', value: 'id', hidden: true},
@@ -64,6 +65,19 @@
             axios.get(url).then((data) => {
                 this.items = data.data
             })
+        },
+        async beforeMount() {
+            let url = '{{ url_for("supercon.get_version") }}'
+            try {
+                const result = await axios.get(url, {})
+                this.version = result.data['version']
+
+            } catch (e) {
+                console.error(e)
+                window.alert(JSON.stringify(e.response.data))
+            } finally {
+
+            }
         },
         methods: {},
         created() {
