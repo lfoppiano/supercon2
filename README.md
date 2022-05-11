@@ -9,6 +9,7 @@
       + [Record reporting (flagging interface)](#record-reporting-or-flagging)
       + [Record correction](#record-correction)
       + [Training data management](#training-data-management)
+      + [Keystrokes](#keystrokes)
     + [Getting started](#getting-started)
     + [API documentation](#api-documentation)
 * [Process](#process)

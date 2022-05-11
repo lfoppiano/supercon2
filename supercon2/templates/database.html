@@ -24,7 +24,7 @@
             </v-row>
             <v-data-table v-model="selectedItems" :headers="showHeaders" :items="items" :dense="true" single-select
                 loading-text="loading ..." :multi-sort="true" class="elevation-1"
-                @current-items="hasChangedCurrentItems" :page.sync="page" :items-per-page="itemsPerPage"
+                @current-items="hasChangedCurrentItems" :page.sync="page" :footer-props="{'items-per-page-options':[20, 50, 100]}"
                 :sort-by.sync="sortBy" @page-count="hasChangedPageCount" @click:row="clickRow">
                 <template v-slot:body.prepend>
                     <tr>
@@ -144,6 +144,7 @@
                     page: 1,
                     pageCount: 0,
                     itemsPerPage: 10,
+                    itemsPerPageOptions: [25, 50, 100],
                     sortBy: ['hash'],
                     selectedItems: [],
                     filteredItems: [],
