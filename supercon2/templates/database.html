@@ -87,9 +87,14 @@
                     </v-checkbox>
                 </template>
                 <template v-slot:item.actions="{ item }">
-                    <v-icon small class="mr-2" @click="openEditItemDialog(item)" title="Open edit dialog">
+                    <v-row>
+                        <v-icon small class="mr-2" @click="openEditItemDialog(item)" title="Open edit dialog">
                         mdi-pencil
+                        </v-icon>
+                        <v-icon small class="mr-2" @click="remove_record(item)" title="Remove record">
+                        mdi-delete-outline
                     </v-icon>
+                    </v-row>
                 </template>
             </v-data-table>
             <p><span style="color:#848484;">&copy; Contributors, 2022 |</span> <span id="version" style="color:#848484;" v-html="version"></span></p>
@@ -601,6 +606,23 @@
                 flagIsNotWritable(record) {
                     return record.type === 'manual' && record.status === 'valid'
                 },
+                async remove_record(item) {
+                    let url = '{{ url_for("supercon.delete_record", id="record_id") }}'
+                    url = url.replace(
+                        "record_id",
+                        item.id
+                    )
+
+                    try {
+                        await axios.delete(url, {})
+                        this.loadItems()
+                    } catch (e) {
+                        console.error(e)
+                        window.alert(JSON.stringify(e.response.data))
+                    } finally {
+                        //
+                    }
+                }
             },
             created() {
                 this.selectedHeaders = this.headers.filter(h => !h.hidden)

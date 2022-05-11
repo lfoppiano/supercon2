@@ -384,6 +384,16 @@ def get_record(id):
     return record
 
 
+@bp.route('/record/<id>', methods=['DELETE'])
+@output(Record)
+def delete_record(id):
+    object_id = validateObjectId(id)
+    db = connect_and_get_db()
+    record = db.get_collection("tabular").update_one({"_id": object_id}, {"$set": {"status": "removed"}})
+
+    return record
+
+
 @bp.route('/record/<id>/flags', methods=['GET'])
 @output(Flag)
 def get_flag(id):
