@@ -5,11 +5,12 @@
 * [Introduction](#introduction)
 * [Service](#service)
     + [Overview](#overview)
+    + [Keystrokes](#keystrokes)
+    + [Interface features](#interface-features)
     + [Workflows](#workflows)
       + [Record reporting (flagging interface)](#record-reporting-or-flagging)
       + [Record correction](#record-correction)
       + [Training data management](#training-data-management)
-      + [Keystrokes](#keystrokes)
     + [Getting started](#getting-started)
     + [API documentation](#api-documentation)
 * [Process](#process)
@@ -66,6 +67,23 @@ The technical details of the curation interface can be found [here](docs/correct
  - Versioning of documents 
 
 [//]: # (![pdf-view.png]&#40;docs/images/pdf-view.png&#41;)
+
+### Keystrokes
+
+The interface can be managed entirely with the keyboard, which improves the efficiency of the curation work. 
+
+The table can be navigated using the arrows after having selected one row with the mouse. 
+
+The shortcuts are: 
+
+| Key        | Description                             |
+|------------|-----------------------------------------|
+| n          | Open the dialog for adding a new record |
+| e          | Edit the current record                 | 
+| arrow-up   | move one record up                      | 
+| arrow-down | move to the record down                 |
+| enter      | flag/unflag the current record          | 
+
 
 ### Interface features
 
@@ -155,22 +173,6 @@ The `status` indicate:
 The `actions` column comprises two action-buttons: 
  - `send` the training data to label-studio 
  - `remove` the training data, in case of duplicates. **In general is always better to keep the training data even if they have been sent to label-studio already**
-
-### Keystrokes
-
-The interface can be managed entirely with the keyboard, which improves the efficiency of the curation work. 
-
-The table can be navigated using the arrows after having selected one row with the mouse. 
-
-The shortcuts are: 
-
-| Key        | Description                             |
-|------------|-----------------------------------------|
-| n          | Open the dialog for adding a new record |
-| e          | Edit the current record                 | 
-| arrow-up   | move one record up                      | 
-| arrow-down | move to the record down                 |
-| enter      | flag/unflag the current record          | 
 
 ### Getting started
 
