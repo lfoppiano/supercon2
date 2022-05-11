@@ -37,12 +37,14 @@
                 <span v-html="item.annotated_text"></span>
             </template>
             <template v-slot:item.actions="{ item }">
-                <v-icon small class="mr-2" @click="send_record_to_label_studio(item)" title="Send to label-studio">
-                    mdi-send-outline
-                </v-icon>
-                <v-icon small class="mr-2" @click="remove_training_data_record(item)" title="Remove record">
-                    mdi-delete-outline
-                </v-icon>
+                <v-row>
+                    <v-icon small class="mr-2" @click="send_record_to_label_studio(item)" title="Send to label-studio">
+                        mdi-send-outline
+                    </v-icon>
+                    <v-icon small class="mr-2" @click="remove_training_data_record(item)" title="Remove record">
+                        mdi-delete-outline
+                    </v-icon>
+                </v-row>
             </template>
         </v-data-table>
 
