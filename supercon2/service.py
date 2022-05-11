@@ -6,7 +6,8 @@ import gridfs
 from apiflask import APIBlueprint, abort, output, input
 from bson import ObjectId
 from bson.errors import InvalidId
-from flask import render_template, Response, url_for
+from flask import render_template, Response, url_for, request
+from pymongo import UpdateOne
 
 from commons.correction_utils import write_correction, write_raw_training_data
 from commons.label_studio_commons import to_label_studio_format_single
@@ -125,7 +126,6 @@ def get_stats():
 
     return render_template("stats.html", by_publisher=by_publisher_fixed, by_year=by_year_fixed,
                            by_journal=by_journal_fixed)
-
 
 def replace_empty_key(input):
     output = [{k: v for k, v in item.items()} for item in input]
@@ -440,8 +440,10 @@ def unflag_record(id):
 
 
 @bp.route('/config', methods=['GET'])
-def get_config(config_file='config.yaml'):
-    return load_config_yaml(config_file)
+def get_config():
+    return config
+# def get_config(config_file='config.yaml'):
+#     return load_config_yaml(config_file)
 
 
 @bp.route('/training_data', methods=['GET'])
@@ -467,19 +469,42 @@ def export_training_data(id):
     return single_training_data
 
 
-@bp.route('/training/data/status/<status>')
-def export_training_data_by_type(status):
+@bp.route('/annotation/<hash>/biblio')
+def get_biblio_by_hash(hash):
     db = connect_and_get_db()
+    last_documents = db.get_collection("document").find({"hash": hash}).sort("timestamp", -1)
+    last_document = last_documents[0]
+    return last_document['biblio']
+
+
+@bp.route('/training/data/status/<status>')
+def export_training_data_by_status(status):
+    db = connect_and_get_db()
+    new_format, _ = get_training_data_by_status(status, db)
+
+    return Response(json.dumps(new_format, default=json_serial), mimetype="application/json")
+
+
+def get_training_data_by_status(status, db):
     training_data_collection = db.get_collection("training_data")
-
     training_data_list = list(training_data_collection.find({'status': status}, {'tokens': 0}))
-
     new_format = []
+    ids = []
     for training_data in training_data_list:
         new_structure = to_label_studio_format_single(training_data['text'], training_data['spans'])
         new_format.append(new_structure)
+        ids.append(training_data['_id'])
+    return new_format, ids
 
-    return Response(json.dumps(new_format, default=json_serial), mimetype="application/json")
+
+def get_training_data_by_id_and_status(record_id, status, db):
+    id = validateObjectId(record_id)
+    training_data_collection = db.get_collection("training_data")
+    training_data = training_data_collection.find_one({'_id': id, 'status': status}, {'tokens': 0})
+    if not training_data:
+        return None, None
+    new_structure = to_label_studio_format_single(training_data['text'], training_data['spans'])
+    return new_structure, training_data['_id']
 
 
 def get_span_start(type):
@@ -517,6 +542,7 @@ def get_training_data_list():
         training_output.append({
             "id": str(training_data_item['_id']),
             "text": text,
+            "status": training_data_item['status'],
             "annotated_text": annotated_text,
             "hash": training_data_item['hash'],
             "corrected_record_id": training_data_item['corrected_record_id']
@@ -524,6 +550,182 @@ def get_training_data_list():
 
     return Response(json.dumps(training_output, default=json_serial), mimetype="application/json")
 
+
+@bp.route("/label/studio/projects", methods=['GET'])
+def get_projects_label_studio():
+    authentication_token = get_label_studio_token()
+
+    from label_studio_sdk import Client
+    ls = Client(url=config['label-studio']['url'], api_key=authentication_token)
+
+    ls.check_connection()
+    projects = None
+    try:
+        projects = ls.get_projects()
+    except Exception as e:
+        abort(e.response.status_code, message="Error when fetching data from label studio",
+              detail=json.loads(e.response.text)['detail'])
+
+    if projects is None or len(projects) == 0:
+        abort(404, "No project were found.")
+
+    result_projects = []
+
+    for project in projects:
+        params = project.params
+        result_projects.append({
+            'id': params['id'],
+            'title': params['title'],
+            'description': params['description']
+        })
+
+    return Response(json.dumps(result_projects, default=json_serial), mimetype="application/json")
+
+
+def get_label_studio_token():
+    if 'Authentication' not in request.headers:
+        abort(400, "The authentication token should be provided in the headers. ")
+    elif not request.headers['Authentication'].startswith("Token "):
+        abort(400, "The authentication token must start with 'Token'")
+    authentication_token = request.headers['Authentication'].replace("Token ", "")
+    return authentication_token
+
+
+@bp.route("/label/studio/project/<project_id>", methods=['GET'])
+def get_project_label_studio(project_id):
+    authentication_token = get_label_studio_token()
+
+    from label_studio_sdk import Client
+    ls = Client(url=config['label-studio']['url'], api_key=authentication_token)
+
+    ls.check_connection()
+    try:
+        project = ls.get_project(project_id)
+    except Exception as e:
+        abort(e.response.status_code, message="Error when fetching data from label studio",
+              detail=json.loads(e.response.text)['detail'])
+
+    if project is None:
+        abort(404, "No project were found.")
+
+    output_project_format = {
+        'params': project.params,
+        'parsed_label_config': project.parsed_label_config,
+        'tasks': project.tasks,
+        'tasks_ids': project.tasks_ids
+    }
+
+    return Response(json.dumps(output_project_format, default=json_serial), mimetype="application/json")
+
+
+@bp.route("/label/studio/project/<project_id>/records", methods=['POST', 'PUT'])
+def post_tasks_to_label_studio_project(project_id):
+    db = connect_and_get_db()
+    tasks_to_send, ids = get_training_data_by_status('new', db)
+
+    if len(tasks_to_send) == 0:
+        abort(404, "No training data to send. All data has been already transferred. ")
+
+    authentication_token = get_label_studio_token()
+
+    from label_studio_sdk import Client
+    ls = Client(url=config['label-studio']['url'], api_key=authentication_token)
+
+    ls.check_connection()
+    try:
+        project = ls.get_project(project_id)
+    except Exception as e:
+        abort(e.response.status_code, message="Error when fetching data from label studio",
+              detail=json.loads(e.response.text)['detail'])
+
+    if project is None:
+        abort(404, "No project were found.")
+
+    try:
+        result = project.import_tasks(tasks_to_send)
+    except Exception as e:
+        abort(e.response.status_code, message="Error when sending data to label studio",
+              detail=json.loads(e.response.text)['detail'])
+
+    if len(ids) != len(result):
+        abort(500, "The training_data ids length did not match the identifier length. Something was lost on the way. ")
+
+    training_data_collection = db.get_collection("training_data")
+    updates = []
+    ids_mapping = []
+    for idx, identifier in enumerate(ids):
+        updates.append(UpdateOne({'_id': identifier}, {'$set': {'status': 'in_progress', 'task_id': result[idx]}}))
+        ids_mapping.append({
+            'record_id': str(identifier),
+            'task_id': result[idx]
+        })
+
+    op_result = training_data_collection.bulk_write(updates)
+
+    result_response = {
+        'ids_mapping': ids_mapping,
+        'modified': op_result.modified_count
+    }
+
+    return Response(json.dumps(result_response, default=json_serial), mimetype="application/json")
+
+
+@bp.route("/label/studio/project/<project_id>/record/<record_id>", methods=['POST', 'PUT'])
+def post_task_to_label_studio_project(project_id, record_id):
+    db = connect_and_get_db()
+    task_to_send, task_id = get_training_data_by_id_and_status(record_id, 'new', db)
+
+    if not task_to_send:
+        abort(404, "No available training data to send. The requested record is not available"
+                   " or it had been sent already. ")
+
+    authentication_token = get_label_studio_token()
+
+    from label_studio_sdk import Client
+    ls = Client(url=config['label-studio']['url'], api_key=authentication_token)
+
+    ls.check_connection()
+    try:
+        project = ls.get_project(project_id)
+    except Exception as e:
+        abort(e.response.status_code, message="Error when fetching data from label studio",
+              detail=json.loads(e.response.text)['detail'])
+
+    if project is None:
+        abort(404, "No project were found.")
+
+    try:
+        result = project.import_tasks(task_to_send)
+    except Exception as e:
+        abort(e.response.status_code, message="Error when sending data to label studio",
+              detail=json.loads(e.response.text)['detail'])
+
+    if len(result) != 1:
+        abort(500, "One result is expected but not obtained. Something was lost on the way. ")
+
+    training_data_collection = db.get_collection("training_data")
+    op_result = training_data_collection.update_one({'_id': task_id},
+                                                    {'$set': {'status': 'in_progress', 'task_id': result[0]}})
+
+    result_response = {
+        'ids_mapping': [
+            {str(task_id): result[0]}
+        ],
+        'modified': op_result.modified_count
+    }
+
+    return Response(json.dumps(result_response, default=json_serial), mimetype="application/json")
+
+
+@bp.route("/training/data/<id>", methods=['DELETE'])
+def delete_training_data_record(id):
+    db = connect_and_get_db()
+    training_data_collection = db.get_collection("training_data")
+
+    object_id = validateObjectId(id)
+    result = training_data_collection.delete_one({"_id": object_id})
+
+    return Response(json.dumps({"deleted": result.deleted_count}, default=json_serial), mimetype="application/json")
 
 # @bp.after_request
 # def add_header(r):
