@@ -8,6 +8,7 @@
     + [Workflows](#workflows)
       + [Record reporting (flagging interface)](#record-reporting-or-flagging)
       + [Record correction](#record-correction)
+      + [Keystrokes](#keystrokes)
     + [Getting started](#getting-started)
     + [API documentation](#api-documentation)
 * [Process](#process)
