@@ -58,9 +58,9 @@ The technical details of the curation interface can be found [here](docs/correct
 
  
 **Future plans**
- - Invalid record remove [#43](https://github.com/lfoppiano/supercon2/issues/43)
  - Undo/redo functionality: possibility to revert incorrect edits and modification of the database 
- - Versioning of documents 
+ - Document versioning
+ - ...
 
 
 [//]: # (![training-data-view.png]&#40;docs/images/training-data-view.png&#41;)
