@@ -88,12 +88,15 @@
                 </template>
                 <template v-slot:item.actions="{ item }">
                     <v-row>
-                        <v-icon small class="mr-2" @click="openEditItemDialog(item)" title="Open edit dialog">
+                        <v-icon small class="mr-1" @click="openEditItemDialog(item)" title="Open edit dialog">
                         mdi-pencil
                         </v-icon>
-                        <v-icon small class="mr-2" @click="remove_record(item)" title="Remove record">
+                        <v-icon small class="mr-1" @click="removeRecord(item)" title="Remove record">
                         mdi-delete-outline
-                    </v-icon>
+                        </v-icon>
+                        <v-icon small class="mr-1" @click="newRecord(item)" title="New record">
+                        mdi-folder-plus-outline
+                        </v-icon>
                     </v-row>
                 </template>
             </v-data-table>
@@ -174,13 +177,13 @@
                         // { text: 'Critical TemperatureId', value: 'criticalTemperatureId', hidden: true },
                         { text: 'Applied Pressure', value: 'appliedPressure', hidden: false, filter: this.appliedPressureFilter, filterKeyword: '', shouldHideEmpty: false },
                         // { text: 'Applied Pressure ID', value: 'appliedPressureId', hidden: true },
-                        { text: 'Critical Temperature Measurement Method', value: 'criticalTemperatureMeasurementMethod', hidden: false, filter: this.criticalTemperatureMeasurementMethodFilter, filterKeyword: '', shouldHideEmpty: false },
-                        // { text: 'Critical Temperature Measurement MethodId', value: 'criticalTemperatureMeasurementMethodId', hidden: true },
-                        { text: 'Link Type', value: 'linkType', hidden: true, filter: this.linkTypeFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Measurement Method', value: 'criticalTemperatureMeasurementMethod', hidden: false, filter: this.measurementMethodFilter, filterKeyword: '', shouldHideEmpty: false },
+                        // { text: 'Measurement MethodId', value: 'measurementMethodId', hidden: true },
+                        {#{ text: 'Link Type', value: 'linkType', hidden: true, filter: this.linkTypeFilter, filterKeyword: '', shouldHideEmpty: false },#}
                         { text: 'Section', value: 'section', hidden: true, filter: this.sectionFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'Subsection', value: 'subsection', hidden: true, filter: this.subsectionFilter, filterKeyword: '', shouldHideEmpty: false },
-                        { text: 'Path', value: 'path', hidden: true, filter: this.pathFilter, filterKeyword: '', shouldHideEmpty: false },
-                        { text: 'Filename', value: 'filename', hidden: true, filter: this.filenameFilter, filterKeyword: '', shouldHideEmpty: false },
+                        {#{ text: 'Path', value: 'path', hidden: true, filter: this.pathFilter, filterKeyword: '', shouldHideEmpty: false },#}
+                        {#{ text: 'Filename', value: 'filename', hidden: true, filter: this.filenameFilter, filterKeyword: '', shouldHideEmpty: false },#}
                         { text: 'Document', value: 'hash', hidden: false, filter: this.hashFilter, filterKeyword: '', width: 120, shouldHideEmpty: false },
                         { text: 'Timestamp', value: 'timestamp', hidden: true, filter: this.timestampFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'DOI', value: 'doi', hidden: false, filter: this.doiFilter, filterKeyword: '', shouldHideEmpty: false },
@@ -606,7 +609,7 @@
                 flagIsNotWritable(record) {
                     return record.type === 'manual' && record.status === 'valid'
                 },
-                async remove_record(item) {
+                async removeRecord(item) {
                     let url = '{{ url_for("supercon.delete_record", id="record_id") }}'
                     url = url.replace(
                         "record_id",
@@ -622,6 +625,20 @@
                     } finally {
                         //
                     }
+                },
+                async newRecord(item) {
+                    // make a deep copy so that the record is not updated in the table
+                    let newItem = {}
+                    let fields = ['hash', 'doi', "authors", "title", "publisher", "journal", "year"]
+
+                    fields.forEach(function (field) {
+                        newItem[field] = item[field]
+                    })
+                    let d = new Date();
+                    newItem['timestamp'] = d.toISOString();
+
+                    this.editedItem = newItem
+                    this.dialog = true
                 }
             },
             created() {
