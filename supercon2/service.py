@@ -537,6 +537,7 @@ def get_training_data_list():
     for training_data_item in training_data_list:
         text = training_data_item['text']
         spans = training_data_item['spans']
+        task_id = training_data_item['task_id'] if 'task_id' in training_data_item else None
 
         sorted_spans = list(sorted(spans, key=lambda item: item['offset_start']))
         annotated_text = ""
@@ -554,6 +555,7 @@ def get_training_data_list():
             "text": text,
             "status": training_data_item['status'],
             "annotated_text": annotated_text,
+            "task_id": task_id,
             "hash": training_data_item['hash'],
             "corrected_record_id": training_data_item['corrected_record_id']
         })
