@@ -215,6 +215,9 @@ def roll_back(new_id, old_id, training_data_id, tabular_collection, training_dat
 @output(Record)
 def create_record(record: Record):
     validate_record(record)
+    if 'timestamp' not in record:
+        record['timestamp'] = datetime.utcnow()
+
     new_id = add_record(record)
 
     return_info = UpdatedRecord()

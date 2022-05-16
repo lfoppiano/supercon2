@@ -561,6 +561,8 @@
                 },
                 openCreateItemDialog() {
                     this.editedItem = {}
+                    {#let d = new Date();#}
+                    {#this.editedItem['timestamp'] = d.toISOString();#}
                     this.dialog = true
                 },
                 close() {
@@ -634,8 +636,8 @@
                     fields.forEach(function (field) {
                         newItem[field] = item[field]
                     })
-                    let d = new Date();
-                    newItem['timestamp'] = d.toISOString();
+                    {#let d = new Date();#}
+                    {#newItem['timestamp'] = d.toISOString();#}
 
                     this.editedItem = newItem
                     this.dialog = true
