@@ -21,6 +21,7 @@ class GrobidClientGeneric(ApiClient):
         self.config = None
         if config_path:
             self.config = self.load_yaml_config_from_file(path=config_path, ping=ping)
+        super().__init__(self.config['grobid']['server'])
         os.environ['NO_PROXY'] = "nims.go.jp"
 
     @staticmethod

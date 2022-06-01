@@ -6,11 +6,18 @@ import os
 import sys
 from pathlib import Path
 
-from grobid_client_generic import grobid_client_generic
+from process.grobid_client_generic import GrobidClientGeneric
 
-header_row = ["Raw material", "Name", "Formula", "Doping", "Shape", "Class", "Fabrication", "Substrate",
-              "Critical temperature", "Applied pressure", "Link type", "Section", "Subsection", "Sentence",
-              'path', 'filename']
+header_row = ["Raw material", "Raw material ID",
+              "Name", "Formula", "Doping", "Shape", "Class", "Fabrication", "Substrate", "variables",
+              "Unit-cell-type", "Unit-cell-type ID",
+              "Space group", "Space group ID",
+              "Crystal structure", "Crystal structure ID",
+              "Critical temperature", "Critical temperature ID",
+              "Measurement method", "Measurement method ID",
+              "Applied pressure", "Applied pressure ID",
+              "Section", "Subsection", "Sentence", "Link type",
+              "Path", "Filename"]
 
 
 def decode(response_string):
@@ -35,7 +42,9 @@ def process_file(grobid_client, source_path, format: str, task="processPDF"):
         if format == 'json':
             output = json.loads(r)
         else:
-            output = [row for row in csv.reader(r.split("\n")) if len(row) > 0]
+            reader = csv.reader(r.split("\n"))
+            next(reader, None)
+            output = [row for row in reader if len(row) > 0]
 
     return output
 
@@ -47,6 +56,7 @@ def write_data(output_path, data, format):
         else:
             delimiter = ',' if format == 'csv' else '\t'
             writer = csv.writer(f, delimiter=delimiter, quotechar='"', quoting=csv.QUOTE_ALL)
+            writer.writerow(header_row)
             for row in data:
                 writer.writerow(row)
 
@@ -57,7 +67,7 @@ if __name__ == '__main__':
 
     parser.add_argument("--input", help="Input file or directory", type=Path, required=True)
     parser.add_argument("--output", help="Output directory", type=Path, required=True)
-    parser.add_argument("--config", help="Config file", type=Path, required=False, default='./config.json')
+    parser.add_argument("--config", help="Config file", type=Path, required=False, default='./config.yaml')
     parser.add_argument("--recursive", action="store_true", default=False,
                         help="Process input directory recursively. If input is a file, this parameter is ignored.")
     parser.add_argument("--format", default='csv', choices=['tsv', 'csv', 'json'],
@@ -70,11 +80,11 @@ if __name__ == '__main__':
     input_path = args.input
     output_path = args.output
     recursive = args.recursive
-    format = args.format
+    output_format = args.format
     config = args.config
     task = args.task
 
-    grobid_client = grobid_client_generic(config_path=config)
+    grobid_client = GrobidClientGeneric(config_path=config)
 
     if os.path.isdir(input_path):
         if not os.path.isdir(output_path):
@@ -88,8 +98,8 @@ if __name__ == '__main__':
                 for dir in dirs:
                     abs_path_dir = os.path.join(root, dir)
                     abs_output_path = abs_path_dir.replace(str(input_path), str(output_path))
-                    if not os.path.exists(abs_output_path):
-                        os.makedirs(abs_output_path)
+                    # if not os.path.exists(abs_output_path):
+                    #     os.makedirs(abs_output_path)
 
                 for file_ in files:
                     if not file_.lower().endswith(".pdf"):
@@ -100,7 +110,7 @@ if __name__ == '__main__':
                     parent_dir = Path(abs_path).parent
                     if os.path.isdir(output_path):
                         output_ = Path(str(parent_dir).replace(str(input_path), str(output_path)))
-                        output_filename_with_extension = str(output_filename) + '.' + format
+                        output_filename_with_extension = str(output_filename) + '.' + output_format
                         output_path_with_filename_and_extension = os.path.join(output_, output_filename_with_extension)
                         # else:
                         #     output_path = os.path.join(parent_dir, output_filename + ".tei.xml")
@@ -112,15 +122,17 @@ if __name__ == '__main__':
 
         # output_data = []
         for input_file_path, output_file_path in path_list:
-            extracted_data = process_file(grobid_client, input_file_path, format, task=task)
+            extracted_data = process_file(grobid_client, input_file_path, output_format, task=task)
             # output_data.extend(file_data)
-            # write_rows(output_file_path, header_row)
             if len(extracted_data) > 0:
-                write_data(output_file_path, extracted_data, format)
+                abs_parent_path = Path(output_file_path).parent
+                if not os.path.exists(abs_parent_path):
+                    os.makedirs(abs_parent_path)
+                write_data(output_file_path, extracted_data, output_format)
 
     elif os.path.isfile(input_path):
-        extracted_data = process_file(grobid_client, input_path, format, task=task)
-        output_filename = os.path.join(output_path, input_path.stem + "." + format)
+        extracted_data = process_file(grobid_client, input_path, output_format, task=task)
+        output_filename = os.path.join(output_path, input_path.stem + "." + output_format)
 
         # write_rows(output_filename, header_row)
-        write_data(output_filename, extracted_data, format)
+        write_data(output_filename, extracted_data, output_format)
