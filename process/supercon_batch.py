@@ -10,13 +10,14 @@ from process.grobid_client_generic import GrobidClientGeneric
 
 header_row = ["Raw material", "Raw material ID",
               "Name", "Formula", "Doping", "Shape", "Class", "Fabrication", "Substrate", "variables",
-              "Unit-cell-type", "Unit-cell-type ID",
-              "Space group", "Space group ID",
-              "Crystal structure", "Crystal structure ID",
+              # "Unit-cell-type", "Unit-cell-type ID",
+              # "Space group", "Space group ID",
+              # "Crystal structure", "Crystal structure ID",
               "Critical temperature", "Critical temperature ID",
-              "Measurement method", "Measurement method ID",
-              "Applied pressure", "Applied pressure ID",
-              "Section", "Subsection", "Sentence", "Link type",
+              "Measurement method", #"Measurement method ID",
+              "Applied pressure", #"Applied pressure ID",
+              "Link type",
+              "Section", "Subsection", "Sentence",
               "Path", "Filename"]
 
 
@@ -49,7 +50,7 @@ def process_file(grobid_client, source_path, format: str, task="processPDF"):
     return output
 
 
-def write_data(output_path, data, format):
+def write_data(output_path, data, format, aggregated_output=None):
     with open(output_path, 'w') as f:
         if format == 'json':
             json.dump(data, f)
@@ -57,6 +58,13 @@ def write_data(output_path, data, format):
             delimiter = ',' if format == 'csv' else '\t'
             writer = csv.writer(f, delimiter=delimiter, quotechar='"', quoting=csv.QUOTE_ALL)
             writer.writerow(header_row)
+            for row in data:
+                writer.writerow(row)
+
+    if aggregated_output is not None and format != 'json':
+        with open(aggregated_output, 'a') as af:
+            delimiter = ',' if format == 'csv' else '\t'
+            writer = csv.writer(af, delimiter=delimiter, quotechar='"', quoting=csv.QUOTE_ALL)
             for row in data:
                 writer.writerow(row)
 
@@ -94,13 +102,6 @@ if __name__ == '__main__':
 
         if recursive:
             for root, dirs, files in os.walk(input_path):
-                # Manage to create the directories
-                for dir in dirs:
-                    abs_path_dir = os.path.join(root, dir)
-                    abs_output_path = abs_path_dir.replace(str(input_path), str(output_path))
-                    # if not os.path.exists(abs_output_path):
-                    #     os.makedirs(abs_output_path)
-
                 for file_ in files:
                     if not file_.lower().endswith(".pdf"):
                         continue
@@ -120,15 +121,26 @@ if __name__ == '__main__':
         else:
             path_list = Path(input_path).glob('*.pdf')
 
+        aggregated_output_file = os.path.join(output_path, "aggregated_output" + "." + output_format)
+        with open(aggregated_output_file, 'w') as af:
+            delimiter = ',' if output_format == 'csv' else '\t'
+            writer = csv.writer(af, delimiter=delimiter, quotechar='"', quoting=csv.QUOTE_ALL)
+            writer.writerow(header_row)
+
+
         # output_data = []
         for input_file_path, output_file_path in path_list:
             extracted_data = process_file(grobid_client, input_file_path, output_format, task=task)
-            # output_data.extend(file_data)
             if len(extracted_data) > 0:
+                input_path = Path(input_file_path)
+                for extracted_row in extracted_data:
+                    extracted_row.extend([input_path.name, str(input_path)])
+
                 abs_parent_path = Path(output_file_path).parent
                 if not os.path.exists(abs_parent_path):
                     os.makedirs(abs_parent_path)
-                write_data(output_file_path, extracted_data, output_format)
+                write_data(output_file_path, extracted_data, output_format,
+                           aggregated_output=aggregated_output_file)
 
     elif os.path.isfile(input_path):
         extracted_data = process_file(grobid_client, input_path, output_format, task=task)
