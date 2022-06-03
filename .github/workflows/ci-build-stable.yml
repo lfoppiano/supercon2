@@ -1,9 +1,9 @@
-name: Build unstable
+name: Build stable
 
 on: [push]
 
 concurrency: 
-  group: gradle
+  group: stable
   cancel-in-progress: true
 
 
@@ -40,4 +40,4 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Build the Docker image
-        run: docker build . --file Dockerfile --tag lfoppiano/supercon2:develop-latest
+        run: docker build . --file Dockerfile --tag lfoppiano/supercon2:stable-latest
