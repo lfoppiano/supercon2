@@ -14,7 +14,6 @@ from commons.label_studio_commons import to_label_studio_format_single
 from commons.mongo_utils import connect_mongo
 from process.utils import json_serial
 from supercon2.schemas import Publishers, Record, Years, Flag, RecordParamsIn, UpdatedRecord
-from supercon2.utils import load_config_yaml
 
 bp = APIBlueprint('supercon', __name__)
 config = []
@@ -365,7 +364,7 @@ def get_annotations(hash):
 
 @bp.route('/pdf/<hash>', methods=['GET'])
 def get_binary(hash):
-    '''GET PDF / binary file '''
+    """GET PDF / binary file """
     db = connect_and_get_db()
     fs_binary = gridfs.GridFS(db, collection='binary')
 
