@@ -184,6 +184,14 @@ pip should be something like `....supercon2/bin/pip`. If not you should unset it
 unset pip
 ```
 
+Download the source: 
+
+```
+git clone https://github.com/lfoppiano/supercon2 supercon2
+
+cd supercon2 
+```
+
 Install dependencies: 
 
 ```
