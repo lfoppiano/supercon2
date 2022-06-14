@@ -45,7 +45,7 @@ This section describes the different information that is stored in the database.
 | Formula                   | Method obtaining Tc                | Year                   | Link Type     |
 | Doping                    |                                    | Section                | Record Status |
 | Variables                 |                                    | Subsection             | Error Types   |
-| Shape                     |                                    | Path                   |               |
+| Form                     |                                    | Path                   |               |
 | Substrate                 |                                    | Timestamp              |               |
 | Fabrication               |                                    | Authors                |               |
 | Material Class            |                                    | Title                  |               |
@@ -53,18 +53,7 @@ This section describes the different information that is stored in the database.
 | Space Group               |                                    | Journal                |               |
 | Unit cell type            |                                    | Filename               |               |
 
-#### Common rules to all items
-- units
-- Record status
-    - Correct
-    - Wrong
-    - Invalid
-    - missing
-- Error types
-    - From table
-    - Extraction
-    - Linking
-    - Composition resolution
+
 
 ## General principles
 
@@ -128,17 +117,17 @@ In addition, curators could select only reported records and inspect them though
       
 
 - Name
-    - description:
+    - description & typical example:
 
         Abbrebiation of material
           
-        for example: LSCO
+        For example: LSCO
     - rules for curating:
     - possible error-examples:
       
 
 - Formula
-    - description:
+    - description & typical example:
 
         Chemical formula of the material
     - rules for curating:
@@ -146,11 +135,12 @@ In addition, curators could select only reported records and inspect them though
       
 
 - Doping
-    - description
+    - description & typical example:
 
         Atoms and molecules that are used for doping, adjointed to the material name
+        For example: _Ag_-doped Bi2Te3
     - rules for curating:
-    - possible error and example
+    - possible error and example:
       
   
 - Variables
@@ -158,7 +148,9 @@ In addition, curators could select only reported records and inspect them though
 
         Variables that can be substituted in the formula
     - rules for curating:
-    - possible error and example
+
+        This is often kept unfilled, due to "composition resolution" error.  Try to fill it when curator finds it in the paper.
+    - possible error and example:
       
 
 - Form
@@ -175,6 +167,9 @@ In addition, curators could select only reported records and inspect them though
     - description
 
         Substrate on which target material is grown
+
+        For example: Cu grown on _Si(111)_ substrate
+
     - rules for curating:
     - possible error and example
       
@@ -184,7 +179,7 @@ In addition, curators could select only reported records and inspect them though
 
         Represent all the various information that are not belonging to any of the previous tags
 
-        for example: annealed, irradiated
+        For example: annealed, irradiated
 
     - rules for curating:
     - possible error and example
@@ -192,6 +187,11 @@ In addition, curators could select only reported records and inspect them though
 
 - Material Class
     - description
+
+        For the time being, class name is given by rule-based approach, based on containing either anion or cation atoms.
+
+        Fe-based
+
     - rules for curating:
     - possible error and example
       
