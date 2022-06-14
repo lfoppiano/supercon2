@@ -4,12 +4,23 @@
 
 * [Introduction](#introduction)
 * [Data model](#data-model)
+  + [Data description](#data-description)
+  + [List of items](#list-of-items)
+  + [Common rules to all items](#common-rules-to-all-items)
 * [General principles](#general-principles)
    + [Units](#units)
    + [Record status](#record-status)
    + [Error types](#error-types)
 * [Rules](#rules)
-* [Error types](#error-types)
+   + [Detailed description and rules for individual items](#detailed-description-and-rules-for-individual-items)
+     + [Item related to materials](#items-related-to-material)
+     + [Item related to the target property](#items-related-to-the-target-property)
+     + [Item related to the paper](#items-related-to-the-paper)
+     + [Miscellaneous](#miscellaneous)
+   + [Examples](#examples)
+     + [Missing entities](#missing-entity) 
+     + [Invalid temperature](#invalid-temperature) 
+     + [Composition extraction](#composition-extraction) 
 * [Glossary](#glossary)
 
 
@@ -20,9 +31,40 @@ SuperCon 2 is a database of superconducting materials which properties are extra
 
 The guidelines assume that the user knows well the SuperCon 2 application. The documentation on how to use SuperCon 2 is in ...
 
-## Data Model 
-
+## Data Model
 This section describes the different information that is stored in the database. 
+
+### Data description
+
+#### List of items
+
+| Items related to material | Items related to target properties | Items Related to paper | Miscellanecus |
+|---------------------------|------------------------------------|------------------------|---------------|
+| Raw material              | Critical Temperature               | Document               | Flag          |
+| Name                      | Applied Pressure                   | DOI                    | Actions       |
+| Formula                   | Method obtaining Tc                | Year                   | Link Type     |
+| Doping                    |                                    | Section                | Record Status |
+| Variables                 |                                    | Subsection             | Error Types   |
+| Shape                     |                                    | Path                   |               |
+| Substrate                 |                                    | Timestamp              |               |
+| Fabrication               |                                    | Authors                |               |
+| Material Class            |                                    | Title                  |               |
+| Crystal Structure         |                                    | Publisher              |               |
+| Space Group               |                                    | Journal                |               |
+| Unit cell type            |                                    | Filename               |               |
+
+#### Common rules to all items
+- units
+- Record status
+    - Correct
+    - Wrong
+    - Invalid
+    - missing
+- Error types
+    - From table
+    - Extraction
+    - Linking
+    - Composition resolution
 
 ## General principles
 
@@ -73,6 +115,223 @@ The (1) data reporting (or flagging) is the process in which a record is marked 
 The term "flag" indicates the action of adding a flag on top of a record. In this case, the record will be hidden from the public view of the database. 
 In addition, curators could select only reported records and inspect them thoughtfully, amending or removing for good (2). 
 
+
+### Detailed description and rules for individual items        
+
+#### Items related to material
+            
+- Raw material
+    - description & typical example:
+    - rules for curating:
+
+        we do not curate this item
+      
+
+- Name
+    - description:
+
+        Abbrebiation of material
+          
+        for example: LSCO
+    - rules for curating:
+    - possible error-examples:
+      
+
+- Formula
+    - description:
+
+        Chemical formula of the material
+    - rules for curating:
+    - possible error and example:
+      
+
+- Doping
+    - description
+
+        Atoms and molecules that are used for doping, adjointed to the material name
+    - rules for curating:
+    - possible error and example
+      
+  
+- Variables
+    - description
+
+        Variables that can be substituted in the formula
+    - rules for curating:
+    - possible error and example
+      
+
+- Form
+    - description
+
+        Identify the form of the material
+
+        for example: polycrystals, thin film, wire
+    - rules for curating:
+    - possible error and example
+      
+
+- Substrate
+    - description
+
+        Substrate on which target material is grown
+    - rules for curating:
+    - possible error and example
+      
+
+- Fabrication
+    - description
+
+        Represent all the various information that are not belonging to any of the previous tags
+
+        for example: annealed, irradiated
+
+    - rules for curating:
+    - possible error and example
+      
+
+- Material Class
+    - description
+    - rules for curating:
+    - possible error and example
+      
+
+- Crystal Structure
+    - description
+    - rules for curating:
+        try to fill whenever available
+    - possible error and example
+      
+
+- Space Group
+    - description
+    - rules for curating:
+        try to fill whenever available
+    - possible error and example
+      
+
+- Unit Cell Type
+    - description
+
+#### Items related to the target property
+
+- Critical Temperature
+
+    - description
+
+    Represent the value of the superconducting critical temperature, Tc. Other temperatures (fabrication conditions, etc.) should not be extracted.
+    - rules for curating:
+        It has to be properly linked with composition and applied pressure(if it exists)
+    - possible error and example
+        There could be "Failure in extraction" and "Link failure".
+        - Failure in extraction
+
+      
+
+- Applied Pressure
+
+    - description
+
+    Represent the value of applied pressure on which superconducting critical temperature Tc is determined.  Other pressures (pressure during fabrication process, etc.) should not be extracted.
+    - rules for curating:
+    - possible error and example
+      
+
+- Method Obtaining Tc
+
+    - description:
+
+        Indicates the techniques used to determine the superconductiving transition temperature, either by experimental measurements or theoretical calculations. This includes also the study of temperature/resistivity, temperature/magnetic field graphs, not necessarily related to superconductivity (what does this mean?).
+    - rules for curating::
+    - possible error and example
+
+#### Items related to the paper
+
+- Document
+
+    - description
+        Document ID of the paper
+      
+
+- DOI
+
+    - description
+        Digital Object Identifier of the paper
+      
+
+- Year
+
+    - description
+        Published year of the paper
+      
+
+- Section
+
+    - description
+        From which section the item has been extracted
+      
+
+- Subsection
+
+    - description
+      
+
+- Path
+
+    - description
+      
+
+- Timestamp
+
+    - description
+      
+
+- Authors
+
+    - description
+      
+
+- Title
+
+    - description
+      
+
+- Publisher
+
+    - description
+      
+
+- Journal
+
+    - description
+      
+  
+- Filename
+
+    - description
+
+#### Miscellaneous
+
+- Flag
+    - description
+      
+
+- Actions
+    - description
+      
+
+- Link Type
+    - description
+      
+
+- Record Status
+    described in "commmon rule" section
+      
+
+- Error Types
+    described in "common rule" section
+
+
 ### Examples
 
 #### Missing entity
@@ -94,6 +353,7 @@ In the following example the temperature of about 1234 K has been extracted. Thi
 
 ![](images/example-wrong-composition-recognition.jpg)
 <div style="text-align: center;">Figure 3: Example </div>
+
 
 ## Glossary
 
