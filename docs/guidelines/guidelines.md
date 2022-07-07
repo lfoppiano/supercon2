@@ -49,9 +49,9 @@ This section describes the different information that is stored in the database.
 | Substrate                 |                                    | Timestamp              |               |
 | Fabrication               |                                    | Authors                |               |
 | Material Class            |                                    | Title                  |               |
-| Crystal Structure         |                                    | Publisher              |               |
+| Unit cell type         |                                    | Publisher              |               |
 | Space Group               |                                    | Journal                |               |
-| Unit cell type            |                                    | Filename               |               |
+| Structure type            |                                    | Filename               |               |
 
 
 
@@ -78,14 +78,14 @@ These are concepts. Add the status flow.
 
 ### Error types
 
-The extraction of superconductors materials follows a precise data flow. 
-However, failures can occur at any time in the flow and it is important to know at which point they occur.
-In other words, the error type indicates the causes for which a specific material-properties record is invalid, wrong or missing.
+The extraction of superconductors materials is performed, following a unified data flow. 
+Failures can occur at each stage in the flow, and we distinguish each failure by naming them "error type".
+Error types indicate the causes for which a specific material-properties record is invalid, wrong or missing.
 Table 2 illustrates these type of errors:
 
 | Error type             | Definition                                                                                                                                                                                                |
 |------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| From table             | When part of complete tables are incorrectly extracted, and consequently entities contained within. At the moment, table extraction is not performed.                                                      |
+| From table             | When part of complete tables are incorrectly extracted, and consequently entities contained within. At the moment, table extraction is not intended and out of scope.                                                      |
 | Extraction             | The entity is not extracted or its boundaries are not matching the correct information (e.g., when the entity is partially extracted or when the extraction includes text that is not part of the entity. |
 | Tc classification      | The temperature is not correctly classified as "superconductors critical temperature" (e.g. Curie temperature, Magnetic temperature…)                                                                     |
 | Linking                | The material is incorrectly linked to the Tc given that the entities are correctly recognised                                                                                                             |
@@ -111,6 +111,10 @@ In addition, curators could select only reported records and inspect them though
             
 - Raw material
     - description & typical example:
+
+        The extracted material name as it is
+
+        For example: "tetragonal Ba(Fe_1-x_Co_x_)_2_As_2_ grown on Si(111)"
     - rules for curating:
 
         we do not curate this item
@@ -121,8 +125,11 @@ In addition, curators could select only reported records and inspect them though
 
         Abbrebiation of material
           
-        For example: LSCO
+        For example: "LSCO"
     - rules for curating:
+
+        Try to fill when it is available
+
     - possible error-examples:
       
 
@@ -130,205 +137,283 @@ In addition, curators could select only reported records and inspect them though
     - description & typical example:
 
         Chemical formula of the material
+
+        For example: La_1.75_Sr_0.25_CuO_4_
     - rules for curating:
-    - possible error and example:
+
+        When the value for $x$ in the formula can be found in the same document, try to fill it.
+    - possible error-examples:
+
+        - composition resolution:
       
 
 - Doping
     - description & typical example:
 
         Atoms and molecules that are used for doping, adjointed to the material name
-        For example: _Ag_-doped Bi2Te3
+
+        For example: _Ag_-doped Bi_2_Te_3_
     - rules for curating:
+
+        Try to fill when it is available
     - possible error and example:
       
   
 - Variables
-    - description
+    - description & typical example:
 
         Variables that can be substituted in the formula
     - rules for curating:
 
         This is often kept unfilled, due to "composition resolution" error.  Try to fill it when curator finds it in the paper.
-    - possible error and example:
+    - possible error-examples:
       
 
 - Form
-    - description
+    - description & typical example:
 
         Identify the form of the material
 
-        for example: polycrystals, thin film, wire
+        For example: polycrystals, thin film, wire
     - rules for curating:
+
+        Try to fill when it is available
+
     - possible error and example
       
 
 - Substrate
-    - description
+    - description & typical example:
 
         Substrate on which target material is grown
 
         For example: Cu grown on _Si(111)_ substrate
 
     - rules for curating:
+
+        Try to fill when it is available
+
     - possible error and example
       
 
 - Fabrication
-    - description
+    - description & typical example:
 
         Represent all the various information that are not belonging to any of the previous tags
 
         For example: annealed, irradiated
 
     - rules for curating:
+
+        Try to fill when it is available
+
     - possible error and example
       
 
 - Material Class
-    - description
+    - description & typical example:
 
         For the time being, class name is given by rule-based approach, based on containing either anion or cation atoms.
 
-        Fe-based
+        For example: Fe-based
 
     - rules for curating:
-    - possible error and example
+
+        We do not curate this item
+    - possible error-examples
       
 
-- Crystal Structure
-    - description
-    - rules for curating:
-        try to fill whenever available
-    - possible error and example
-      
-
-- Space Group
-    - description
-    - rules for curating:
-        try to fill whenever available
-    - possible error and example
-      
 
 - Unit Cell Type
-    - description
+    - description & typical example:
+
+        Bravais lattice that the crystal structure of the material belongs to
+
+        For example: tetragonal, orthorhombic
+    
+    - rules for curating:
+
+        Try to fill whenever available
+    - possible error-examples
+
+        - compositional resolution
+        
+            Unit cell type sometimes appear as a part of "Formula".  Remove from "Formula" when it is attached.
+
+            Example: NOTE FOR MYSELF: FILL HEHEHEHEHHEHHEHEHEHEHEHEHH
+
+    
+- Space Group
+    - description & typical example:
+
+        Space group for which the material's crystal structure belongs to.  Either No. (1-230) or "standard short symbol" is fine.
+
+        For example: "Space group No. 225 (Fm-3m)"
+    - rules for curating:
+    
+        try to fill whenever available
+    - possible error and example
+
+
+- Structure type
+    - description & typical example:
+
+        Type of crystal structure, described by the name of typical material that takes the crystal structure.
+
+        For example: MnP-type, AlB_2_-type
+    - rules for curating:
+    
+        Try to fill whenever available
+    - possible error and example     
 
 #### Items related to the target property
 
 - Critical Temperature
 
-    - description
+    - description & typical example:
 
-    Represent the value of the superconducting critical temperature, Tc. Other temperatures (fabrication conditions, etc.) should not be extracted.
+        Represent the value of the superconducting critical temperature, Tc. Other temperatures (fabrication conditions, etc.) should not be extracted.
+
+        For example: 100 K
+
     - rules for curating:
+
         It has to be properly linked with composition and applied pressure(if it exists)
-    - possible error and example
-        There could be "Failure in extraction" and "Link failure".
-        - Failure in extraction
+    - possible error-examples:
+        - From table
+
+            Note for myself fill HEHEHEHEHHEHEHEHEHEHEHEHEHEHEHEEH
+
+        - Extraction
+        
+            Note for myself fill HEHEHEHEHHEHEHEHEHEHEHEHEHEHEHEEH
+
+        - Tc classification
+
+            Note for myself fill HEHEHEHEHHEHEHEHEHEHEHEHEHEHEHEEH
+
+        - Linking
+
+            Note for myself fill HEHEHEHEHHEHEHEHEHEHEHEHEHEHEHEEH
 
       
 
 - Applied Pressure
 
-    - description
+    - description & typical example:
 
-    Represent the value of applied pressure on which superconducting critical temperature Tc is determined.  Other pressures (pressure during fabrication process, etc.) should not be extracted.
+        Represent the value of applied pressure on which superconducting critical temperature Tc is determined.  Other pressures (pressure during fabrication process, etc.) should not be extracted.
+
+        For example: 10 GPa
     - rules for curating:
-    - possible error and example
+    - possible error-examples:
+        - Extraction
+
+            Note for myself fill HEHEHEHEHHEHEHEHEHEHEHEHEHEHEHEEH
+
+        - Tc classification
+
+            Note for myself fill HEHEHEHEHHEHEHEHEHEHEHEHEHEHEHEEH
+
+        - Linking
+
+            Note for myself fill HEHEHEHEHHEHEHEHEHEHEHEHEHEHEHEEH
       
 
 - Method Obtaining Tc
 
-    - description:
+    - description & typical example:
 
-        Indicates the techniques used to determine the superconductiving transition temperature, either by experimental measurements or theoretical calculations. This includes also the study of temperature/resistivity, temperature/magnetic field graphs, not necessarily related to superconductivity (what does this mean?).
-    - rules for curating::
+        Indicates the techniques used to determine the superconductiving transition temperature, either by experimental measurements or theoretical calculations. This includes also explanatory sentences for temperature dependence of resistivity, magnetic susceptibility or specific heat graphs, not necessarily related to superconductivity.
+
+        For example: resistivity, magnetic susceptibility, specific heat, calculated
+    - rules for curating:
+
+        Try to fill whenever available
     - possible error and example
 
 #### Items related to the paper
 
 - Document
 
-    - description
-        Document ID of the paper
+    Luca please fill this
       
 
 - DOI
 
-    - description
-        Digital Object Identifier of the paper
+    Digital Object Identifier of the paper where the entity is extracted
       
 
 - Year
-
-    - description
-        Published year of the paper
+    
+    Published year of the paper where the entity is extracted
       
 
 - Section
-
-    - description
-        From which section the item has been extracted
+    
+    From which section the item has been extracted
       
 
 - Subsection
 
-    - description
+    Luca please fill this
       
 
 - Path
 
-    - description
+    Luca please fill this
       
 
 - Timestamp
 
-    - description
+    Luca please fill this
       
 
 - Authors
 
-    - description
+    Authors' names of the paper where the entity is extracted
       
 
 - Title
 
-    - description
+    Title of the paper where the entity is extracted
       
 
 - Publisher
 
-    - description
+    Publisher's name of the paper where the entity is extracted
       
 
 - Journal
 
-    - description
+    Journal's name where the entity is extracted
       
   
 - Filename
 
-    - description
+    Luca please fill this
+
 
 #### Miscellaneous
 
 - Flag
-    - description
       
 
 - Actions
-    - description
+
       
 
 - Link Type
-    - description
+
       
 
 - Record Status
+
     described in "commmon rule" section
       
 
 - Error Types
+
     described in "common rule" section
 
 
