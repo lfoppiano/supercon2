@@ -87,8 +87,8 @@ Table 2 illustrates these type of errors:
 |------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | From table             | When part of complete tables are incorrectly extracted, and consequently entities contained within. At the moment, table extraction is not intended and out of scope.                                                      |
 | Extraction             | The entity is not extracted or its boundaries are not matching the correct information (e.g., when the entity is partially extracted or when the extraction includes text that is not part of the entity. |
-| Tc classification      | The temperature is not correctly classified as "superconductors critical temperature" (e.g. Curie temperature, Magnetic temperature…)                                                                     |
-| Linking                | The material is incorrectly linked to the Tc given that the entities are correctly recognised                                                                                                             |
+| Tc classification      | The extracted temperature is not correctly classified as the target "superconductors critical temperature" (and resultantly, other temperatures were stored, such as Curie temperature, annealing temperature …)                                                                     |
+| Linking                | The material is incorrectly linked to the Tc (and applied pressure if it exists) given that the entities are correctly recognised                                                                                                             |
 | Composition resolution | When the exact composition cannot be resolved (e.g. the stochiometric values cannot be resolved)                                                                                                          |
 <div style="text-align: center;">Table 2: List of error types, sorted by their occurrence in the data flow. </div>
 
