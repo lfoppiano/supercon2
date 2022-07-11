@@ -48,9 +48,14 @@ if __name__ == '__main__':
     parser.add_argument("--env", type=str, choices=["development", "production"], required=False,
                         default="development")
 
+    parser.add_argument("--db-name", type=str, required=False, help="Force the database name.")
+
     args = parser.parse_args()
 
     service.config = load_config_yaml(args.config_file)
+    if args.db_name:
+        service.config['mongo']['db'] = args.db_name
+        print("Override manually the database name:", args.db_name)
 
     root_path = args.root_path
 
