@@ -94,7 +94,12 @@ Table 2 illustrates these type of errors:
 
 ### Priority between error types
 figure
-explanation
+
+Following the dataflow, the priority between errors is as follows:
+
+From table > Extraction > Tc classification > Linking > Composition resolution
+
+This means, when a wrong formula (Extraction) is linked incorrectly (Linking) to Curie temperature (Tc classification), the error is "Extraction".
 
 
 ## Rules
@@ -406,14 +411,17 @@ In addition, curators could select only reported records and inspect them though
 
 - Flag
       
+    Luca please fill this
 
 - Actions
 
       
+    Luca please fill this
 
 - Link Type
 
       
+    Luca please fill this
 
 - Record Status
 
@@ -424,7 +432,7 @@ In addition, curators could select only reported records and inspect them though
 
     described in "common rule" section
 
-
+<!--
 ### Examples
 
 #### Missing entity
@@ -447,6 +455,7 @@ In the following example the temperature of about 1234 K has been extracted. Thi
 ![](images/example-wrong-composition-recognition.jpg)
 <div style="text-align: center;">Figure 3: Example </div>
 
+-->
 
 ## Glossary
 
