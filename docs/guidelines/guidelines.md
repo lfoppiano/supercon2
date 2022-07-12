@@ -92,6 +92,10 @@ Table 2 illustrates these type of errors:
 | Composition resolution | When the exact composition cannot be resolved (e.g. the stochiometric values cannot be resolved)                                                                                                          |
 <div style="text-align: center;">Table 2: List of error types, sorted by their occurrence in the data flow. </div>
 
+### Priority between error types
+figure
+explanation
+
 
 ## Rules
 
@@ -141,7 +145,11 @@ In addition, curators could select only reported records and inspect them though
         For example: La_1.75_Sr_0.25_CuO_4_
     - rules for curating:
 
-        When the value for $x$ in the formula can be found in the same document, try to fill it.
+        What we want is chemical formula, that ONLY consists of atomic species and numbers. Therefore;
+
+        - When the value for $x$ in the formula can be found in the same document, try to fill it.
+
+        - When any additional information regarding the materials remains attached (e.g. tetragonal, annealed, grown on substrate), split and put them in appropriate sections.
     - possible error-examples:
 
         - composition resolution:
