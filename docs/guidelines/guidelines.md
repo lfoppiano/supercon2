@@ -477,6 +477,52 @@ In addition, curators could select only reported records and inspect them though
 ### Collections of error-examples
 When it is not obvious which state-errortype is appropriate, examples below might help curator to decide.
 
+<details><summary>examples of state-errortypes:</summary>
+
+- Invalid - from_table
+
+    ![](images/ex_I_table_1.png)
+
+- Wrong - Extraction
+
+    ![](images/ex_W_extraction_1.png)
+
+- Invalid - Extraction
+
+   ![](images/ex_I_extraction_1.png)
+
+- Missing - Extraction
+
+   ![](images/ex_M_extraction_1.png)
+
+- Invalid - Tc_classification
+
+   ![](images/ex_I_Tc_classification_1.png)
+
+- Missing - Tc_classification
+
+   ![](images/ex_M_Tc_classification_1.png)
+
+- Wrong - Linking
+
+   ![](images/ex_W_Linking_1.png)
+
+- Missing - Linking
+
+   ![](images/ex_M_Linking_1.png)
+
+
+- Wrong - Composition resolution
+
+    ![](images/ex_W_compres_1.png)
+    ![](images/ex_W_compres_2.png)
+
+- multiple errors in vicinity
+
+    ![](images/ex_two_vicinity_1.png)
+
+</details>
+
 <!--
 #### Missing entity
 
