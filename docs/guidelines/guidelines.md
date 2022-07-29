@@ -157,7 +157,33 @@ In addition, curators could select only reported records and inspect them though
         - When any additional information regarding the materials remains attached (e.g. tetragonal, annealed, grown on substrate), split and put them in appropriate sections.
     - possible error-examples:
 
-        - composition resolution:
+        - Wrong - Extraction
+
+            example1: extracted formula is only a part of it
+
+            ![](images/ex_W_Extraction_1.png)
+
+        - Wrong - Composition resolution:
+
+            <!-- [example1: formula is not complete](https://nimsgojp-my.sharepoint.com/:p:/r/personal/foppiano_luca_nims_go_jp/Documents/%E6%B7%BB%E4%BB%98%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB/Supercon2-curation-guidelines.pptx?d=wf1ec5f0bc719422591814d1be2795051&csf=1&web=1&e=mkpGZj&nav=eyJzSWQiOjI1NiwiY0lkIjoyNjAxMjI0MDU1fQ{:target="_blank"}) -->
+        
+            example1: valiable in formula remained unsubstituted
+
+            ![](images/ex_W_compres_1.png)
+
+            example2: formula has extra
+
+            ![](images/ex_W_compres_2.png)
+
+        - Invalid - Extraction
+        
+            Example1: extracted something else than formula
+            ![](images/ex_I_extraction_1.png)
+
+        - Missing - Extraction
+
+            example1: formula is not annotated
+            ![](images/ex_M_extraction_1.png)
       
 
 - Doping
@@ -249,11 +275,10 @@ In addition, curators could select only reported records and inspect them though
         Try to fill whenever available
     - possible error-examples
 
-        - compositional resolution
+        - Wrong - Composition resolution
         
-            Unit cell type sometimes appear as a part of "Formula".  Remove from "Formula" when it is attached.
-
-            Example: NOTE FOR MYSELF: FILL HEHEHEHEHHEHHEHEHEHEHEHEHH
+            Example1: formula has extra
+            ![](images/ex_W_compres_2.png)
 
     
 - Space Group
@@ -266,7 +291,10 @@ In addition, curators could select only reported records and inspect them though
     
         try to fill whenever available
     - possible error and example
-
+        - Wrong - Composition resolution
+        
+            Example1: formula has extra
+            ![](images/ex_W_compres_2.png)
 
 - Structure type
     - description & typical example:
@@ -293,13 +321,10 @@ In addition, curators could select only reported records and inspect them though
 
         It has to be properly linked with composition and applied pressure(if it exists)
     - possible error-examples:
-        - From table
+        - Invalid - From table
 
-            Note for myself fill HEHEHEHEHHEHEHEHEHEHEHEHEHEHEHEEH
-
-        - Extraction
-        
-            Note for myself fill HEHEHEHEHHEHEHEHEHEHEHEHEHEHEHEEH
+            Example1: entity is from table
+            ![](images/ex_I_table_1.png)
 
         - Tc classification
 
@@ -432,9 +457,11 @@ In addition, curators could select only reported records and inspect them though
 
     described in "common rule" section
 
-<!--
-### Examples
 
+### Corrections of error-examples
+When it is not obvious which state-errortype is appropriate, examples below might help curator to decide.
+
+<!--
 #### Missing entity
 
 In the following example the entity has been missed completely. In this case the cause is likely "Extraction" because the process failed to recognise `HCl`. 
