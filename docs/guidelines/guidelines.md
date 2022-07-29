@@ -93,14 +93,18 @@ Table 2 illustrates these type of errors:
 <div style="text-align: center;">Table 2: List of error types, sorted by their occurrence in the data flow. </div>
 
 ### Priority between error types
-figure
+Errors can occur in each process of the dataflow, shown below:
+![](images/workflow_and_errors.png)
 
 Following the dataflow, the priority between errors is as follows:
 
 From table > Extraction > Tc classification > Linking > Composition resolution
 
-This means, when a wrong formula (Extraction) is linked incorrectly (Linking) to Curie temperature (Tc classification), the error is "Extraction".
+For example, when a wrong formula (Extraction) is linked incorrectly (Linking) to Curie temperature (Tc classification), the error is "Extraction".
 
+### Tips for annotated entities
+
+![](images/tips_1.png)
 
 ## Rules
 
@@ -161,7 +165,7 @@ In addition, curators could select only reported records and inspect them though
 
             example1: extracted formula is only a part of it
 
-            ![](images/ex_W_Extraction_1.png)
+            ![](images/ex_W_extraction_1.png)
 
         - Wrong - Composition resolution:
 
@@ -326,13 +330,26 @@ In addition, curators could select only reported records and inspect them though
             Example1: entity is from table
             ![](images/ex_I_table_1.png)
 
-        - Tc classification
+        - Invalid - Tc classification
 
-            Note for myself fill HEHEHEHEHHEHEHEHEHEHEHEHEHEHEHEEH
+            Example1: extracted T is not superconducting transition temperature
+            ![](images/ex_I_Tc_classification_1.png)
 
-        - Linking
+        - Missing - Tc classification
 
-            Note for myself fill HEHEHEHEHHEHEHEHEHEHEHEHEHEHEHEEH
+            Example1: Superconducting transition temperature was annotated but classified as other than SC
+            ![](images/ex_M_Tc_classification_1.png)
+
+        - Wrong - Linking
+
+            Example1: Link among material - Tc_value - Presssure_value was not correct
+            ![](images/ex_W_linking_1.png)
+
+
+        - Missing - Linking
+            Example1: Tc_value was annotated but failed to link to material
+            ![](images/ex_M_linking_1.png)
+
 
       
 
@@ -347,15 +364,14 @@ In addition, curators could select only reported records and inspect them though
     - possible error-examples:
         - Extraction
 
-            Note for myself fill HEHEHEHEHHEHEHEHEHEHEHEHEHEHEHEEH
 
         - Tc classification
 
-            Note for myself fill HEHEHEHEHHEHEHEHEHEHEHEHEHEHEHEEH
 
-        - Linking
+        - Wrong - Linking
 
-            Note for myself fill HEHEHEHEHHEHEHEHEHEHEHEHEHEHEHEEH
+            Example1: Link among material - Tc_value - Presssure_value was not correct
+            ![](images/ex_W_linking_1.png)
       
 
 - Method Obtaining Tc
@@ -458,7 +474,7 @@ In addition, curators could select only reported records and inspect them though
     described in "common rule" section
 
 
-### Corrections of error-examples
+### Collections of error-examples
 When it is not obvious which state-errortype is appropriate, examples below might help curator to decide.
 
 <!--
