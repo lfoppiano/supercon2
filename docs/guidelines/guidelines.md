@@ -17,10 +17,7 @@
      + [Item related to the target property](#items-related-to-the-target-property)
      + [Item related to the paper](#items-related-to-the-paper)
      + [Miscellaneous](#miscellaneous)
-   + [Examples](#examples)
-     + [Missing entities](#missing-entity) 
-     + [Invalid temperature](#invalid-temperature) 
-     + [Composition extraction](#composition-extraction) 
+   + [Collection of Examples](#collection-of-examples)
 * [Glossary](#glossary)
 
 
@@ -474,7 +471,7 @@ In addition, curators could select only reported records and inspect them though
     described in "common rule" section
 
 
-### Collections of error-examples
+### Collection of examples
 When it is not obvious which state-errortype is appropriate, examples below might help curator to decide.
 
 <details><summary>examples of state-errortypes:</summary>
