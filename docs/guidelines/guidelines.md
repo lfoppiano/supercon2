@@ -505,11 +505,11 @@ When it is not obvious which state-errortype is appropriate, examples below migh
 
 - Wrong - Linking
 
-   ![](images/ex_W_Linking_1.png)
+   ![](images/ex_W_linking_1.png)
 
 - Missing - Linking
 
-   ![](images/ex_M_Linking_1.png)
+   ![](images/ex_M_linking_1.png)
 
 
 - Wrong - Composition resolution
