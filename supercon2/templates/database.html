@@ -11,8 +11,11 @@
     <link rel="icon" type="image/x-icon" href={{ url_for('static', filename='resources/img/favicon.ico' ) }} />
     <link rel="shortcut icon" type="image/x-icon" href={{ url_for('static', filename='resources/img/favicon.ico' ) }} />
     <style>
-        tr:nth-child(2n) {
-            background: floralwhite;
+        .bg-floralwhite {
+            background: floralwhite
+        }
+        .bg-white {
+            background: white
         }
     </style>
 </head>
@@ -145,6 +148,10 @@
     <script src="https://cdn.jsdelivr.net/npm/vuetify@2.6.3/dist/vuetify.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios@0.26.1/dist/axios.min.js"></script>
     <script>
+        let itemClassStore = {
+            class: 'bg-white',
+            hashes: [],
+        }
         new Vue({
             delimiters: ['[[', ']]'],
             el: '#app',
@@ -646,6 +653,22 @@
 
                     this.editedItem = newItem
                     this.dialog = true
+                },
+                getItemClass(item) {
+                    const store = itemClassStore
+                    // to prevent reverse coloring when re-rendering
+                    if (store.hashes.length > 1 && item.hash === store.hashes[0]) {
+                        // initialize store
+                        store.hashes = []
+                        store.class = "bg-white"
+                    }
+                    if (item.hash === store.hashes[store.hashes.length-1]) {
+                        return store.class
+                    } else {
+                        store.hashes.push(item.hash)
+                        store.class = store.class === 'bg-floralwhite' ? 'bg-white' : 'bg-floralwhite'
+                        return store.class
+                    }
                 }
             },
             created() {
