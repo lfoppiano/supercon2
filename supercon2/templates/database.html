@@ -113,18 +113,12 @@
                 <v-card>
                     <v-card-text>
                         <v-container>
-                            <v-row>
-                                <v-col cols="12" sm="6" md="2" v-for="header in headers" :key="header.value">
-                                    <v-text-field v-model="editedItem[header.value]" :label="header.text"
-                                        v-if="isReadOnlyOnDialog(header.value)" disabled>
-                                    </v-text-field>
-                                    <v-text-field v-model="editedItem[header.value]" :label="header.text"
-                                        v-else-if="isRequiredOnDialog(header.value)" :rules="[rules.required]">
-                                    </v-text-field>
-                                    <v-text-field v-model="editedItem[header.value]" :label="header.text"
-                                        v-else-if="isHiddenOnDialog(header.value)" disabled v-show="false">
-                                    </v-text-field>
-                                    <v-text-field v-model="editedItem[header.value]" :label="header.text" v-else>
+                            <v-row v-for="row of rowsOnItemEditDialog">
+                                <v-col :cols="row.config.cols" v-for="col of row.cols">
+                                    <v-text-field
+                                        v-model="editedItem[col.key]"
+                                        :label="headerObject[col.key].text"
+                                        :disabled="col.disabled">
                                     </v-text-field>
                                 </v-col>
                             </v-row>
@@ -198,6 +192,7 @@
                         {#{ text: 'Path', value: 'path', hidden: true, filter: this.pathFilter, filterKeyword: '', shouldHideEmpty: false },#}
                         {#{ text: 'Filename', value: 'filename', hidden: true, filter: this.filenameFilter, filterKeyword: '', shouldHideEmpty: false },#}
                         { text: 'Document', value: 'hash', hidden: false, filter: this.hashFilter, filterKeyword: "{{hash}}", width: 120, shouldHideEmpty: false },
+                        { text: 'Entity ID', value: 'id', hidden: true, filter: this.hashFilter, shouldHideEmpty: false },
                         { text: 'Timestamp', value: 'timestamp', hidden: true, filter: this.timestampFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'DOI', value: 'doi', hidden: false, filter: this.doiFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'Authors', value: 'authors', width: 300, hidden: true, filter: this.authorsFilter, filterKeyword: '', shouldHideEmpty: false },
@@ -251,6 +246,77 @@
                         // { text: 'Material ID', value: 'materialId', hidden: true},
                         // { text: 'Sentence', value: 'sentence', width: 500, hidden: true},
                     ],
+                    rowsOnItemEditDialog: [{
+                        config: {
+                            cols: 4,
+                        },
+                        cols: [{
+                            key: 'rawMaterial',
+                        }, {
+                            key: 'id',
+                            disabled: true,
+                        }]
+                    }, {
+                        config: {
+                            cols: null,
+                        },
+                        cols: [{
+                            key: 'formula',
+                        },{
+                            key: 'variables',
+                        },{
+                            key: 'criticalTemperature',
+                        },{
+                            key: 'appliedPressure',
+                        },{
+                            key: 'criticalTemperatureMeasurementMethod',
+                        },]
+                    }, {
+                        config: {
+                            cols: null,
+                        },
+                        cols: [{
+                            key: 'spaceGroup',
+                        },{
+                            key: 'crystalStructure',
+                        },{
+                            key: 'unitCellType',
+                        },{
+                            key: 'doping',
+                        },{
+                            key: 'shape',
+                        },{
+                            key: 'fabrication',
+                        },{
+                            key: 'substrate',
+                        },]
+                    }, {
+                        config: {
+                            cols: null,
+                        },
+                        cols: [{
+                            key: 'hash',
+                            disabled: true,
+                        },{
+                            key: 'doi',
+                            disabled: true,
+                        },{
+                            key: 'authors',
+                            disabled: true,
+                        },{
+                            key: 'title',
+                            disabled: true,
+                        },{
+                            key: 'publisher',
+                            disabled: true,
+                        },{
+                            key: 'journal',
+                            disabled: true,
+                        },{
+                            key: 'year',
+                            disabled: true,
+                        },]
+                    }],
                     items: [],
                     rules: {
                         required: value => !!value || 'Required.',
