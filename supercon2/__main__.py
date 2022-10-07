@@ -62,11 +62,14 @@ if __name__ == '__main__':
     app = create_app(root_path)
 
     env = args.env
-    if env == "development" or args.debug :
+    if env == "development" or args.debug:
         # force development env
+        print("Running in development mode. For serious installation, use --env production")
         app.env = 'development'
         app.run(host=args.host, port=args.port, debug=args.debug)
     elif env == "production":
+        print("Running in production mode. Faster and less verbose. "
+              "Use either --env development or --debug for development.")
         waitress.serve(app, host=args.host, port=args.port)
     else:
         print("Wrong environment value. ")
