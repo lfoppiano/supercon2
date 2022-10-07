@@ -31,7 +31,7 @@
 {#                <v-btn @click="openCreateItemDialog" Depressed class="ma-2">New Item</v-btn>#}
             </v-row>
             <v-data-table v-model="selectedItems" :headers="showHeaders" :items="items" :dense="true" single-select
-                loading-text="loading ..." :multi-sort="true" class="elevation-1"
+                loading-text="loading ..." :loading="isLoading" :multi-sort="true" class="elevation-1" :item-class="getItemClass"
                 @current-items="hasChangedCurrentItems" :page.sync="page" :footer-props="{'items-per-page-options':[20, 50, 100]}"
                 :sort-by.sync="sortBy" @page-count="hasChangedPageCount" @click:row="clickRow">
                 <template v-slot:body.prepend>
@@ -159,6 +159,7 @@
             data() {
                 return {
                     dialog: false,
+                    isLoading: true,
                     version: 'unknown version',
                     editedItem: {},
                     page: 1,
@@ -312,6 +313,7 @@
             },
             methods: {
                 loadItems() {
+                    this.isLoading = true
                     const url =
                         '{{ url_for("supercon.get_records_from_form_data") }}'
                     axios.get(url).then((data) => {
@@ -320,6 +322,8 @@
                                 ...item, ...{ flag: item.status === 'invalid' && item.type === 'manual' }
                             }
                         })
+                    }).finally(() => {
+                        this.isLoading = false
                     })
                 },
                 isReadOnlyOnDialog(key) {
