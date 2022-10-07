@@ -346,6 +346,10 @@ def get_records(type=None, status=None, document=None, publisher=None, year=None
 def get_automatic_database():
     return render_template("database.html")
 
+@bp.route("/database/document/<hash>", methods=["GET"])
+def get_automatic_database_filter_by_document(hash):
+    return render_template("database.html", hash=hash)
+
 
 @bp.route('/document/<hash>', methods=['GET'])
 def get_document(hash):
