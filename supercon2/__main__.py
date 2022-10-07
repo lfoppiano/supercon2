@@ -62,7 +62,7 @@ if __name__ == '__main__':
     app = create_app(root_path)
 
     env = args.env
-    if env == "development":
+    if env == "development" or args.debug :
         # force development env
         app.env = 'development'
         app.run(host=args.host, port=args.port, debug=args.debug)
