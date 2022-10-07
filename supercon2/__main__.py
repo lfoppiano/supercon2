@@ -46,7 +46,7 @@ if __name__ == '__main__':
     parser.add_argument("--debug", action="store_true", required=False, default=False,
                         help="Activate the debug mode for the service")
     parser.add_argument("--env", type=str, choices=["development", "production"], required=False,
-                        default="development")
+                        default="production", help="Select whether to run the service in production")
 
     parser.add_argument("--db-name", type=str, required=False, help="Force the database name.")
 
@@ -65,10 +65,9 @@ if __name__ == '__main__':
     if env == "development":
         # force development env
         app.env = 'development'
-        app.run(host=args.host, port=args.port, debug=args.debug, threaded=True)
+        app.run(host=args.host, port=args.port, debug=args.debug)
     elif env == "production":
-        listening_address = args.host + ":" + str(args.port)
-        waitress.serve(app, listen=listening_address)
+        waitress.serve(app, host=args.host, port=args.port)
     else:
         print("Wrong environment value. ")
         parser.print_help()
