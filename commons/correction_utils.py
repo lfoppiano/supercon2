@@ -104,10 +104,17 @@ def post_process_fields(doc, remove_trailing_space=True, skip_none=True):
     return new_doc
 
 
-def write_raw_training_data(doc, new_doc_id, document_collection, training_data_collection, dry_run=False) -> ObjectId:
+def write_raw_training_data(old_doc, new_doc_id, document_collection, training_data_collection, dry_run=False) -> ObjectId:
     """Training data generation"""
 
-    hash = doc['hash']
+    hash = old_doc['hash']
+
+    # If the training data related to the same record exists, we don't add them again.
+    # We use the old_doc._id for reference
+
+    training_data_id = training_data_collection.find_one({"corrected_record_id": str(old_doc['_id'])}, {'_id': 1})
+    if training_data_id:
+        return training_data_id
 
     # We get the latest document
     document_latest_version = \
@@ -118,7 +125,7 @@ def write_raw_training_data(doc, new_doc_id, document_collection, training_data_
     for passage in document_latest_version['passages'] if 'passages' in document_latest_version else []:
         spans = passage['spans'] if 'spans' in passage else []
         for span in spans:
-            if span['id'] == doc['materialId']:
+            if span['id'] == old_doc['materialId']:
                 print("Found span and sentence. Pull them out. ")
                 # annotated_text, features = create_training_data_from_passage(passage)
 
