@@ -564,6 +564,7 @@ def get_training_data_list():
             "id": str(training_data_item['_id']),
             "text": text,
             "status": training_data_item['status'],
+            "timestamp": training_data_item['timestamp'].replace(microsecond=0).isoformat(),
             "annotated_text": annotated_text,
             "task_id": task_id,
             "hash": training_data_item['hash'],

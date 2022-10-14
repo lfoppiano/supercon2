@@ -126,7 +126,8 @@ def write_raw_training_data(doc, new_doc_id, document_collection, training_data_
                             "tokens": passage['tokens'],
                             "hash": hash,
                             "corrected_record_id": str(new_doc_id),
-                            "status": "new"
+                            "status": "new",
+                            "timestamp": datetime.utcnow()
                         }
                     )
                     return result.inserted_id
