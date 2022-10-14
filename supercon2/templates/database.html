@@ -10,6 +10,7 @@
     <link href="https://cdn.jsdelivr.net/npm/vuetify@2.6.3/dist/vuetify.min.css" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href={{ url_for('static', filename='resources/img/favicon.ico' ) }} />
     <link rel="shortcut icon" type="image/x-icon" href={{ url_for('static', filename='resources/img/favicon.ico' ) }} />
+    <link rel="stylesheet" href={{ url_for('static', filename='resources/css/style-superconductors.css') }}/>
     <style>
         .bg-floralwhite {
             background: floralwhite
@@ -97,6 +98,15 @@
                         </v-icon>
                     </v-row>
                 </template>
+                <template v-slot:item.sentence="{ item }">
+                    <v-container>
+                        <div v-if="!!item.sentenceIsExpanded" v-html="item.sentence_decorated">
+                        </div>
+                        <div v-else :style="{cursor: 'ns-resize'}" @click="showWholeSentence(item)">
+                            [[ item.sentence.slice(0, 30) + ' ...' ]]
+                        </div>
+                    </v-container>
+                </template>
                 <template v-slot:item.flag="{ item }">
                     <v-checkbox :input-value="item.flag" @click="toggleFlag(item)" :disabled="flagIsNotWritable(item)">
                     </v-checkbox>
@@ -168,7 +178,7 @@
             class: 'bg-white',
             hashes: [],
         }
-        new Vue({
+        const app = new Vue({
             delimiters: ['[[', ']]'],
             el: '#app',
             vuetify: new Vuetify(),
@@ -295,7 +305,7 @@
                         // { text: 'Doc URL', value: 'doc_url', hidden: true},
                         // { text: 'ID', value: 'id', hidden: true},
                         // { text: 'Material ID', value: 'materialId', hidden: true},
-                        // { text: 'Sentence', value: 'sentence', width: 500, hidden: true},
+                        { text: 'Sentence', value: 'sentence', width: 200, hidden: false, filter: this.sentenceFilter},
                     ],
                     rowsOnItemEditDialog: [{
                         config: {
@@ -437,6 +447,10 @@
                 }
             },
             methods: {
+                showWholeSentence(item) {
+                    item.sentenceIsExpanded = true
+                    this.headerObject.sentence.width = 400
+                },
                 loadItems() {
                     this.isLoading = true
                     const url =
@@ -582,6 +596,9 @@
                 },
                 subsectionFilter(_, __, item) {
                     return this.keywordFilter(this.headerObject.subsection, item.subsection)
+                },
+                sentenceFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.sentence, item.sentence)
                 },
                 pathFilter(_, __, item) {
                     return this.keywordFilter(this.headerObject.path, item.path)
