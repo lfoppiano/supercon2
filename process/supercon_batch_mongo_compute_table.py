@@ -68,7 +68,7 @@ class MongoTabularProcessor(MongoSuperconProcessor):
                         continue
 
                     for ag_e in json_aggregated_entries:
-                        ag_e['status'] = "valid"
+                        ag_e['status'] = "new"
                         ag_e['hash'] = hash
                         ag_e['timestamp'] = timestamp
                         ag_e['type'] = 'automatic'

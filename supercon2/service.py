@@ -433,10 +433,11 @@ def get_flag(id):
 @bp.route('/record/<id>/flag', methods=['PUT', 'PATCH'])
 @output(Flag)
 def flag_record(id):
+    """The record is marked as incorrect"""
     object_id = validateObjectId(id)
     db = connect_and_get_db()
     tabular_collection = db.get_collection("tabular")
-    record = tabular_collection.find_one({"_id": object_id})
+    record = tabular_collection.find_one({"_id": object_id, "status": {"$in": ["valid", "invalid", "new"]}})
     if record is None:
         return 404
     else:
@@ -448,6 +449,24 @@ def flag_record(id):
         tabular_collection.update_one({'_id': record['_id']}, {'$set': changes})
         return changes, 200
 
+@bp.route('/record/<id>/validate', methods=['PUT', 'PATCH'])
+@output(Flag)
+def validate_record(id):
+    """The record is marked as correct"""
+    object_id = validateObjectId(id)
+    db = connect_and_get_db()
+    tabular_collection = db.get_collection("tabular")
+    record = tabular_collection.find_one({"_id": object_id, "status": {"$in": ["valid", "invalid", "new"]}})
+    if record is None:
+        return 404
+    else:
+        new_status = 'valid'
+        new_type = 'manual'
+
+        changes = {'status': new_status, 'type': new_type}
+
+        tabular_collection.update_one({'_id': record['_id']}, {'$set': changes})
+        return changes, 200
 
 def validateObjectId(id):
     try:
@@ -456,18 +475,19 @@ def validateObjectId(id):
         abort(400, "Invalid identifier (objectId)")
 
 
-@bp.route('/record/<id>/unflag', methods=['PUT', 'PATCH'])
+@bp.route('/record/<id>/reset', methods=['PUT', 'PATCH'])
 @output(Flag)
-def unflag_record(id):
+def reset_record(id):
+    """Reset the status of the record"""
     object_id = validateObjectId(id)
     db = connect_and_get_db()
     tabular_collection = db.get_collection("tabular")
 
-    record = tabular_collection.find_one({"_id": object_id})
+    record = tabular_collection.find_one({"_id": object_id, "status": {"$in": ["valid", "invalid", "new"]}})
     if record is None:
         return "Record with id=" + id + " not found.", 404
     else:
-        status = 'valid'
+        status = 'new'
         type = 'automatic'
 
         changes = {'status': status, 'type': type}
