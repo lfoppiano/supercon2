@@ -26,7 +26,7 @@
         <v-container fluid>
             <v-row class="justify-space-between ma-0">
                 <v-card flat>
-            <h2>SuperCon<sup>2</sup> | Database</h2>
+                    <h2>SuperCon<sup>2</sup> | Database</h2>
                 </v-card>
                 <v-card flat>
                     <v-icon @click="shouldShowShortcutKeysDialog = true">mdi-help-circle</v-icon>
@@ -116,7 +116,7 @@
                         <v-icon small class="mr-1" @click="openEditItemDialog(item)" title="Edit">
                         mdi-pencil
                         </v-icon>
-                        <v-icon small class="mr-1" @click="removeRecord(item)" title="Remove">
+                        <v-icon small class="mr-1" @click="openItemDialogToRemove(item)" title="Remove">
                         mdi-delete-outline
                         </v-icon>
                         <v-icon small class="mr-1" @click="openCreateItemDialog(item)" title="Add new">
@@ -135,9 +135,10 @@
                                 <v-col :cols="row.config.cols" v-for="col of row.cols">
                                     <v-select
                                         v-if="col.key === 'error_type'"
+                                        :rules="col.rules"
                                         v-model="editedItem[col.key]"
                                         :items="col.selectBoxItems"
-                                        :label="headerObject[col.key].text">
+                                        :label="col.label">
                                     </v-select>
                                     <v-text-field
                                         v-else
@@ -155,7 +156,14 @@
                         <v-btn color="blue darken-1" text @click="close">
                             Cancel
                         </v-btn>
-                        <v-btn color="blue darken-1" text @click="save" :disabled="!saveIsValidated">
+                        <v-btn
+                            v-if="itemDialog.mode === 'remove'"
+                            color="error" text
+                            @click="removeRecord"
+                            :disabled="!saveIsValidated">
+                            Remove
+                        </v-btn>
+                        <v-btn v-else color="blue darken-1" text @click="save" :disabled="!saveIsValidated">
                             Save
                         </v-btn>
                     </v-card-actions>
@@ -193,7 +201,7 @@
                 return {
                     base_url: '{{ base_url }}',
                     itemDialog: {
-                        mode: '', // 'edit', 'new'
+                        mode: '', // 'edit', 'new', 'remove'
                         shouldShow: false,
                     },
                     shouldShowShortcutKeysDialog: false,
@@ -256,7 +264,7 @@
                         { text: 'Substrate', value: 'substrate', hidden: true, filter: this.substrateFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'Critical Temperature', value: 'criticalTemperature', hidden: false, filter: this.criticalTemperatureFilter, filterKeyword: '', shouldHideEmpty: false },
                         // { text: 'Critical TemperatureId', value: 'criticalTemperatureId', hidden: true },
-                        { text: 'Applied Pressure', value: 'appliedPressure', hidden: false, filter: this.appliedPressureFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Applied Pressure', value: 'appliedPressure', hidden: false, filter: this.appliedPressureFilter, filterKeyword: '', shouldHideEmpty: false, sort: this.sortAsNumeric },
                         // { text: 'Applied Pressure ID', value: 'appliedPressureId', hidden: true },
                         { text: 'Measurement Method', value: 'criticalTemperatureMeasurementMethod', hidden: false, filter: this.measurementMethodFilter, filterKeyword: '', shouldHideEmpty: false },
                         // { text: 'Measurement MethodId', value: 'measurementMethodId', hidden: true },
@@ -331,6 +339,9 @@
                             disabled: true,
                         }, {
                             key: 'error_type',
+                            label: '*Error type',
+                            rules: [(value) => !!value || 'This field is required'],
+                            errorMessages: [],
                             selectBoxItems: ['From table', 'Extraction', 'Linking', 'Tc classification', 'Composition resolution' ]
                         }]
                     }, {
@@ -424,7 +435,7 @@
                     return this.filteredItems[0]
                 },
                 saveIsValidated() {
-                    return this.editedItem.doi && this.editedItem.hash
+                    return this.editedItem.doi && this.editedItem.hash && this.editedItem.error_type
                 },
                 headerObject() {
                     return Object.fromEntries(new Map(
@@ -439,6 +450,8 @@
                             return 'Edit the record'
                         case 'new':
                             return 'Add a new record'
+                        case 'remove':
+                            return 'Remove the record'
                     }
                 }
             },
@@ -501,7 +514,7 @@
                     }
                     // disable shortcut keys when the cursor in an input field
                     if (event.srcElement.nodeName.indexOf('INPUT') > -1) {
-                        return
+                       return
                     }
                     switch (event.key) {
                         case '?':
@@ -700,6 +713,29 @@
                             return !item.flag
                     }
                 },
+                // CONFIRM: whether to support a negative case
+                sortAsNumeric(a, b, c) {
+                    if (a === b) {
+                        return 0
+                    }
+                    if (a === null) {
+                        return 1
+                    }
+                    if (b === null) {
+                        return -1
+                    }
+                    const aList = a.match(/[\d|.]+/g)
+                    const bList = b.match(/[\d|.]+/g)
+                    if (aList === null) {
+                        return 1
+                    }
+                    if (bList === null) {
+                        return -1
+                    }
+                    const aNumber = Number(aList[0])
+                    const bNumber = Number(bList[0])
+                    return aNumber - bNumber
+                },
                 async toggleFlag(record) {
                     let url = ''
                     if (record.flag) {
@@ -744,6 +780,13 @@
                     this.itemDialog = {
                         shouldShow: true,
                         mode: 'new'
+                    }
+                },
+                openItemDialogToRemove(item) {
+                    this.editedItem = JSON.parse(JSON.stringify(item))
+                    this.itemDialog = {
+                        shouldShow: true,
+                        mode: 'remove'
                     }
                 },
                 close() {
@@ -792,16 +835,17 @@
                 flagIsNotWritable(record) {
                     return record.type === 'manual' && record.status === 'valid'
                 },
-                async removeRecord(item) {
+                async removeRecord() {
                     let url = '{{ url_for("supercon.delete_record", id="record_id") }}'
                     url = url.replace(
                         "record_id",
-                        item.id
+                        this.editedItem.id
                     )
 
                     try {
                         await axios.delete(url, {})
                         this.loadItems()
+                        this.itemDialog.shouldShow = false
                     } catch (e) {
                         console.error(e)
                         window.alert(JSON.stringify(e.response.data))
