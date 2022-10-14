@@ -166,32 +166,40 @@ def find_latest(current_record, collection):
         return find_latest(next_record, collection)
 
 
-def _update_record(object_id: ObjectId, record: Union[Record, dict], db):
+def _update_record(object_id: ObjectId, new_doc: Union[Record, dict], db):
     tabular_collection = db.get_collection("tabular")
     document_collection = db.get_collection("document")
     training_data_collection = db.get_collection("training_data")
 
-    if 'id' in record:
-        del record['id']
+    if 'id' in new_doc:
+        del new_doc['id']
+    if 'sentence_decorated' in new_doc:
+        del new_doc['sentence_decorated']
 
-    old_record = tabular_collection.find_one({"_id": object_id})
-    if old_record['status'] == "obsolete":
-        latest_record = find_latest(old_record, tabular_collection)
+    old_doc = tabular_collection.find_one({"_id": object_id})
+    if old_doc['status'] == "obsolete":
+        latest_record = find_latest(old_doc, tabular_collection)
         message = "The record with id " + str(
             object_id) + " is obsolete. The latest updated record of the chain is" + str(
             latest_record['_id'])
         raise Exception(message)
 
-    new_id = None
+    new_doc_id = None
     training_data_id = None
     try:
-        new_id = write_correction(old_record, record, tabular_collection)
-        training_data_id = write_raw_training_data(old_record, new_id, document_collection, training_data_collection)
-        return new_id
+        # If there is an error type, we fetch it and add it to the record that will be marked obsolete
+        error_type = None
+        if 'error_type' in new_doc:
+            error_type = new_doc['error_type']
+            # del record['error_type']
+
+        new_doc_id = write_correction(old_doc, new_doc, tabular_collection, error_type=error_type)
+        training_data_id = write_raw_training_data(old_doc, new_doc_id, document_collection, training_data_collection)
+        return new_doc_id
     except Exception as e:
         # Roll back!
         print("Exception:", e, "Rolling back.")
-        roll_back(new_id, old_record['_id'], training_data_id, tabular_collection, training_data_collection)
+        roll_back(new_doc_id, old_doc['_id'], training_data_id, tabular_collection, training_data_collection)
         raise e
 
 

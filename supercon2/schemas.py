@@ -65,6 +65,7 @@ class Record(Schema):
     publisher = String(allow_none=True)
     journal = String(allow_none=True)
     year = String(allow_none=True)
+    error_type = String(allow_none=True)
 
 
 class Publishers(Schema):
