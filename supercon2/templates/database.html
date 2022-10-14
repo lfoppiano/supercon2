@@ -133,7 +133,14 @@
                         <v-container fluid>
                             <v-row v-for="row of rowsOnItemEditDialog">
                                 <v-col :cols="row.config.cols" v-for="col of row.cols">
+                                    <v-select
+                                        v-if="col.key === 'error_type'"
+                                        v-model="editedItem[col.key]"
+                                        :items="col.selectBoxItems"
+                                        :label="headerObject[col.key].text">
+                                    </v-select>
                                     <v-text-field
+                                        v-else
                                         v-model="editedItem[col.key]"
                                         :label="headerObject[col.key].text"
                                         :disabled="col.disabled">
@@ -197,6 +204,12 @@
                         }, {
                             name: 'e',
                             text: 'Edit the selected record'
+                        }, {
+                            name: '⌘ + Enter',
+                            text: 'Save the record on the edit dialog (Mac)'
+                        }, {
+                            name: 'Ctrl + Enter',
+                            text: 'Save the record on the edit dialog (Win)'
                         }, {
                             name: 'ArrowUp',
                             text: 'Move selection up one record'
@@ -262,8 +275,6 @@
                         { text: 'Journal', value: 'journal', hidden: true, filter: this.journalFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'Year', value: 'year', hidden: true, filter: this.yearFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'Sentence', value: 'sentence', width: 200, hidden: false, filter: this.sentenceFilter},
-                        { text: 'Latest error type', value: 'error_type', hidden: true, filter: this.hashFilter, shouldHideEmpty: false },
-                        // CONFIRM: check column locations for type, status and flag
                         {
                             text: 'Type', value: 'type', hidden: true, filter: this.typeFilter, filterKeyword: 'all', width: 80,
                             radioGroup: [{
@@ -277,6 +288,7 @@
                                 icon: 'mdi-robot'
                             },]
                         },
+                        { text: 'Latest error type', value: 'error_type', hidden: false, filter: this.hashFilter, shouldHideEmpty: false },
                         {
                             text: 'Status', value: 'status', sortable: false, hidden: true, filter: this.statusFilter, filterKeyword: 'all', width: 80,
                             radioGroup: [{
@@ -318,7 +330,8 @@
                             key: 'id',
                             disabled: true,
                         }, {
-                            key: 'error_type'
+                            key: 'error_type',
+                            selectBoxItems: ['From table', 'Extraction', 'Linking', 'Tc classification', 'Composition resolution' ]
                         }]
                     }, {
                         config: {
@@ -441,12 +454,10 @@
                 try {
                     const result = await axios.get(url, {})
                     this.version = result.data['version']
-
                 } catch (e) {
                     console.error(e)
                     window.alert(JSON.stringify(e.response.data))
                 } finally {
-
                 }
             },
             methods: {
@@ -478,12 +489,18 @@
                     this.filteredItems = items
                 },
                 async onKeyDown(event) {
-                    // disable shortcuts when in an input field
-                    if (event.srcElement.nodeName.indexOf('INPUT') > -1) {
+                    if (this.itemDialog.shouldShow) {
+                        if (event.key === 'Enter') {
+                            // for Mac
+                            if (event.metaKey) return this.save()
+                            // for Windows
+                            if ((!event.metaKey && event.ctrlKey)) return this.save()
+                        }
+                        // disable shortcut keys when edit dialog opens
                         return
                     }
-                    // disable shortcuts when edit dialog opens
-                    if (this.itemDialog.shouldShow) {
+                    // disable shortcut keys when the cursor in an input field
+                    if (event.srcElement.nodeName.indexOf('INPUT') > -1) {
                         return
                     }
                     switch (event.key) {
