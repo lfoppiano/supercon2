@@ -49,7 +49,7 @@ def read_info_from_file(file, default="unknown"):
 
 @bp.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', version=get_version()['version'])
 
 
 @bp.route('/<page>')
@@ -125,7 +125,7 @@ def get_stats():
     by_journal_fixed = replace_empty_key(by_journal)
 
     return render_template("stats.html", by_publisher=by_publisher_fixed, by_year=by_year_fixed,
-                           by_journal=by_journal_fixed)
+                           by_journal=by_journal_fixed, version=get_version()['version'])
 
 def replace_empty_key(input):
     output = [{k: v for k, v in item.items()} for item in input]
