@@ -53,7 +53,7 @@ The `supercon2` service provides the following features:
  - each record is linked to the document by the document hash
  - correcting a record will generate a new record and link it to the original, so that will be possible, in future to undo modifications 
 
-The technical details of the curation interface can be found [here](docs/correction_workflow.md).
+The technical details of the curation interface can be found [here](docs/correction_workflow).
 
 **Terminology** 
  - **Incorrect** = wrong (e.g. 3 K extracted instead of 30K is incorrect) [Ref](https://forum.wordreference.com/threads/invalid-incorrect-wrong.2776284/post-14029941)
@@ -62,7 +62,6 @@ The technical details of the curation interface can be found [here](docs/correct
 
  
 **Future plans**
- - Invalid record remove [#43](https://github.com/lfoppiano/supercon2/issues/43)
  - Undo/redo functionality: possibility to revert incorrect edits and modification of the database 
  - Versioning of documents 
 
