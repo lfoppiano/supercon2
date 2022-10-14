@@ -327,7 +327,13 @@ def get_records(type=None, status=None, document=None, publisher=None, year=None
         entry['title'] = entry['title'] if 'title' in entry and entry[
             'title'] is not None else ''
 
-        entry['sentence_decorated'] = decorate_text_with_annotations(entry['sentence'], entry['spans'])
+        if 'sentence' in entry:
+            if 'spans' in entry:
+                entry['sentence_decorated'] = decorate_text_with_annotations(entry['sentence'], entry['spans'])
+            else:
+                entry['sentence_decorated'] = entry['sentence']
+        else:
+            entry['sentence'] = ""
 
         entries.append(entry)
 
@@ -556,7 +562,7 @@ def get_training_data_list():
             "id": str(training_data_item['_id']),
             "text": text,
             "status": training_data_item['status'],
-            # "timestamp": training_data_item['timestamp'].replace(microsecond=0).isoformat(),
+            "timestamp": training_data_item['timestamp'].replace(microsecond=0).isoformat() if "timestamp" in training_data_item else "",
             "annotated_text": annotated_text,
             "task_id": task_id,
             "hash": training_data_item['hash'],
