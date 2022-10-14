@@ -19,8 +19,15 @@ class GrobidClientGeneric(ApiClient):
 
     def __init__(self, config_path=None, ping=False):
         self.config = None
-        if config_path:
-            self.config = self.load_yaml_config_from_file(path=config_path, ping=ping)
+        if config_path is not None:
+            self.config = self.load_yaml_config_from_file(path=config_path)
+            super().__init__(self.config['grobid']['server'])
+
+            if ping:
+                result = self.ping_grobid()
+                if not result:
+                    raise Exception("Grobid is down.")
+
         os.environ['NO_PROXY'] = "nims.go.jp"
 
     @staticmethod
@@ -39,7 +46,7 @@ class GrobidClientGeneric(ApiClient):
 
         return config
 
-    def load_yaml_config_from_file(self, path='./config.yaml', ping=False):
+    def load_yaml_config_from_file(self, path='./config.yaml'):
         """
         Load the YAML configuration
         """
@@ -52,11 +59,6 @@ class GrobidClientGeneric(ApiClient):
         except Exception as e:
             print("Configuration could not be loaded: ", str(e))
             exit(1)
-
-        if ping:
-            result = self.ping_grobid()
-            if not result:
-                raise Exception("Grobid is down.")
 
         return config
 

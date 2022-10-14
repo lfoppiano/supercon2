@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>GROBID Superconductors TDM application</title>
+    <title>SuperCon<sup>2</sup> | Document viewer</title>
     <script>
         var annotation_url = "{{ url_for('supercon.get_annotations', hash="_HASH_") }}"
         var pdf_document_url = "{{ url_for('supercon.get_binary', hash="_HASH_") }}"
@@ -23,7 +23,7 @@
 
     <!-- X-editable -->
     <link href={{ url_for('static', filename='resources/libs/bootstrap-editable/css/bootstrap-editable.css') }} rel="stylesheet">
-    <script src={{ url_for('static', filename='resources/libs/bootstrap-editable/js/bootstrap-editable.js') }}></script>
+    <script src={{ url_for('static', filename='resources/libs/bootstrap-editable/js/bootstrap-editable.min.js') }}></script>
 
     <!-- PDF.js stuff -->
     <link type="text/css" href={{ url_for('static', filename='resources/libs/pdf.js/web/text_layer_builder.css') }} rel="stylesheet"/>
@@ -48,7 +48,7 @@
         <div class="page-header">
             <div class="row">
                 <div class="col-11">
-                    <h1>SuperCon<sup>2</sup>: Document viewer</h1>
+                    <h1>SuperCon<sup>2</sup> | Document viewer</h1>
                 </div>
                 <div class="col-1">
                     <!--                    <a href="http://www.github.com/lfoppiano/grobid-superconductors"><img-->
@@ -120,8 +120,7 @@
         </div>
 
     <footer>
-        <p><span style="color:#848484;">&copy; GROBID contributors, 2019 - 2022 </span>
-        </p>
+        <p><span style="color:#848484;">&copy; Contributors, 2022 |</span> <span id="version" style="color:#848484;">unknown version</span></p>
     </footer>
 </div>
 

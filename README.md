@@ -5,8 +5,12 @@
 * [Introduction](#introduction)
 * [Service](#service)
     + [Overview](#overview)
-    + [Record reporting (flagging interface)](#record-reporting-or-flagging)
-    + [Record correction](#record-correction)
+    + [Keystrokes](#keystrokes)
+    + [Interface features](#interface-features)
+    + [Workflows](#workflows)
+      + [Record reporting (flagging interface)](#record-reporting-or-flagging)
+      + [Record correction](#record-correction)
+      + [Training data management](#training-data-management)
     + [Getting started](#getting-started)
     + [API documentation](#api-documentation)
 * [Process](#process)
@@ -49,7 +53,7 @@ The `supercon2` service provides the following features:
  - each record is linked to the document by the document hash
  - correcting a record will generate a new record and link it to the original, so that will be possible, in future to undo modifications 
 
-The technical details of the curation interface can be found [here](docs/correction_workflow.md).
+The technical details of the curation interface can be found [here](docs/correction_workflow).
 
 **Terminology** 
  - **Incorrect** = wrong (e.g. 3 K extracted instead of 30K is incorrect) [Ref](https://forum.wordreference.com/threads/invalid-incorrect-wrong.2776284/post-14029941)
@@ -58,13 +62,30 @@ The technical details of the curation interface can be found [here](docs/correct
 
  
 **Future plans**
- - Invalid record remove [#43](https://github.com/lfoppiano/supercon2/issues/43)
  - Undo/redo functionality: possibility to revert incorrect edits and modification of the database 
  - Versioning of documents 
 
-
-[//]: # (![training-data-view.png]&#40;docs/images/training-data-view.png&#41;)
 [//]: # (![pdf-view.png]&#40;docs/images/pdf-view.png&#41;)
+
+### Keystrokes
+
+The interface can be managed entirely with the keyboard, which improves the efficiency of the curation work. 
+
+The table can be navigated using the arrows after having selected one row with the mouse. 
+
+The shortcuts are: 
+
+| Key          | Description                                                   |
+|--------------|---------------------------------------------------------------|
+| n            | Add new record (in the same document of the selected record)  |
+| e            | Edit the selected record                                      |
+| ⌘ + Enter    | Save the record on the edit dialog (Mac) record               |
+| Ctrl + Enter | Edit the selected record                                      |
+| arrow-up     | Selection up one record                                       |
+| arrow-down   | Selection down one record                                     |
+| enter        | Show the keyboard shortcuts dialog                            |
+| ?            | Flag/unflag the selected record                                |
+| esc          | Close the help dialog                                         |
 
 ### Interface features
 
@@ -124,13 +145,36 @@ The curators have the possibility to identify such records and correct them or r
 stage.
 ![flagged-records.png](docs/images/flagged-records.png)
 
-### Record correction
+#### Record correction
 
 The interface allow the correction of records independently if they are valid or incorrect: 
 
 ![edit-record.png](docs/images/edit-interface.png)
 
 ![edit-record.png](docs/images/edit-record.png)
+
+
+#### Training data management
+
+This section provides an overview of the collected training data. 
+We follow the idea that exploiting corrections for training data is an important feature to provide improvement of the data quality and model accuracy. 
+Therefore, when a record is corrected, its original sentence, tokens and annotaions are stored in a separate space and can be sent to label-studio, which is a tool for managing annotations.
+
+The training data management looks like the following image: 
+
+![training-data-viewer.png](docs/images/training-data-viewer.png)
+
+Each row represent one training item.
+
+The `status` indicate: 
+ - `new` if the training data has been added but not yet sent to label-studio
+ - `in progress` if the training data was sent to label-studio 
+
+**NOTE** if two materials within the same sentence are corrected, the sentence will appear twice in the training data management. For this reason the data shall be selectively sent to label-studio. 
+
+The `actions` column comprises two action-buttons: 
+ - `send` the training data to label-studio 
+ - `remove` the training data, in case of duplicates. **In general is always better to keep the training data even if they have been sent to label-studio already**
 
 ### Getting started
 
@@ -166,7 +210,6 @@ and shut down:
 #### Local development
 
 We recommend to use CONDA
-
 ```
 conda create -n supercon2 pip python=3.9
 conda activate supercon2
@@ -198,10 +241,20 @@ Install dependencies:
 pip install -r requirements.txt
 ```
 
+Install mongodb (the exact command will depends on the OS) 
+
+Load sample data on the database supercon2
+```
+unzip resources/data/supercon_sample.zip -d resources/data
+
+mongorestore localhost:27017/supercon_sample resources/data/supercon_sample
+```
+**NOTE**: make sure the `db` entry is correctly set to `supercon_sample` in `supercon2/config.yaml`,  
+
 Finally, to run the service you can use: 
 
 ```
-python -m supercon2 --config supercon2/config.json
+python -m supercon2 --config supercon2/config.yaml
 ```
 
 ### API documentation
@@ -302,12 +355,14 @@ python -m process.supercon_batch_mongo_compute_table --config ./process/config.y
 
 ##### Feedback manual corrections from Excel to the database
 
-Feedback to supercon2 corrections from an Excel file
+Feedback to SuperCon 2 the corrections from an Excel file
 
 ```
-usage: feedback_corrections.py [-h] --corrections CORRECTIONS --config CONFIG [--dry-run] [--database DATABASE] [--verbose]
+usage: feedback_corrections.py [-h] --corrections CORRECTIONS --config CONFIG [--dry-run] [--database DATABASE] [--verbose] [--report-file REPORT_FILE]
 
-optional arguments:
+Feedback to SuperCon2 corrections from an Excel file
+
+options:
   -h, --help            show this help message and exit
   --corrections CORRECTIONS
                         Correction file (csv or excel)
@@ -316,11 +371,34 @@ optional arguments:
   --database DATABASE, -db DATABASE
                         Force the database name which is normally read from the configuration file
   --verbose             Print all log information
+  --report-file REPORT_FILE
+                        Dump report in a file. If the file exists it's overriden
 
 ```
 
 Example:
 
 ```
-python -m process.supercon_batch_mongo_compute_table --config ./process/config.yaml
+ python -m process.feedback_corrections --config ./process/config.yaml
 ```
+
+
+The report is a JSON file as a list of elements, each composed by 5 fields: 
+
+
+```json
+  {
+    "id": "61e136f56e3ec3a715592989",
+    "new_id": "625cf7c9e05ef9d3ccff8b5d",
+    "status": "wrong",
+    "action": "update",
+    "hash": "48ba234393"
+  }
+```
+
+The items are as follows: 
+ - `id` contains the identifier of the original document 
+ - `new_id` provides the new id obtained by creating a new updated record. The old record is marked as "obsolete" and linked to the new one. 
+ - `status` indicate the status as provided in the excel file. Currently there are 4 main status values: `wrong`, `correct`, `invalid`, `missing`. More details [here](https://github.com/lfoppiano/supercon2/blob/feature/guidelines/docs/guidelines/guidelines.md#record-status).
+ - `action`: the action that was applied on the database, usually it can be `insert` or `update` (Note: update + new_id != None => Upsert, a new record was created and the old was marked as `obsolete`)
+ - `hash`: the document hash. If the record was not matching and it's inserted because marked as corrected in the Excel, the hash will be `0000000000`. 

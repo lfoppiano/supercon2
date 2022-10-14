@@ -9,11 +9,10 @@ from hashlib import blake2b
 from pathlib import Path
 
 import gridfs
-import pymongo
 from pymongo.errors import DocumentTooLarge
 from tqdm import tqdm
 
-from commons.mongo_utils import connect_mongo
+from commons.mongo_utils import connect_mongo, ensure_indexes
 from process.grobid_client_generic import GrobidClientGeneric
 
 multiprocessing.set_start_method("fork")
@@ -47,29 +46,6 @@ class MongoSuperconProcessor:
 
         if verbose:
             print("Init completed.")
-
-    def ensure_indexes(self, db_name):
-        connection = connect_mongo(config=self.config)
-        db = connection[db_name]
-
-        db.document.create_index([("hash", pymongo.ASCENDING), ("timestamp", pymongo.ASCENDING)])
-        db.document.create_index("hash")
-        db.document.create_index([("type", pymongo.TEXT), ("status", pymongo.TEXT)])
-        db.document.create_index("timestamp")
-        db.document.create_index("biblio.year")
-        db.document.create_index("biblio.journal")
-        db.document.create_index("biblio.publisher")
-
-        db.tabular.create_index([("type", pymongo.TEXT), ("status", pymongo.TEXT)])
-        db.tabular.create_index(
-            [("hash", pymongo.ASCENDING), ("timestamp", pymongo.ASCENDING), ("type", pymongo.ASCENDING)])
-        db.tabular.create_index([("hash", pymongo.ASCENDING), ("timestamp", pymongo.ASCENDING)])
-        db.tabular.create_index("hash")
-
-        db.binary.chunks.create_index([("files_id", pymongo.ASCENDING), ("n", pymongo.ASCENDING)])
-
-        db.binary.files.create_index([("filename", pymongo.ASCENDING), ("uploadDate", pymongo.ASCENDING)])
-        db.binary.files.create_index("hash")
 
     def write_mongo_status(self, db_name, service):
         """Write the status of the document being processed"""
@@ -198,7 +174,7 @@ class MongoSuperconProcessor:
 
         if verbose:
             print("Ensuring indexes...")
-        self.ensure_indexes(self.db_name)
+        ensure_indexes(self.config)
 
         num_threads_process = num_threads
         num_threads_store = math.ceil(num_threads / 2) if num_threads > 1 else 1

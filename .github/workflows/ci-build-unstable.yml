@@ -3,8 +3,8 @@ name: Build unstable
 on: [push]
 
 concurrency: 
-  group: gradle
-  cancel-in-progress: true
+  group: unstable
+#  cancel-in-progress: true
 
 
 jobs:

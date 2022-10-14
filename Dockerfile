@@ -22,7 +22,7 @@ COPY resources/version.txt /opt/service/resources/
 
 # extract version
 COPY .git ./.git
-RUN git rev-parse --short HEAD > /opt/service/resources/version.txt
+RUN git rev-parse --short HEAD > /opt/service/resources/revision.txt
 RUN rm -rf ./.git
 
 ENV VIRTUAL_ENV=/opt/service/venv
@@ -35,4 +35,4 @@ RUN pip install -r ./requirements.txt --trusted-host pypi.org --trusted-host pyp
 
 EXPOSE 8080
 
-CMD ["python3", "-m", "supercon2", "--config", "supercon2/config.yaml"]
+CMD ["python3", "-m", "supercon2", "--config", "supercon2/config.yaml","--env", "production"]
