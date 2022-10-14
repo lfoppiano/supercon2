@@ -260,7 +260,8 @@
                         { text: 'Title', value: 'title', width: 500, hidden: true, filter: this.titleFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'Publisher', value: 'publisher', hidden: true, filter: this.publisherFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'Journal', value: 'journal', hidden: true, filter: this.journalFilter, filterKeyword: '', shouldHideEmpty: false },
-                        { text: 'Year', value: 'year', hidden: false, filter: this.yearFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Year', value: 'year', hidden: true, filter: this.yearFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Sentence', value: 'sentence', width: 200, hidden: false, filter: this.sentenceFilter},
                         { text: 'Latest error type', value: 'error_type', hidden: true, filter: this.hashFilter, shouldHideEmpty: false },
                         // CONFIRM: check column locations for type, status and flag
                         {
@@ -306,7 +307,6 @@
                         // { text: 'Doc URL', value: 'doc_url', hidden: true},
                         // { text: 'ID', value: 'id', hidden: true},
                         // { text: 'Material ID', value: 'materialId', hidden: true},
-                        { text: 'Sentence', value: 'sentence', width: 200, hidden: false, filter: this.sentenceFilter},
                     ],
                     rowsOnItemEditDialog: [{
                         config: {
