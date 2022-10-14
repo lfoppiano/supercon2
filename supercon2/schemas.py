@@ -52,6 +52,7 @@ class Record(Schema):
     section = String(allow_none=True)
     subsection = String(allow_none=True)
     sentence = String(allow_none=True)
+    sentence_decorated = String(allow_none=True)
     path = String(allow_none=True)
     filename = String(allow_none=True)
     hash = String()

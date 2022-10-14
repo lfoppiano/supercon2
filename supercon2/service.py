@@ -327,6 +327,8 @@ def get_records(type=None, status=None, document=None, publisher=None, year=None
         entry['title'] = entry['title'] if 'title' in entry and entry[
             'title'] is not None else ''
 
+        entry['sentence_decorated'] = decorate_text_with_annotations(entry['sentence'], entry['spans'])
+
         entries.append(entry)
 
         if type == "manual":
@@ -549,22 +551,12 @@ def get_training_data_list():
         spans = training_data_item['spans']
         task_id = training_data_item['task_id'] if 'task_id' in training_data_item else None
 
-        sorted_spans = list(sorted(spans, key=lambda item: item['offset_start']))
-        annotated_text = ""
-        start = 0
-        for span in sorted_spans:
-            type = span['type'].replace("<", "").replace(">", "")
-            annotated_text += text[start: span['offset_start']] + get_span_start(type) + text[
-                                                                                         span['offset_start']: span[
-                                                                                             'offset_end']] + get_span_end()
-            start = span['offset_end']
-
-        annotated_text += text[start: len(text)]
+        annotated_text = decorate_text_with_annotations(text, spans)
         training_output.append({
             "id": str(training_data_item['_id']),
             "text": text,
             "status": training_data_item['status'],
-            "timestamp": training_data_item['timestamp'].replace(microsecond=0).isoformat(),
+            # "timestamp": training_data_item['timestamp'].replace(microsecond=0).isoformat(),
             "annotated_text": annotated_text,
             "task_id": task_id,
             "hash": training_data_item['hash'],
@@ -572,6 +564,20 @@ def get_training_data_list():
         })
 
     return Response(json.dumps(training_output, default=json_serial), mimetype="application/json")
+
+
+def decorate_text_with_annotations(text, spans):
+    sorted_spans = list(sorted(spans, key=lambda item: item['offset_start']))
+    annotated_text = ""
+    start = 0
+    for span in sorted_spans:
+        type = span['type'].replace("<", "").replace(">", "")
+        annotated_text += text[start: span['offset_start']] + get_span_start(type) + text[
+                                                                                     span['offset_start']: span[
+                                                                                         'offset_end']] + get_span_end()
+        start = span['offset_end']
+    annotated_text += text[start: len(text)]
+    return annotated_text
 
 
 @bp.route("/label/studio/projects", methods=['GET'])
