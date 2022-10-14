@@ -1,5 +1,6 @@
 import argparse
 import sys
+import urllib.parse
 from pathlib import Path
 
 import waitress
@@ -15,19 +16,15 @@ def create_app(root_path):
     ensure_indexes(service.config)
     print("Ensuring indexes completed..")
 
-    final_root_path = root_path
-    if root_path == "/" and ('root-path' in service.config and service.config['root-path'] is not None):
-        final_root_path = service.config['root-path']
-
     print("root_path:", root_path)
 
-    app = APIFlask(__name__, static_url_path=final_root_path + '/static', spec_path=final_root_path + '/spec',
-                   docs_path=final_root_path + '/docs', redoc_path=final_root_path + '/redoc')
+    app = APIFlask(__name__, static_url_path=urllib.parse.urljoin(root_path, '/static'), spec_path=urllib.parse.urljoin(root_path, '/spec'),
+                   docs_path=urllib.parse.urljoin(root_path, '/docs'), redoc_path=urllib.parse.urljoin(root_path, '/redoc'))
     app.config['OPENAPI_VERSION'] = '3.0.2'
     app.config['SPEC_FORMAT'] = 'json'
     app.tags = ['supercon']
 
-    app.register_blueprint(bp, url_prefix=final_root_path)
+    app.register_blueprint(bp, url_prefix=root_path)
 
     return app
 
@@ -61,8 +58,8 @@ if __name__ == '__main__':
         service.config['root-path'] = args.root_path
         print("Override manually the root path: ", args.root_path)
 
-    if len(service.config['root-path']) > 1:
-        service.config['root-path'] = service.config['root-path'].rstrip("/")
+    if not service.config['root-path'].endswith("/"):
+        service.config['root-path'] += "/"
 
     app = create_app(service.config['root-path'])
 
