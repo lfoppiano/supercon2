@@ -75,13 +75,14 @@ The table can be navigated using the arrows after having selected one row with t
 
 The shortcuts are: 
 
-| Key        | Description                             |
-|------------|-----------------------------------------|
-| n          | Open the dialog for adding a new record |
-| e          | Edit the current record                 | 
-| arrow-up   | move one record up                      | 
-| arrow-down | move to the record down                 |
-| enter      | flag/unflag the current record          | 
+| Key        | Description                                                   |
+|------------|---------------------------------------------------------------|
+| n          | Add new record (in the same document of the selected record)  |
+| e          | Edit the selected record                                      | 
+| arrow-up   | Selection up one record                                       | 
+| arrow-down | Selection down one record                                     |
+| ?          | Flag/unflag the selected record                               |
+| enter      | Show the keyboard shortcuts dialog                            |
 
 
 ### Interface features
