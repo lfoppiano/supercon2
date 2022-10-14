@@ -35,4 +35,4 @@ RUN pip install -r ./requirements.txt --trusted-host pypi.org --trusted-host pyp
 
 EXPOSE 8080
 
-CMD ["python3", "-m", "supercon2", "--config", "supercon2/config.yaml","--env", "development"]
+CMD ["python3", "-m", "supercon2", "--config", "supercon2/config.yaml","--env", "production"]
