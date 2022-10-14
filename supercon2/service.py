@@ -1,4 +1,5 @@
 import json
+import urllib
 from datetime import datetime
 from typing import Union
 
@@ -344,7 +345,8 @@ def get_records(type=None, status=None, document=None, publisher=None, year=None
 
 @bp.route("/database", methods=["GET"])
 def get_automatic_database():
-    return render_template("database.html")
+    base_url = urllib.parse.urljoin(request.host_url, config['root-path'])
+    return render_template("database.html", base_url=base_url)
 
 @bp.route("/database/document/<hash>", methods=["GET"])
 def get_automatic_database_filter_by_document(hash):

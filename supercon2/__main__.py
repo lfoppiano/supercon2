@@ -57,9 +57,15 @@ if __name__ == '__main__':
         service.config['mongo']['db'] = args.db_name
         print("Override manually the database name:", args.db_name)
 
-    root_path = args.root_path
+    if args.root_path != '/':
+        service.config['root-path'] = args.root_path
+        print("Override manually the root path: ", args.root_path)
 
-    app = create_app(root_path)
+    service.config['root-path'] = service.config['root-path'][:-1] if len(service.config['root-path']) > 1 and \
+                                                                      service.config['root-path'].endswith("/") else \
+                                                                        service.config['root-path']
+
+    app = create_app(service.config['root-path'])
 
     env = args.env
     if env == "development" or args.debug:
@@ -75,4 +81,3 @@ if __name__ == '__main__':
         print("Wrong environment value. ")
         parser.print_help()
         sys.exit(-1)
-
