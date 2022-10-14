@@ -37,7 +37,6 @@
                 </v-select>
 {#                <v-btn @click="openCreateItemDialog" Depressed class="ma-2">New Item</v-btn>#}
             </v-row>
-            <div id="hash">{{ base_url }}</div>
             <v-data-table v-model="selectedItems" :headers="showHeaders" :items="items" :dense="true" single-select
                 loading-text="loading ..." :loading="isLoading" :multi-sort="true" class="elevation-1" :item-class="getItemClass"
                 @current-items="hasChangedCurrentItems" :page.sync="page" :footer-props="{'items-per-page-options':[20, 50, 100]}"
@@ -89,7 +88,7 @@
                 </template>
                 <template v-slot:item.hash="{ item }">
                     <v-row>
-                        <a :href="'./document/' + item.hash" target="_blank" :style="{'text-decoration': 'none'}"
+                        <a :href="base_url + 'document/' + item.hash" target="_blank" :style="{'text-decoration': 'none'}"
                             class="ma-1">
                             [[ item.hash ]]
                         </a>
@@ -175,6 +174,7 @@
             vuetify: new Vuetify(),
             data() {
                 return {
+                    base_url: '{{ base_url }}',
                     itemDialog: {
                         mode: '', // 'edit', 'new'
                         shouldShow: false,

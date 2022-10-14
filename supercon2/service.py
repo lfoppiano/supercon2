@@ -350,7 +350,9 @@ def get_automatic_database():
 
 @bp.route("/database/document/<hash>", methods=["GET"])
 def get_automatic_database_filter_by_document(hash):
-    return render_template("database.html", hash=hash)
+    # FIXME: DRY
+    base_url = urllib.parse.urljoin(request.host_url, config['root-path'])
+    return render_template("database.html", hash=hash, base_url=base_url)
 
 
 @bp.route('/document/<hash>', methods=['GET'])
