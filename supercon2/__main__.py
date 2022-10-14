@@ -18,8 +18,8 @@ def create_app(root_path):
 
     print("root_path:", root_path)
 
-    app = APIFlask(__name__, static_url_path=urllib.parse.urljoin(root_path, '/static'), spec_path=urllib.parse.urljoin(root_path, '/spec'),
-                   docs_path=urllib.parse.urljoin(root_path, '/docs'), redoc_path=urllib.parse.urljoin(root_path, '/redoc'))
+    app = APIFlask(__name__, static_url_path=root_path + '/static', spec_path=root_path + '/spec',
+                   docs_path=root_path + '/docs', redoc_path=root_path + '/redoc')
     app.config['OPENAPI_VERSION'] = '3.0.2'
     app.config['SPEC_FORMAT'] = 'json'
     app.tags = ['supercon']
