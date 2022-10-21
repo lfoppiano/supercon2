@@ -89,7 +89,17 @@
                         </a>
                         <v-icon
                             @click="headerObject.hash.filterKeyword = item.hash"
-                            title="Filter by this documenft ID">
+                            :title="'Filter by this documenft ID: ' + item.hash">
+                            mdi-filter
+                        </v-icon>
+                    </v-row>
+                </template>
+                <template v-slot:item.id="{ item }">
+                    <v-row>
+                        [[ "..." + item.id.substring(item.id.length - 8) ]]
+                        <v-icon
+                            @click="copyTextToClipboard(item.id)"
+                            :title="'Copy this entity ID: ' + item.id">
                             mdi-content-paste
                         </v-icon>
                     </v-row>
@@ -279,7 +289,7 @@
                         {#{ text: 'Path', value: 'path', hidden: true, filter: this.pathFilter, filterKeyword: '', shouldHideEmpty: false },#}
                         {#{ text: 'Filename', value: 'filename', hidden: true, filter: this.filenameFilter, filterKeyword: '', shouldHideEmpty: false },#}
                         { text: 'Document', value: 'hash', hidden: false, filter: this.hashFilter, filterKeyword: "{{hash}}", width: 120, shouldHideEmpty: false },
-                        { text: 'Entity ID', value: 'id', hidden: true, filter: this.hashFilter, shouldHideEmpty: false },
+                        { text: 'Entity ID', value: 'id', hidden: false, filter: this.hashFilter, shouldHideEmpty: false },
                         { text: 'Timestamp', value: 'timestamp', hidden: true, filter: this.timestampFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'DOI', value: 'doi', hidden: false, filter: this.doiFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'Authors', value: 'authors', width: 300, hidden: true, filter: this.authorsFilter, filterKeyword: '', shouldHideEmpty: false },
@@ -480,6 +490,9 @@
                 }
             },
             methods: {
+                copyTextToClipboard(text) {
+                    navigator.clipboard.writeText(text)
+                },
                 showWholeSentence(item) {
                     item.sentenceIsExpanded = true
                     this.headerObject.sentence.width = 400
