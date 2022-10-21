@@ -303,7 +303,7 @@ def get_records(type=None, status=None, document=None, publisher=None, year=None
         query['type'] = type
 
     if status is None:
-        query['status'] = {"$in": ['valid', 'invalid']}
+        query['status'] = {"$in": VALID_STATUSES}
     else:
         query['status'] = status
 
