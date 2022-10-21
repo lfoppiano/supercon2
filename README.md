@@ -3,7 +3,7 @@
 ## Table of Contents
 
 * [Introduction](#introduction)
-* [Service](#service)
+* [Curation interface](#curation-interface)
     + [Overview](#overview)
     + [Keystrokes](#keystrokes)
     + [Interface features](#interface-features)
@@ -24,15 +24,12 @@ materials research.
 
 This repository contains:
 
-- SuperCon 2 service, which provides the API and the interface for visualising and editing material and properties
-  extracted from superconductors-related papers.
-- The process to create the SuperCon 2 database from scratch,
-  using [Grobid Superconductor](https://github.com/lfoppiano/grobid-superconductors) to extract materials information
-  from large quantities of PDFs.
+- SuperCon 2 curation interface for visualising and editing material and properties extracted from superconductors-related papers.
+- The process to create the SuperCon 2 database from scratch, using [Grobid Superconductor](https://github.com/lfoppiano/grobid-superconductors) to extract materials information from large quantities of PDFs.
 
 **Work in progress**
 
-## Service
+## Curation interface
 
 ![record-list.png](docs/images/supercon2-overview.png)
 
@@ -42,30 +39,27 @@ The `supercon2` service provides the following features:
 
 - Visualisation of materials-properties records as a table, with search/filtering, sorting, selection of non-empty values
 - Visualisation of "augmented" PDFs with highlight of the annotations identifying materials and properties
-- Reporting of incorrect/invalid records (**record flagging**): records can be marked as incorrect manually
-- Correction of Incorrect records (**record correction**): users can correct incorrect records or add missing records.
+- Reporting of invalid records (**mark as invalid**): records can be manually marked as invalid
+- Records curation (**curation**): users can correct records or add missing records to existing documents.
 - Automatic collection of training data: when a record has been corrected the information of the sentence, spans (the
-  annotations) and tokens (the tokens, including layout information, fonts, and other perpenducular features) are
-  collected
+  annotations) and tokens (the tokens, including layout information, fonts, and other features) are collected
 
 **Design principles** 
  - each document is identified by an 8-character hash code. To save space we do not allow to store multiple version of the same paper (paper with the same hash).  
  - each record is linked to the document by the document hash
- - correcting a record will generate a new record and link it to the original, so that will be possible, in future to undo modifications 
+ - correcting a record will generate a new record and link it to the original, so that will be possible, in future to undo modifications or to visualise what was updated, when and how
 
-The technical details of the curation interface can be found [here](docs/correction_workflow).
+**NOTE**: The technical details of the curation interface can be found [here](docs/data_workflow).
 
 **Terminology** 
  - **Incorrect** = wrong (e.g. 3 K extracted instead of 30K is incorrect) [Ref](https://forum.wordreference.com/threads/invalid-incorrect-wrong.2776284/post-14029941)
  - **Invalid** = wrong through being inappropriate to the situation (e.g. Tm or T curie extracted as superconducting critical temperature is invalid) [Ref](https://forum.wordreference.com/threads/invalid-incorrect-wrong.2776284/post-14029941)
- - **Flagging** = In programming, a "yes/no" indicator used to represent the current status of something. [Ref](https://www.pcmag.com/encyclopedia/term/flagging)
 
- 
+**NOTE**: Additional details on record status and error types can be found [here](docs/readme.md) 
+
 **Future plans**
  - Undo/redo functionality: possibility to revert incorrect edits and modification of the database 
- - Versioning of documents 
-
-[//]: # (![pdf-view.png]&#40;docs/images/pdf-view.png&#41;)
+ - Versioning of documents
 
 ### Keystrokes
 
@@ -75,29 +69,30 @@ The table can be navigated using the arrows after having selected one row with t
 
 The shortcuts are: 
 
-| Key          | Description                                                   |
-|--------------|---------------------------------------------------------------|
-| n            | Add new record (in the same document of the selected record)  |
-| e            | Edit the selected record                                      |
-| ⌘ + Enter    | Save the record on the edit dialog (Mac) record               |
-| Ctrl + Enter | Edit the selected record                                      |
-| arrow-up     | Selection up one record                                       |
-| arrow-down   | Selection down one record                                     |
-| enter        | Show the keyboard shortcuts dialog                            |
-| ?            | Flag/unflag the selected record                                |
-| esc          | Close the help dialog                                         |
+| Key            | Description                                                  |
+|----------------|--------------------------------------------------------------|
+| n              | Add new record (in the same document of the selected record) |
+| e              | Edit the selected record                                     |
+| ⌘ + Enter      | Save the record in the edit dialog (Mac)                     |
+| Ctrl + Enter   | Save the record in the edit dialog (Win)                     |
+| arrow-up       | Selection up one record                                      |
+| arrow-down     | Selection down one record                                    |
+| enter          | Show the keyboard shortcuts dialog                           |
+| ?              | Flag/unflag the selected record                              |
+| esc            | Close the help dialog                                        |
 
 ### Interface features
 
 Here a list of the main features, please notice that they **can all be used simultaneously**. 
 
-#### Filtering 
+#### Table columns filtering 
 
 By entering keywords in each column is possible to filter records by multiple filters
 
 ![](docs/images/filter-by-keywords.png)
 
 #### Filter by document
+
 There is a shortcut for identify only records belonging to a specific document (see column Document) 
 
 ![](docs/images/filter-by-document-1.png)
@@ -118,6 +113,7 @@ it's possible to extend the table by using the "select columns" feature:
 ![](docs/images/modify-visualised-columns-2.png)
 
 #### Hide empty/blank values 
+
 It's possible to show only **records for which certain column(s) contains non-blank characters (spaces, break lines, tabs, etc..): 
 
 ![](docs/images/visualise-non-empty-fields-1.png)
@@ -132,27 +128,50 @@ such filters can be "combined" on multiple columns (e.g. formula + applied press
 The interface supports multicolumn sorting, the number indicate the priority, the arrow the order (ascendent or descendent): 
 ![](docs/images/multicolumn-sorting.png)
 
-### Workflows 
-#### Record reporting (or flagging)
+### Correction workflows 
 
-The "Record reporting" allows users and curator to quickly report incorrect or invalid records. 
-By clicking on the flagging checkbox the record is marked as invalid and can be excluded from the database without being
-removed.
+The correction workflow is summarised in the following schema: 
+![](docs/images/record-correction.png)
+
+Records have several statuses: 
+ - **new**: the record has been added by the automatic process
+ - **invalid**: the record is probably wrong and it was marked manually by a curator 
+ - **curated**: the record has been edited (a curated record will also contain the [error type](doc/readme.md#error-types))
+ - **validated**: the record was validated by a curator as correct (this could have been done from a new or a curated record)
+
+Additional statuses which are irrelevant for users: 
+ - **obsolete**: the original record after an update (the old record is kept)
+ - **removed**: the record was removed
+ - **empty**: the document does not have any tabular information 
+
+#### Mark records as validated / invalid
+
+The "Record reporting" allows users and curator to quickly mark corrected or incorrected records. 
+There is a panel of actions described in the following figure: 
 
 ![flagging_interface.png](docs/images/flagging_interface.png)
 
-The curators have the possibility to identify such records and correct them or remove them from the database at later
-stage.
-![flagged-records.png](docs/images/flagged-records.png)
+The user can reset the status of a record, not the content of the record.
 
-#### Record correction
+#### Record manipulation (edit/remove/add)
 
-The interface allow the correction of records independently if they are valid or incorrect: 
+The interface allow to manipulate records with three possible actions:
+ - edit record 
+ - remove record
+ - add new record in the same document (the bibliographic data in the edit dialog will be already filled up)
 
-![edit-record.png](docs/images/edit-interface.png)
+![](docs/images/record-actions.png)
 
-![edit-record.png](docs/images/edit-record.png)
+The record can be edited on the following interface:
+![](docs/images/record-edit-dialog.png)
 
+When adding a new record, the bibligrpahic data will be pre-filled: 
+![](docs/images/add-new-record.png)
+
+In any case, in the case of any modification (edit, add, or remove) the user have to select an error type. 
+This is mandatory in order to be able to save the modifications. 
+
+![](docs/images/error-type-selection.png)
 
 #### Training data management
 
@@ -264,26 +283,40 @@ The API documentation is provided by apiflask OpenAPI (swagger) implementation.
 
 Following an API documentation summary:
 
-| URL                                  | Method     | Description                                                                      |
-|--------------------------------------|------------|----------------------------------------------------------------------------------|
-| `/stats`                             | GET        | Return statistics                                                                |
-| `/records`                           | GET        | Return the list of records                                                       |
-| `/records/<type>`                    | GET        | Return the list of records of a specific type `automatic`/`manual`               |
-| `/records/<type>/<year>`             | GET        | Return the list of records of a specific type + year                             |
-| `/records/<type>/<publisher>/<year>` | GET        | Return the list of records of a specific type + publisher + year                 |
-| `/record/<id>`                       | GET        | Return the single record                                                         |  
-| `/record/<id>`                       | PUT/PATCH  | Update the record                                                                |  
-| `/record`                            | POST       | Create a new record                                                              |  
-| `/record/<id>`                       | DELETE     | Remove a record by its id                                                        |  
-| `/record/<id>/flags`                 | GET        | Return the flags of a single record                                              | 
-| `/record/<id>/flag`                  | PATCH/PUT  | Flag a record                                                                    |  
-| `/record/<id>/unflag`                | PATCH/PUT  | Unflag  a record                                                                 |   
-| `/document/<hash>`                   | GET        | Load the template to show the PDF with annotations                               |
-| `/annotation/<hash>`                 | GET        | Return the single document JSON representation                                   |
-| `/pdf/<hash>`                        | GET        | Return the PDF document corresponding to the identifier                          |
-| `/training/data/<id>`                | GET        | Get the training data by identifier                                              |
-| `/training/data`                     | GET        | Get the list of all training                                                     |
-| `/training/data/status/<status>`     | GET        | Get the training data by status (of the training data: new, exported, corrected) |
+| URL                                                     | Method     | Description                                                                      |
+|---------------------------------------------------------|------------|----------------------------------------------------------------------------------|
+| `/annotation/<doc_id>`                                  | GET        | Return the JSON annotation representation of a document                          |
+| `/biblio/<doc_id>`                                      | GET        | Get the bibliographic data of the document by document id                        |
+| `/config`                                               | GET        | Get the configuration                                                            |
+| `/database`                                             | GET        | Render the database interface                                                    |
+| `/database/document/<doc_id>`                           | GET        | Get the tabular data filtering by doc_id                                         |
+| `/document/<doc_id>`                                    | GET        | Render the PDF viewer (PDF document + JSON annotations)                          |
+| `/label/studio/project/{project_id} `                   | GET        | Get information from a label-studio project                                      |
+| `/label/studio/project/{project_id}/record/{record_id}` | POST/PUT   | Send annotation task to Label studio                                             |
+| `/label/studio/project/{project_id}/records`            | POST/PUT   | Send all annotation tasks to Label studio                                        |
+| `/label/studio/projects  `                              | GET        | Get the list of projects from label-studio (annotation tool)                     |
+| `/pdf/<doc_id>`                                         | GET        | Return the PDF document corresponding to the identifier                          |
+| `/publishers`                                           | GET        | Get list of all publishers in the database                                       |
+| `/record`                                               | POST       | Create a new record                                                              |  
+| `/record/<record_id>`                                   | DELETE     | Remove a record by its id                                                        |  
+| `/record/<record_id>`                                   | GET        | Return the single record                                                         |  
+| `/record/<record_id>`                                   | PUT/PATCH  | Update the record                                                                |  
+| `/record/<record_id>/mark_invalid`                      | PUT/PATCH  | Mark a record as invalid                                                         |  
+| `/record/<record_id>/mark_validated`                    | PUT/PATCH  | Mark a record as validated                                                       |  
+| `/record/<record_id>/reset`                             | PUT/PATCH  | Reset record status                                                              |  
+| `/record/<record_id>/status`                            | GET        | Return the flags of a single record                                              | 
+| `/records`                                              | GET        | Return the list of records                                                       |
+| `/records/<type>`                                       | GET        | Return the list of records of a specific type `automatic`/`manual`               |
+| `/records/<type>/<publisher>/<year>`                    | GET        | Return the list of records of a specific type + publisher + year                 |
+| `/records/<type>/<year>`                                | GET        | Return the list of records of a specific type + year                             |
+| `/stats`                                                | GET        | Return statistics                                                                |
+| `/training/data`                                        | GET        | Get the list of all training data stored in the database                         |
+| `/training/data/status/<status>`                        | GET        | Get the training data by status (of the training data: new, exported, corrected) |
+| `/training/data/<training_data_id>`                     | GET        | Export training data                                                             |
+| `/training/data/<training_data_id>`                     | DELETE     | Remove training data                                                             |
+| `/training_data`                                        | GET        | Render interface for managing the training data                                  |
+| `/version`                                              | GET        | Render interface for managing the training data                                  |
+| `/years`                                                | GET        | Render interface for managing the training data                                  |
 
 ## Process
 
@@ -293,9 +326,9 @@ The processes are composed by a set of python scripts that were built under the 
 - skip/force reprocessing
 - simple logging (successes and failures divided by process steps)
 
-#### Scripts
+### Scripts
 
-##### PDF processing and extraction
+#### PDF processing and extraction
 
 Extract superconductor materials and properties and save them on MongoDB - extraction
 
@@ -320,7 +353,7 @@ Example:
 python -m process.supercon_batch_mongo_extraction --config ./process/config.yaml --input <your_pdf_input_directory>
 ```
 
-##### Conversion from document representation to material-properties records
+#### Conversion from document representation to material-properties records
 
 Process extracted documents and compute the tabular format:
 
@@ -345,7 +378,7 @@ Example:
 python -m process.supercon_batch_mongo_compute_table --config ./process/config.yaml
 ```
 
-##### Feedback manual corrections from Excel to the database
+#### Feedback manual corrections from Excel to the database
 
 Feedback to SuperCon 2 the corrections from an Excel file
 

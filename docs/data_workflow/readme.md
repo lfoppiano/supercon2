@@ -1,4 +1,4 @@
-# SuperCon 2 current workflow
+# SuperCon 2 data workflows
 
 This is a living document describing the current SuperCon 2 worklow and documenting the proposed changes aiming to improve the efficiency and quality of the automatically extracted database. 
 
@@ -71,53 +71,3 @@ At a glance:
 - Is not guaranteed that the process could be repeatable
 - The process will be dependent on someone 
 - Learning from the past: during the SuperMat construction we had two manual steps that only Luca-san could do (XML -> TSV -> Inception -> TSV -> XML). It was error prone and time consuming.-  
-
-
-## Proposed workflow
-
-**Work in progress**
-
-The proposed workflow is designed under the following assuptions:
- - corrections are expensive (time, knowledge) and, 
- - hiding possible invalid records ("flagging") from the default view should be done as quick as possible
- - "flagging" could be done without reading the paper most of the time  
-
-### Record flagging (also "flagging")
-The "Record flagging" is the action of adding a flag to a record, as "incorrect", "dubious", "invalid". 
-This action does not supply a correction, which can be done as a later step, however the record is not being accessed by default, until is it corrected.
-
-The workflow is very simple: 
-
-![](images/Record-flag.png)
-
-Required changes: 
- - add a button in each flag to flag the record (minimal requirement)
- - add selection of multiple records so that can be flagged with one click (efficient)
- - enable such action without using the mouse, only with keyboard (efficient)
- - update view to see (a) only valid records, (b) only flagged records, and (c) all records
-
-
-### Record correction
-The record correction allow the curator to pick up flagged records and correct them. 
-
-
-![](images/Record-correction.png)
-
-Required changes:
- - rebuild the interface to have the pdf document opened in the same page as the record 
- - enable a smart view that allow the curator to edit the various fields of the data format (3)
- - enable the process of creating new record for each edit in the same record
- 
-### Additional changes
-
-- Interface responsiveness 
-  - modernise the technology 
-  - change design e.g. at the moment the data is loaded in memory, which become slower as the data increase
-- Enable recording of the type of errors, comments, references information
-
-### How can we justify these improvements
-There are several reasons to justify this investment: 
- - Ability to generate training data from error cases
- - Ability to monitor the data quality. 
-     E.g. answering the question "what are the most common errors from the machine?"
- - ... 

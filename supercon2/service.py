@@ -52,9 +52,9 @@ def index():
     return render_template('index.html', version=get_version()['version'])
 
 
-@bp.route('/<page>')
-def render_page(page):
-    return render_template(page)
+# @bp.route('/<page>')
+# def render_page(page):
+#     return render_template(page)
 
 
 # @bp.route('/annotation/feedback', methods=['POST'])
@@ -547,7 +547,7 @@ def export_training_data(id):
     return single_training_data
 
 
-@bp.route('/annotation/<hash>/biblio')
+@bp.route('/biblio/<hash>')
 def get_biblio_by_hash(hash):
     db = connect_and_get_db()
     last_documents = db.get_collection("document").find({"hash": hash}).sort("timestamp", -1)
