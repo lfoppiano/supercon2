@@ -495,7 +495,7 @@ def reset_record(id):
     """Reset the status of the record"""
     object_id = validateObjectId(id)
     db = connect_and_get_db()
-    return _reset_record(db, id)
+    return _reset_record(db, object_id)
 
 
 def _reset_record(db, id: ObjectId):
