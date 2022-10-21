@@ -18,7 +18,7 @@ from supercon2.schemas import Publishers, Record, Years, Flag, RecordParamsIn, U
 
 bp = APIBlueprint('supercon', __name__)
 config = []
-
+VALID_STATUSES = ["invalid", "new", "curated", "validated"]
 
 @bp.route('/version')
 def get_version():
@@ -420,9 +420,9 @@ def delete_record(id):
     return record
 
 
-@bp.route('/record/<id>/flags', methods=['GET'])
+@bp.route('/record/<id>/status', methods=['GET'])
 @output(Flag)
-def get_flag(id):
+def get_record_status(id):
     object_id = validateObjectId(id)
     db = connect_and_get_db()
     record = db.get_collection("tabular").find_one({"_id": object_id}, {'_id': 0, 'type': 1, 'status': 1})
@@ -430,14 +430,14 @@ def get_flag(id):
     return record
 
 
-@bp.route('/record/<id>/flag', methods=['PUT', 'PATCH'])
+@bp.route('/record/<id>/mark_incorrect', methods=['PUT', 'PATCH'])
 @output(Flag)
-def flag_record(id):
-    """The record is marked as incorrect"""
+def mark_record_invalid(id):
+    """The record is marked as invalid"""
     object_id = validateObjectId(id)
     db = connect_and_get_db()
     tabular_collection = db.get_collection("tabular")
-    record = tabular_collection.find_one({"_id": object_id, "status": {"$in": ["valid", "invalid", "new"]}})
+    record = tabular_collection.find_one({"_id": object_id, "status": {"$in": VALID_STATUSES}})
     if record is None:
         return 404
     else:
@@ -449,24 +449,29 @@ def flag_record(id):
         tabular_collection.update_one({'_id': record['_id']}, {'$set': changes})
         return changes, 200
 
-@bp.route('/record/<id>/validate', methods=['PUT', 'PATCH'])
+@bp.route('/record/<id>/mark_validated', methods=['PUT', 'PATCH'])
 @output(Flag)
-def validate_record(id):
+def mark_record_validated(id):
     """The record is marked as correct"""
     object_id = validateObjectId(id)
     db = connect_and_get_db()
+    return _mark_validated(db, object_id)
+
+
+def _mark_validated(db, id: ObjectId):
     tabular_collection = db.get_collection("tabular")
-    record = tabular_collection.find_one({"_id": object_id, "status": {"$in": ["valid", "invalid", "new"]}})
+    record = tabular_collection.find_one({"_id": id, "status": {"$in": VALID_STATUSES}})
     if record is None:
-        return 404
-    else:
-        new_status = 'valid'
-        new_type = 'manual'
+        return "Record with id=" + id + " not found.", 404
 
-        changes = {'status': new_status, 'type': new_type}
+    new_status = 'validated'
+    new_type = 'manual'
 
-        tabular_collection.update_one({'_id': record['_id']}, {'$set': changes})
-        return changes, 200
+    changes = {'status': new_status, 'type': new_type}
+
+    tabular_collection.update_one({'_id': record['_id']}, {'$set': changes})
+    return changes, 200
+
 
 def validateObjectId(id):
     try:
@@ -481,18 +486,26 @@ def reset_record(id):
     """Reset the status of the record"""
     object_id = validateObjectId(id)
     db = connect_and_get_db()
-    tabular_collection = db.get_collection("tabular")
+    return _reset_record(db, id)
 
-    record = tabular_collection.find_one({"_id": object_id, "status": {"$in": ["valid", "invalid", "new"]}})
+
+def _reset_record(db, id: ObjectId):
+    tabular_collection = db.get_collection("tabular")
+    record = tabular_collection.find_one({"_id": id, "status": {"$in": VALID_STATUSES}})
     if record is None:
-        return "Record with id=" + id + " not found.", 404
+        return "Valid record with id=" + str(id) + " not found.", 404
+
+    if 'previous' in record:
+        status = 'curated'
+        type = 'manual'
     else:
         status = 'new'
         type = 'automatic'
 
-        changes = {'status': status, 'type': type}
-        tabular_collection.update_one({'_id': record['_id']}, {'$set': changes})
-        return changes, 200
+    changes = {'status': status, 'type': type}
+    tabular_collection.update_one({'_id': record['_id']}, {'$set': changes})
+
+    return changes, 200
 
 
 @bp.route('/config', methods=['GET'])

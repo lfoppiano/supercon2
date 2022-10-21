@@ -125,7 +125,7 @@ def process(corrections_file, database, dry_run=False):
         year = row[20]
 
         # Iterate on the database records
-        documents = tabular_collection.find({"hash": hash, "type": "automatic", "status": "valid"})
+        documents = tabular_collection.find({"hash": hash, "type": "automatic", "status": "new"})
 
         matching = False
         for doc in documents:

@@ -59,7 +59,7 @@ def write_correction(old_doc, corrections, collection, dry_run: bool = False, sk
     obsolete_id = old_doc['_id']
     new_doc['previous'] = obsolete_id
     new_doc['type'] = 'manual'
-    new_doc['status'] = 'valid'
+    new_doc['status'] = 'curated'
     new_doc['timestamp'] = datetime.utcnow()
 
     # Cleanup

@@ -4,7 +4,7 @@ import pytest
 from bson import ObjectId
 
 from commons.correction_utils import post_process_fields
-from supercon2.service import _update_record
+from supercon2.service import _update_record, mark_record_validated, _mark_validated, _reset_record
 
 
 def test_update_record_should_update_record(mongodb):
@@ -37,7 +37,7 @@ def test_update_record_should_update_record(mongodb):
     assert records_by_document_after > records_by_document_before
 
     final_record = mongodb.tabular.find_one(inserted_id)
-    assert final_record['status'] == "valid"
+    assert final_record['status'] == "curated"
     assert final_record['type'] == "manual"
     assert final_record['previous'] == original_identifier_object_id
     assert str(final_record['_id']) != original_identifier
@@ -161,3 +161,119 @@ def test_post_process_fields_remove_trailing_with_non_str():
     assert output['B'] == "value"
     assert 'c' not in output
     assert output['id'] == object_id
+
+def test_flow_new_validated(mongodb):
+    object_id = ObjectId("61e136f56e3ec3a715592988")
+
+    object_before = mongodb.tabular.find_one({"_id": object_id})
+    assert object_before['status'] == "new"
+    assert object_before['type'] == "automatic"
+
+    _mark_validated(mongodb, ObjectId("61e136f56e3ec3a715592988"))
+
+    object_after = mongodb.tabular.find_one({"_id": object_id})
+    assert object_after['status'] == "validated"
+    assert object_after['type'] == "manual"
+
+
+def test_flow_new_validated_reset(mongodb):
+    object_id = ObjectId("61e136f56e3ec3a715592988")
+
+    object_before = mongodb.tabular.find_one({"_id": object_id})
+    assert object_before['status'] == "new"
+    assert object_before['type'] == "automatic"
+
+    _mark_validated(mongodb, ObjectId("61e136f56e3ec3a715592988"))
+
+    object_after = mongodb.tabular.find_one({"_id": object_id})
+    assert object_after['status'] == "validated"
+    assert object_after['type'] == "manual"
+
+    _reset_record(mongodb, ObjectId("61e136f56e3ec3a715592988"))
+
+    object_after = mongodb.tabular.find_one({"_id": object_id})
+    assert object_after['status'] == "new"
+    assert object_after['type'] == "automatic"
+
+def test_flow_new_validated_curated(mongodb):
+    object_id = ObjectId("61e136f56e3ec3a715592988")
+
+    object_before = mongodb.tabular.find_one({"_id": object_id})
+    assert object_before['status'] == "new"
+    assert object_before['type'] == "automatic"
+
+    _mark_validated(mongodb, object_id)
+
+    object_after = mongodb.tabular.find_one({"_id": object_id})
+    assert object_after['status'] == "validated"
+    assert object_after['type'] == "manual"
+
+    new_doc = {"rawMaterial": "thin films Mg B2",
+               "materialId": "-964232725",
+               "formula": "Mg B2"}
+
+    new_object_id = _update_record(object_id, new_doc, mongodb)
+
+    object_after = mongodb.tabular.find_one({"_id": new_object_id})
+    assert object_after['status'] == "curated"
+    assert object_after['type'] == "manual"
+
+def test_flow_new_curated_reset(mongodb):
+    object_id = ObjectId("61e136f56e3ec3a715592988")
+
+    object_before = mongodb.tabular.find_one({"_id": object_id})
+    assert object_before['status'] == "new"
+    assert object_before['type'] == "automatic"
+
+    new_doc = {"rawMaterial": "thin films Mg B2",
+                  "materialId": "-964232725",
+                  "formula": "Mg B2"}
+
+    new_object_id = _update_record(ObjectId("61e136f56e3ec3a715592988"), new_doc, mongodb)
+
+    object_after = mongodb.tabular.find_one({"_id": new_object_id})
+    assert object_after['status'] == "curated"
+    assert object_after['type'] == "manual"
+
+    _reset_record(mongodb, new_object_id)
+
+    object_after = mongodb.tabular.find_one({"_id": new_object_id})
+    assert object_after['status'] == "curated"
+    assert object_after['type'] == "manual"
+
+def test_flow_new_curated_validated_reset(mongodb):
+    object_id = ObjectId("61e136f56e3ec3a715592988")
+
+    object_before = mongodb.tabular.find_one({"_id": object_id})
+    assert object_before['status'] == "new"
+    assert object_before['type'] == "automatic"
+
+    new_doc = {"rawMaterial": "thin films Mg B2",
+                  "materialId": "-964232725",
+                  "formula": "Mg B2"}
+
+    new_object_id = _update_record(ObjectId("61e136f56e3ec3a715592988"), new_doc, mongodb)
+
+    obsolete_record = mongodb.tabular.find_one({"_id": object_id})
+    assert obsolete_record['status'] == "obsolete"
+    assert obsolete_record['type'] == "automatic"
+
+    updated_record = mongodb.tabular.find_one({"_id": new_object_id})
+    assert updated_record['status'] == "curated"
+    assert updated_record['type'] == "manual"
+
+    _mark_validated(mongodb, ObjectId(new_object_id))
+
+    object_after = mongodb.tabular.find_one({"_id": new_object_id})
+    assert object_after['status'] == "validated"
+    assert object_after['type'] == "manual"
+
+    _reset_record(mongodb, new_object_id)
+
+    object_after = mongodb.tabular.find_one({"_id": new_object_id})
+    assert object_after['status'] == "curated"
+    assert object_after['type'] == "manual"
+
+    obsolete_record = mongodb.tabular.find_one({"_id": object_id})
+    assert obsolete_record['status'] == "obsolete"
+    assert obsolete_record['type'] == "automatic"
