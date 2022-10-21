@@ -8,8 +8,8 @@
     + [Keystrokes](#keystrokes)
     + [Interface features](#interface-features)
     + [Workflows](#workflows)
-      + [Record reporting (flagging interface)](#record-reporting-or-flagging)
-      + [Record correction](#record-correction)
+      + [Mark records as validated/invalid](#mark-records-as-validated--invalid)
+      + [Record manipulation (add, remove, edit)](#record-manipulation-editremoveadd)
       + [Training data management](#training-data-management)
     + [Getting started](#getting-started)
     + [API documentation](#api-documentation)
@@ -181,7 +181,7 @@ Therefore, when a record is corrected, its original sentence, tokens and annotai
 
 The training data management looks like the following image: 
 
-![training-data-viewer.png](docs/images/training-data-viewer.png)
+![](docs/images/training-data-viewer.jpg)
 
 Each row represent one training item.
 
