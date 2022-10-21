@@ -430,7 +430,7 @@ def get_record_status(id):
     return record
 
 
-@bp.route('/record/<id>/mark_incorrect', methods=['PUT', 'PATCH'])
+@bp.route('/record/<id>/mark_invalid', methods=['PUT', 'PATCH'])
 @output(Flag)
 def mark_record_invalid(id):
     """The record is marked as invalid"""
