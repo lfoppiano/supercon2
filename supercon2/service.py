@@ -95,7 +95,7 @@ def get_stats():
     tabular_collection = db.get_collection("tabular")
 
     pipeline_group_by_publisher = [
-        {"$match": {"type": "automatic", "status": "valid"}},
+        {"$match": {"type": "automatic", "status": {"$in": VALID_STATUSES}}},
         {"$group": {"_id": "$publisher", "count_records": {"$sum": 1}, "hashes": {"$addToSet": "$hash"}}},
         {"$project": {"_id": 1, "hashes": 1, "count_records": 1, "count_docs": {"$size": "$hashes"}}},
         {"$project": {"hashes": 0}},
@@ -105,7 +105,7 @@ def get_stats():
     by_publisher_fixed = replace_empty_key(by_publisher)
 
     pipeline_group_by_year = [
-        {"$match": {"type": "automatic", "status": "valid"}},
+        {"$match": {"type": "automatic", "status": {"$in": VALID_STATUSES}}},
         {"$group": {"_id": "$year", "count_records": {"$sum": 1}, "hashes": {"$addToSet": "$hash"}}},
         {"$project": {"_id": 1, "hashes": 1, "count_records": 1, "count_docs": {"$size": "$hashes"}}},
         {"$project": {"hashes": 0}},
@@ -115,7 +115,7 @@ def get_stats():
     by_year_fixed = replace_empty_key(by_year)
 
     pipeline_group_by_journal = [
-        {"$match": {"type": "automatic", "status": "valid"}},
+        {"$match": {"type": "automatic", "status": {"$in": VALID_STATUSES}}},
         {"$group": {"_id": "$journal", "count_records": {"$sum": 1}, "hashes": {"$addToSet": "$hash"}}},
         {"$project": {"_id": 1, "hashes": 1, "count_records": 1, "count_docs": {"$size": "$hashes"}}},
         {"$project": {"hashes": 0}},
@@ -199,21 +199,30 @@ def _update_record(object_id: ObjectId, new_doc: Union[Record, dict], db):
     except Exception as e:
         # Roll back!
         print("Exception:", e, "Rolling back.")
-        roll_back(new_doc_id, old_doc['_id'], training_data_id, tabular_collection, training_data_collection)
+        roll_back(new_doc_id, old_doc, training_data_id, tabular_collection, training_data_collection)
         raise e
 
 
-def roll_back(new_id, old_id, training_data_id, tabular_collection, training_data_collection):
+def roll_back(new_id, old_doc, training_data_id, tabular_collection, training_data_collection):
     if training_data_id is not None:
         training_data_collection.delete_one({"_id": training_data_id})
 
     if new_id is not None:
         tabular_collection.delete_one({"_id": new_id})
+        query_set = {"status": old_doc['status']}
+        query_unset = {"previous": ""}
+
+        # When rolling back I might have the error type or not, in the previous record
+        if 'error_type' in old_doc:
+            query_set['error_type'] = old_doc['error_type']
+        else:
+            query_unset['error_type'] = ""
+
         tabular_collection.update_one(
-            {'_id': old_id},
+            {'_id': old_doc['_id']},
             {
-                "$set": {"status": "valid"},
-                "$unset": {"previous": ""}
+                "$set": query_set,
+                "$unset": query_unset
             }
         )
 

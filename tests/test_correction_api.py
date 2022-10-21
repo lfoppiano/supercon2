@@ -25,6 +25,7 @@ def test_update_record_should_update_record(mongodb):
                   "hash": "48ba234393",
                   "title": "A defect detection method for MgB 2 superconducting and iron-based Ba(Fe,Co) 2 As 2 wires",
                   "doi": "10.1063/1.4947056",
+                  "error_type": "extraction",
                   "authors": "D Gajda, ) A Morawski, A Zaleski, A Yamamoto, T Cetner",
                   "year": 2016}
 
@@ -41,11 +42,13 @@ def test_update_record_should_update_record(mongodb):
     assert final_record['type'] == "manual"
     assert final_record['previous'] == original_identifier_object_id
     assert str(final_record['_id']) != original_identifier
+    assert final_record['error_type'] == "extraction"
 
     old_record_from_db = mongodb.tabular.find_one({'_id': original_identifier_object_id})
 
     assert old_record_from_db['status'] == "obsolete"
     assert old_record_from_db['type'] == "automatic"
+    assert old_record_from_db['error_type'] == "extraction"
 
     assert old_record_from_db['timestamp'] != final_record['timestamp']
 
@@ -115,8 +118,9 @@ def test_update_record_with_failure_should_rollback(mongodb, mocker: MagicMock):
 
     old_record_from_db = mongodb.tabular.find_one({'_id': original_identifier_object_id})
 
-    assert old_record_from_db['status'] == "valid"
+    assert old_record_from_db['status'] == "new"
     assert old_record_from_db['type'] == "automatic"
+    assert 'error_type' not in old_record_from_db or old_record_from_db['error_type'] == ''
 
     assert training_data_after == training_data_before
 
