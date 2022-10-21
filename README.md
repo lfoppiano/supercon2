@@ -123,10 +123,24 @@ in this example the user sees only records of materials with "Applied pressure":
 such filters can be "combined" on multiple columns (e.g. formula + applied pressure): 
 ![](docs/images/visualise-non-empty-fields-3.png)
 
-#### multi column sorting
+#### Multi column sorting
 
 The interface supports multicolumn sorting, the number indicate the priority, the arrow the order (ascendent or descendent): 
 ![](docs/images/multicolumn-sorting.png)
+
+#### Annotated sentence
+The annotated sentence indicate the entities related to the sentence where the record belongs.
+The sentence can be expanded by clicking on top of it (the mouse cursor should change)
+![](docs/images/annotated-sentence.png)
+
+#### Entity-id / document-id
+The document id can be used for
+ - visualise only records belonging to the selected document (click on the icon near the document id)
+ - open the pdf viewer (**notice that the current version of the pdf viewer is not integrated in the tabular view. Removed record in the tabular view will still be visualised in the pdf viewer.**)
+
+The entity-id is the unique identifier for each entity. It can be expanded by clicking on it, or copied by clicking on the clipboard icon. 
+
+![](docs/images/document-entity-id.png)
 
 ### Correction workflows 
 
