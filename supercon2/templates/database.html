@@ -279,9 +279,9 @@
                         { text: 'Material Class', value: 'materialClass', hidden: false, filter: this.materialClassFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'Other Information', value: 'fabrication', hidden: true, filter: this.fabricationFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'Substrate', value: 'substrate', hidden: true, filter: this.substrateFilter, filterKeyword: '', shouldHideEmpty: false },
-                        { text: 'Critical Temperature', value: 'criticalTemperature', hidden: false, filter: this.criticalTemperatureFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Critical Temperature', value: 'criticalTemperature', hidden: false, filter: this.criticalTemperatureFilter, filterKeyword: '', shouldHideEmpty: false, sort: this.sortByPhysicalQuantity },
                         // { text: 'Critical TemperatureId', value: 'criticalTemperatureId', hidden: true },
-                        { text: 'Applied Pressure', value: 'appliedPressure', hidden: false, filter: this.appliedPressureFilter, filterKeyword: '', shouldHideEmpty: false, sort: this.sortAsNumeric },
+                        { text: 'Applied Pressure', value: 'appliedPressure', hidden: false, filter: this.appliedPressureFilter, filterKeyword: '', shouldHideEmpty: false, sort: this.sortByPhysicalQuantity },
                         // { text: 'Applied Pressure ID', value: 'appliedPressureId', hidden: true },
                         { text: 'Measurement Method', value: 'criticalTemperatureMeasurementMethod', hidden: false, filter: this.measurementMethodFilter, filterKeyword: '', shouldHideEmpty: false },
                         // { text: 'Measurement MethodId', value: 'measurementMethodId', hidden: true },
@@ -734,28 +734,18 @@
                             return !item.flag
                     }
                 },
-                // CONFIRM: whether to support a negative case
-                sortAsNumeric(a, b, c) {
-                    if (a === b) {
-                        return 0
-                    }
-                    if (a === null) {
-                        return 1
-                    }
-                    if (b === null) {
+                sortByPhysicalQuantity(a, b) {
+                    try {
+                        a = math.unit(a)
+                    } catch {
                         return -1
                     }
-                    const aList = a.match(/[\d|.]+/g)
-                    const bList = b.match(/[\d|.]+/g)
-                    if (aList === null) {
+                    try {
+                        b = math.unit(b)
+                    } catch {
                         return 1
                     }
-                    if (bList === null) {
-                        return -1
-                    }
-                    const aNumber = Number(aList[0])
-                    const bNumber = Number(bList[0])
-                    return aNumber - bNumber
+                    return math.compare(a, b)
                 },
                 async markRecordValidated(record) {
                     let url = '{{ url_for("supercon.mark_record_validated", id = "id") }}'
