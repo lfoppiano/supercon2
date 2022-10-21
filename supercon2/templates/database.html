@@ -7,8 +7,7 @@
     <title>SuperCon<sup>2</sup> | Database</title>
     <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.5.95/css/materialdesignicons.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/vuetify@2.6.3/dist/vuetify.min.css" rel="stylesheet">
-    <link rel="icon" type="image/x-icon" href={{ url_for('static', filename='resources/img/favicon.ico' ) }} />
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@2.6.3/dist/vuetify.min.css" rel="stylesheet">    <link rel="icon" type="image/x-icon" href={{ url_for('static', filename='resources/img/favicon.ico' ) }} />
     <link rel="shortcut icon" type="image/x-icon" href={{ url_for('static', filename='resources/img/favicon.ico' ) }} />
     <link rel="stylesheet" href={{ url_for('static', filename='resources/css/style-superconductors.css') }}/>
     <style>
@@ -96,7 +95,9 @@
                 </template>
                 <template v-slot:item.id="{ item }">
                     <v-row>
+                        <span class="ma-1">
                         [[ "..." + item.id.substring(item.id.length - 8) ]]
+                        </span>
                         <v-icon
                             @click="copyTextToClipboard(item.id)"
                             :title="'Copy this entity ID: ' + item.id">
@@ -203,6 +204,7 @@
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vuetify@2.6.3/dist/vuetify.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios@0.26.1/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjs@11.3.1/lib/browser/math.min.js"></script>
     <script>
         let itemClassStore = {
             class: 'bg-white',
@@ -289,7 +291,7 @@
                         {#{ text: 'Path', value: 'path', hidden: true, filter: this.pathFilter, filterKeyword: '', shouldHideEmpty: false },#}
                         {#{ text: 'Filename', value: 'filename', hidden: true, filter: this.filenameFilter, filterKeyword: '', shouldHideEmpty: false },#}
                         { text: 'Document', value: 'hash', hidden: false, filter: this.hashFilter, filterKeyword: "{{hash}}", width: 120, shouldHideEmpty: false },
-                        { text: 'Entity ID', value: 'id', hidden: false, filter: this.hashFilter, shouldHideEmpty: false },
+                        { text: 'Entity ID', value: 'id', hidden: false, filter: this.hashFilter, shouldHideEmpty: false, width: 120, },
                         { text: 'Timestamp', value: 'timestamp', hidden: true, filter: this.timestampFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'DOI', value: 'doi', hidden: false, filter: this.doiFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'Authors', value: 'authors', width: 300, hidden: true, filter: this.authorsFilter, filterKeyword: '', shouldHideEmpty: false },
