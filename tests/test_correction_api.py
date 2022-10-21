@@ -162,6 +162,7 @@ def test_post_process_fields_remove_trailing_with_non_str():
     assert 'c' not in output
     assert output['id'] == object_id
 
+
 def test_flow_new_validated(mongodb):
     object_id = ObjectId("61e136f56e3ec3a715592988")
 
@@ -195,6 +196,7 @@ def test_flow_new_validated_reset(mongodb):
     assert object_after['status'] == "new"
     assert object_after['type'] == "automatic"
 
+
 def test_flow_new_validated_curated(mongodb):
     object_id = ObjectId("61e136f56e3ec3a715592988")
 
@@ -218,6 +220,7 @@ def test_flow_new_validated_curated(mongodb):
     assert object_after['status'] == "curated"
     assert object_after['type'] == "manual"
 
+
 def test_flow_new_curated_reset(mongodb):
     object_id = ObjectId("61e136f56e3ec3a715592988")
 
@@ -226,8 +229,8 @@ def test_flow_new_curated_reset(mongodb):
     assert object_before['type'] == "automatic"
 
     new_doc = {"rawMaterial": "thin films Mg B2",
-                  "materialId": "-964232725",
-                  "formula": "Mg B2"}
+               "materialId": "-964232725",
+               "formula": "Mg B2"}
 
     new_object_id = _update_record(ObjectId("61e136f56e3ec3a715592988"), new_doc, mongodb)
 
@@ -241,6 +244,7 @@ def test_flow_new_curated_reset(mongodb):
     assert object_after['status'] == "curated"
     assert object_after['type'] == "manual"
 
+
 def test_flow_new_curated_validated_reset(mongodb):
     object_id = ObjectId("61e136f56e3ec3a715592988")
 
@@ -249,8 +253,8 @@ def test_flow_new_curated_validated_reset(mongodb):
     assert object_before['type'] == "automatic"
 
     new_doc = {"rawMaterial": "thin films Mg B2",
-                  "materialId": "-964232725",
-                  "formula": "Mg B2"}
+               "materialId": "-964232725",
+               "formula": "Mg B2"}
 
     new_object_id = _update_record(ObjectId("61e136f56e3ec3a715592988"), new_doc, mongodb)
 
