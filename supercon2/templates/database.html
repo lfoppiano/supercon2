@@ -822,6 +822,8 @@
                     delete this.editedItem.flag
                     delete this.editedItem.status
                     delete this.editedItem.type
+                    // Deletes sentenceIsExpanded field because this field is for only frontend. The backend doesn't allow an unknown field.
+                    delete this.editedItem.sentenceIsExpanded
                     try {
                         await axios.put(url, this.editedItem)
                         this.close()
