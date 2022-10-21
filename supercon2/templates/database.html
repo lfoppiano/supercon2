@@ -26,7 +26,7 @@
         <v-container fluid>
             <v-row class="justify-space-between ma-0">
                 <v-card flat>
-            <h2>SuperCon<sup>2</sup> | Database</h2>
+                    <h2>SuperCon<sup>2</sup> | Database</h2>
                 </v-card>
                 <v-card flat>
                     <v-icon @click="shouldShowShortcutKeysDialog = true">mdi-help-circle</v-icon>
@@ -121,7 +121,7 @@
                         <v-icon small class="mr-1" @click="openEditItemDialog(item)" title="Edit">
                         mdi-pencil
                         </v-icon>
-                        <v-icon small class="mr-1" @click="removeRecord(item)" title="Remove">
+                        <v-icon small class="mr-1" @click="openItemDialogToRemove(item)" title="Remove">
                         mdi-delete-outline
                         </v-icon>
                         <v-icon small class="mr-1" @click="openCreateItemDialog(item)" title="Add new">
@@ -138,7 +138,15 @@
                         <v-container fluid>
                             <v-row v-for="row of rowsOnItemEditDialog">
                                 <v-col :cols="row.config.cols" v-for="col of row.cols">
+                                    <v-select
+                                        v-if="col.key === 'error_type'"
+                                        :rules="col.rules"
+                                        v-model="editedItem[col.key]"
+                                        :items="col.selectBoxItems"
+                                        :label="col.label">
+                                    </v-select>
                                     <v-text-field
+                                        v-else
                                         v-model="editedItem[col.key]"
                                         :label="headerObject[col.key].text"
                                         :disabled="col.disabled">
@@ -153,7 +161,14 @@
                         <v-btn color="blue darken-1" text @click="close">
                             Cancel
                         </v-btn>
-                        <v-btn color="blue darken-1" text @click="save" :disabled="!saveIsValidated">
+                        <v-btn
+                            v-if="itemDialog.mode === 'remove'"
+                            color="error" text
+                            @click="removeRecord"
+                            :disabled="!saveIsValidated">
+                            Remove
+                        </v-btn>
+                        <v-btn v-else color="blue darken-1" text @click="save" :disabled="!saveIsValidated">
                             Save
                         </v-btn>
                     </v-card-actions>
@@ -191,7 +206,7 @@
                 return {
                     base_url: '{{ base_url }}',
                     itemDialog: {
-                        mode: '', // 'edit', 'new'
+                        mode: '', // 'edit', 'new', 'remove'
                         shouldShow: false,
                     },
                     shouldShowShortcutKeysDialog: false,
@@ -202,6 +217,12 @@
                         }, {
                             name: 'e',
                             text: 'Edit the selected record'
+                        }, {
+                            name: '⌘ + Enter',
+                            text: 'Save the record on the edit dialog (Mac)'
+                        }, {
+                            name: 'Ctrl + Enter',
+                            text: 'Save the record on the edit dialog (Win)'
                         }, {
                             name: 'ArrowUp',
                             text: 'Move selection up one record'
@@ -248,7 +269,7 @@
                         { text: 'Substrate', value: 'substrate', hidden: true, filter: this.substrateFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'Critical Temperature', value: 'criticalTemperature', hidden: false, filter: this.criticalTemperatureFilter, filterKeyword: '', shouldHideEmpty: false },
                         // { text: 'Critical TemperatureId', value: 'criticalTemperatureId', hidden: true },
-                        { text: 'Applied Pressure', value: 'appliedPressure', hidden: false, filter: this.appliedPressureFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Applied Pressure', value: 'appliedPressure', hidden: false, filter: this.appliedPressureFilter, filterKeyword: '', shouldHideEmpty: false, sort: this.sortAsNumeric },
                         // { text: 'Applied Pressure ID', value: 'appliedPressureId', hidden: true },
                         { text: 'Measurement Method', value: 'criticalTemperatureMeasurementMethod', hidden: false, filter: this.measurementMethodFilter, filterKeyword: '', shouldHideEmpty: false },
                         // { text: 'Measurement MethodId', value: 'measurementMethodId', hidden: true },
@@ -267,15 +288,32 @@
                         { text: 'Journal', value: 'journal', hidden: true, filter: this.journalFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'Year', value: 'year', hidden: true, filter: this.yearFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'Sentence', value: 'sentence', width: 200, hidden: false, filter: this.sentenceFilter},
-                        { text: 'Latest error type', value: 'error_type', hidden: true, filter: this.hashFilter, shouldHideEmpty: false },
-                        // CONFIRM: check column locations for type, status and flag
                         {
                             text: 'Type', value: 'type', hidden: true, filter: this.typeFilter, filterKeyword: 'all', width: 80,
-                            radioGroup: [
-                                { value: 'all',       icon: 'mdi-filter-off' },
-                                { value: 'manual',    icon: 'mdi-human' },
-                                { value: 'automatic', icon: 'mdi-robot' }
-                            ]
+                            radioGroup: [{
+                                value: 'all',
+                                icon: 'mdi-filter-off'
+                           }, {
+                                value: 'manual',
+                                icon: 'mdi-human'
+                            }, {
+                                value: 'automatic',
+                                icon: 'mdi-robot'
+                            },]
+                        },
+                        { text: 'Latest error type', value: 'error_type', hidden: false, filter: this.hashFilter, shouldHideEmpty: false },
+                        {
+                            text: 'Status', value: 'status', sortable: false, hidden: true, filter: this.statusFilter, filterKeyword: 'all', width: 80,
+                            radioGroup: [{
+                                value: 'all',
+                                icon: 'mdi-filter-off'
+                            }, {
+                                value: 'valid',
+                                icon: 'mdi-thumb-up'
+                            }, {
+                                value: 'invalid',
+                                icon: 'mdi-thumb-down'
+                            },]
                         },
                         {
                             text: 'Status', value: 'status', sortable: false, hidden: false, filter: this.statusFilter, filterKeyword: 'all', width: 80,
@@ -306,7 +344,11 @@
                             key: 'id',
                             disabled: true,
                         }, {
-                            key: 'error_type'
+                            key: 'error_type',
+                            label: '*Error type',
+                            rules: [(value) => !!value || 'This field is required'],
+                            errorMessages: [],
+                            selectBoxItems: ['From table', 'Extraction', 'Linking', 'Tc classification', 'Composition resolution' ]
                         }]
                     }, {
                         config: {
@@ -399,7 +441,7 @@
                     return this.filteredItems[0]
                 },
                 saveIsValidated() {
-                    return this.editedItem.doi && this.editedItem.hash
+                    return this.editedItem.doi && this.editedItem.hash && this.editedItem.error_type
                 },
                 headerObject() {
                     return Object.fromEntries(new Map(
@@ -414,6 +456,8 @@
                             return 'Edit the record'
                         case 'new':
                             return 'Add a new record'
+                        case 'remove':
+                            return 'Remove the record'
                     }
                 }
             },
@@ -429,12 +473,10 @@
                 try {
                     const result = await axios.get(url, {})
                     this.version = result.data['version']
-
                 } catch (e) {
                     console.error(e)
                     window.alert(JSON.stringify(e.response.data))
                 } finally {
-
                 }
             },
             methods: {
@@ -463,13 +505,19 @@
                     this.filteredItems = items
                 },
                 async onKeyDown(event) {
-                    // disable shortcuts when in an input field
-                    if (event.srcElement.nodeName.indexOf('INPUT') > -1) {
+                    if (this.itemDialog.shouldShow) {
+                        if (event.key === 'Enter') {
+                            // for Mac
+                            if (event.metaKey) return this.save()
+                            // for Windows
+                            if ((!event.metaKey && event.ctrlKey)) return this.save()
+                        }
+                        // disable shortcut keys when edit dialog opens
                         return
                     }
-                    // disable shortcuts when edit dialog opens
-                    if (this.itemDialog.shouldShow) {
-                        return
+                    // disable shortcut keys when the cursor in an input field
+                    if (event.srcElement.nodeName.indexOf('INPUT') > -1) {
+                       return
                     }
                     switch (event.key) {
                         case '?':
@@ -668,6 +716,29 @@
                             return !item.flag
                     }
                 },
+                // CONFIRM: whether to support a negative case
+                sortAsNumeric(a, b, c) {
+                    if (a === b) {
+                        return 0
+                    }
+                    if (a === null) {
+                        return 1
+                    }
+                    if (b === null) {
+                        return -1
+                    }
+                    const aList = a.match(/[\d|.]+/g)
+                    const bList = b.match(/[\d|.]+/g)
+                    if (aList === null) {
+                        return 1
+                    }
+                    if (bList === null) {
+                        return -1
+                    }
+                    const aNumber = Number(aList[0])
+                    const bNumber = Number(bList[0])
+                    return aNumber - bNumber
+                },
                 async markRecordValidated(record) {
                     let url = '{{ url_for("supercon.mark_record_validated", id = "id") }}'
                     url = url.replace(
@@ -743,6 +814,13 @@
                         mode: 'new'
                     }
                 },
+                openItemDialogToRemove(item) {
+                    this.editedItem = JSON.parse(JSON.stringify(item))
+                    this.itemDialog = {
+                        shouldShow: true,
+                        mode: 'remove'
+                    }
+                },
                 close() {
                     this.itemDialog.shouldShow = false
                 },
@@ -776,6 +854,8 @@
                     delete this.editedItem.flag
                     delete this.editedItem.status
                     delete this.editedItem.type
+                    // Deletes sentenceIsExpanded field because this field is for only frontend. The backend doesn't allow an unknown field.
+                    delete this.editedItem.sentenceIsExpanded
                     try {
                         await axios.put(url, this.editedItem)
                         this.close()
@@ -789,16 +869,17 @@
                 flagIsNotWritable(record) {
                     return record.type === 'manual' && record.status === 'validated'
                 },
-                async removeRecord(item) {
+                async removeRecord() {
                     let url = '{{ url_for("supercon.delete_record", id="record_id") }}'
                     url = url.replace(
                         "record_id",
-                        item.id
+                        this.editedItem.id
                     )
 
                     try {
                         await axios.delete(url, {})
                         this.loadItems()
+                        this.itemDialog.shouldShow = false
                     } catch (e) {
                         console.error(e)
                         window.alert(JSON.stringify(e.response.data))

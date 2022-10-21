@@ -75,15 +75,17 @@ The table can be navigated using the arrows after having selected one row with t
 
 The shortcuts are: 
 
-| Key        | Description                                                   |
-|------------|---------------------------------------------------------------|
-| n          | Add new record (in the same document of the selected record)  |
-| e          | Edit the selected record                                      | 
-| arrow-up   | Selection up one record                                       | 
-| arrow-down | Selection down one record                                     |
-| ?          | Flag/unflag the selected record                               |
-| enter      | Show the keyboard shortcuts dialog                            |
-
+| Key          | Description                                                   |
+|--------------|---------------------------------------------------------------|
+| n            | Add new record (in the same document of the selected record)  |
+| e            | Edit the selected record                                      |
+| ⌘ + Enter    | Save the record on the edit dialog (Mac) record               |
+| Ctrl + Enter | Edit the selected record                                      |
+| arrow-up     | Selection up one record                                       |
+| arrow-down   | Selection down one record                                     |
+| enter        | Show the keyboard shortcuts dialog                            |
+| ?            | Flag/unflag the selected record                                |
+| esc          | Close the help dialog                                         |
 
 ### Interface features
 
