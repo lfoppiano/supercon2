@@ -57,23 +57,15 @@
                             </v-radio-group>
                             <v-radio-group v-model="header.filterKeyword" v-else-if="header.value === 'status'" dense
                                 hide-details>
-                                <v-row class="pb-1" v-for="radio in headerObject.status.radioGroup">
+                                <v-select :items="headerObject.status.selectItems" v-model="header.filterKeyword"></v-select>
+                                {#<v-row class="pb-1" v-for="radio in headerObject.status.radioGroup">
                                     <v-radio dense :value="radio.value" class="ma-0">
                                     </v-radio>
                                     <v-icon small :title="radio.value" @click="header.filterKeyword = radio.value">
                                         [[ radio.icon ]]
                                     </v-icon>
-                                </v-row>
-                            </v-radio-group>
-                            <v-radio-group v-model="header.filterKeyword" v-else-if="header.value === 'flag'" dense
-                                hide-details>
-                                <v-row class="pb-1" v-for="radio in headerObject.flag.radioGroup">
-                                    <v-radio dense :value="radio.value" class="ma-0">
-                                    </v-radio>
-                                    <v-icon small :title="radio.value" @click="header.filterKeyword = radio.value">
-                                        [[ radio.icon ]]
-                                    </v-icon>
-                                </v-row>
+                                    <div @click="header.filterKeyword = radio.value">[[ radio.value ]]</div>
+                                </v-row>#}
                             </v-radio-group>
                             <template v-else-if="header.value === 'actions'"></template>
                             <template v-else>
@@ -89,11 +81,15 @@
                 </template>
                 <template v-slot:item.hash="{ item }">
                     <v-row>
-                        <a :href="base_url + 'document/' + item.hash" target="_blank" :style="{'text-decoration': 'none'}"
-                            class="ma-1">
+                        <a :href="base_url + 'document/' + item.hash"
+                            target="_blank"
+                            :style="{'text-decoration': 'none'}"
+                            class="ma-1" title="View document">
                             [[ item.hash ]]
                         </a>
-                        <v-icon @click="headerObject.hash.filterKeyword = item.hash">
+                        <v-icon
+                            @click="headerObject.hash.filterKeyword = item.hash"
+                            title="Filter by this documenft ID">
                             mdi-content-paste
                         </v-icon>
                     </v-row>
@@ -113,6 +109,15 @@
                 </template>
                 <template v-slot:item.actions="{ item }">
                     <v-row>
+                        <v-icon small class="mr-1" @click="markRecordValidated(item)" title="Mark as validated">
+                            mdi-thumb-up
+                        </v-icon>
+                        <v-icon small class="mr-1" @click="markRecordInvalid(item)" title="Mark as invalid">
+                            mdi-thumb-down
+                        </v-icon>
+                        <v-icon small class="mr-1" @click="resetRecord(item)" title="Reset">
+                            mdi-restart
+                        </v-icon>
                         <v-icon small class="mr-1" @click="openEditItemDialog(item)" title="Edit">
                         mdi-pencil
                         </v-icon>
@@ -288,7 +293,7 @@
                             radioGroup: [{
                                 value: 'all',
                                 icon: 'mdi-filter-off'
-                            }, {
+                           }, {
                                 value: 'manual',
                                 icon: 'mdi-human'
                             }, {
@@ -311,17 +316,18 @@
                             },]
                         },
                         {
-                            text: 'Flag', value: 'flag', sortable: false, hidden: false, filter: this.flagFilter, filterKeyword: 'all', width: 80,
-                            radioGroup: [{
-                                value: 'all',
-                                icon: 'mdi-filter-off'
-                            }, {
-                                value: 'flag',
-                                icon: 'mdi-flag'
-                            }, {
-                                value: 'unflag',
-                                icon: 'mdi-flag-off'
-                            },]
+                            text: 'Status', value: 'status', sortable: false, hidden: false, filter: this.statusFilter, filterKeyword: 'all', width: 80,
+                            // radioGroup is obsolete of the status header
+                            radioGroup: [
+                                { value: 'all',       icon: 'mdi-filter-off' },
+                                { value: 'new',       icon: 'mdi-new-box' },
+                                { value: 'curated',   icon: 'mdi-auto-fix' },
+                                { value: 'validated', icon: 'mdi-thumb-up' },
+                                { value: 'invalid',   icon: 'mdi-thumb-down' }
+                            ],
+                            selectItems: [
+                                'all', 'new', 'curated', 'validated', 'invalid'
+                            ]
                         },
                         { text: 'Actions', value: 'actions', sortable: false, hidden: false },
                         // { text: 'Doc URL', value: 'doc_url', hidden: true},
@@ -483,11 +489,8 @@
                     const url =
                         '{{ url_for("supercon.get_records_from_form_data") }}'
                     axios.get(url).then((data) => {
-                        this.items = data.data.map((item) => {
-                            return {
-                                ...item, ...{ flag: item.status === 'invalid' && item.type === 'manual' }
-                            }
-                        })
+                        this.items = data.data
+                        return
                     }).finally(() => {
                         this.isLoading = false
                     })
@@ -736,14 +739,8 @@
                     const bNumber = Number(bList[0])
                     return aNumber - bNumber
                 },
-                async toggleFlag(record) {
-                    let url = ''
-                    if (record.flag) {
-                        url =
-                            '{{ url_for("supercon.unflag_record", id = "id") }}'
-                    } else {
-                        url = '{{ url_for("supercon.flag_record", id = "id") }}'
-                    }
+                async markRecordValidated(record) {
+                    let url = '{{ url_for("supercon.mark_record_validated", id = "id") }}'
                     url = url.replace(
                         "id",
                         record.id
@@ -756,7 +753,42 @@
                             {
                                 type: data.type,
                                 status: data.status,
-                                flag: !record.flag,
+                    }
+                        )
+                    )
+                },
+                async markRecordInvalid(record) {
+                    let url = '{{ url_for("supercon.mark_record_invalid", id = "id") }}'
+                    url = url.replace(
+                        "id",
+                        record.id
+                    )
+                    const { data: data } = await axios.patch(url)
+                    this.items = Object.assign(
+                        this.items,
+                        Object.assign(
+                            this.items.find(item => item.id === record.id),
+                            {
+                                type: data.type,
+                                status: data.status,
+                            }
+                        )
+                    )
+                },
+                async resetRecord(record) {
+                    let url = '{{ url_for("supercon.reset_record", id = "id") }}'
+                    url = url.replace(
+                        "id",
+                        record.id
+                    )
+                    const { data: data } = await axios.patch(url)
+                    this.items = Object.assign(
+                        this.items,
+                        Object.assign(
+                            this.items.find(item => item.id === record.id),
+                            {
+                                type: data.type,
+                                status: data.status,
                             }
                         )
                     )
@@ -835,7 +867,7 @@
                     }
                 },
                 flagIsNotWritable(record) {
-                    return record.type === 'manual' && record.status === 'valid'
+                    return record.type === 'manual' && record.status === 'validated'
                 },
                 async removeRecord() {
                     let url = '{{ url_for("supercon.delete_record", id="record_id") }}'

@@ -27,7 +27,7 @@ def find_differences(new, old, ignored_fields=[]):
     # exclude_paths = {"root['type']", "root['status']", "root['_id']", "root['previous']"}
 
     differences = DeepDiff(new, old, ignore_order=True,
-                           exclude_paths={"root['"+str(field)+"']" for field in ignored_fields})
+                           exclude_paths={"root['" + str(field) + "']" for field in ignored_fields})
 
     return differences
 
@@ -49,20 +49,16 @@ def write_correction(old_doc, corrections, collection, dry_run: bool = False, sk
     for field, value in correction_clean.items():
         new_doc[field] = value
 
-    old_doc['status'] = "obsolete"  ## 'obsolete' means that another record is taking over
+    # old_doc['status'] = "obsolete"  ## 'obsolete' means that another record is taking over
     # doc['type'] = "automatic"
-
-    # We save the error type in the previous document
-    if error_type: 
-        old_doc['error_type'] = error_type
 
     obsolete_id = old_doc['_id']
     new_doc['previous'] = obsolete_id
     new_doc['type'] = 'manual'
-    new_doc['status'] = 'valid'
+    new_doc['status'] = 'curated'
     new_doc['timestamp'] = datetime.utcnow()
 
-    # Cleanup
+    # Cleanup new doc
     for x in ['id', '_id']:
         if x in new_doc:
             del new_doc['_id']
@@ -75,14 +71,14 @@ def write_correction(old_doc, corrections, collection, dry_run: bool = False, sk
         print("Creating training data. Saving the sentence for the moment.")
         new_doc_id = "00000"
     else:
-        collection.update_one({
-            '_id': old_doc['_id']
-        }, {
-            '$set': {
-                'status': 'obsolete',
-                'type': 'automatic'
-            }
-        }, upsert=False)
+        query = {'status': 'obsolete',
+                 'type': 'automatic'}
+        if error_type:
+            query['error_type'] = error_type
+        else:
+            print("No error type specified. This is allowed in case the process is automatic. Skipping!")
+
+        collection.update_one({'_id': old_doc['_id']}, {'$set': query}, upsert=False)
         result = collection.insert_one(new_doc)
         new_doc_id = result.inserted_id
 

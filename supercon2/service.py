@@ -18,7 +18,7 @@ from supercon2.schemas import Publishers, Record, Years, Flag, RecordParamsIn, U
 
 bp = APIBlueprint('supercon', __name__)
 config = []
-
+VALID_STATUSES = ["invalid", "new", "curated", "validated"]
 
 @bp.route('/version')
 def get_version():
@@ -95,7 +95,7 @@ def get_stats():
     tabular_collection = db.get_collection("tabular")
 
     pipeline_group_by_publisher = [
-        {"$match": {"type": "automatic", "status": "valid"}},
+        {"$match": {"type": "automatic", "status": {"$in": VALID_STATUSES}}},
         {"$group": {"_id": "$publisher", "count_records": {"$sum": 1}, "hashes": {"$addToSet": "$hash"}}},
         {"$project": {"_id": 1, "hashes": 1, "count_records": 1, "count_docs": {"$size": "$hashes"}}},
         {"$project": {"hashes": 0}},
@@ -105,7 +105,7 @@ def get_stats():
     by_publisher_fixed = replace_empty_key(by_publisher)
 
     pipeline_group_by_year = [
-        {"$match": {"type": "automatic", "status": "valid"}},
+        {"$match": {"type": "automatic", "status": {"$in": VALID_STATUSES}}},
         {"$group": {"_id": "$year", "count_records": {"$sum": 1}, "hashes": {"$addToSet": "$hash"}}},
         {"$project": {"_id": 1, "hashes": 1, "count_records": 1, "count_docs": {"$size": "$hashes"}}},
         {"$project": {"hashes": 0}},
@@ -115,7 +115,7 @@ def get_stats():
     by_year_fixed = replace_empty_key(by_year)
 
     pipeline_group_by_journal = [
-        {"$match": {"type": "automatic", "status": "valid"}},
+        {"$match": {"type": "automatic", "status": {"$in": VALID_STATUSES}}},
         {"$group": {"_id": "$journal", "count_records": {"$sum": 1}, "hashes": {"$addToSet": "$hash"}}},
         {"$project": {"_id": 1, "hashes": 1, "count_records": 1, "count_docs": {"$size": "$hashes"}}},
         {"$project": {"hashes": 0}},
@@ -199,21 +199,30 @@ def _update_record(object_id: ObjectId, new_doc: Union[Record, dict], db):
     except Exception as e:
         # Roll back!
         print("Exception:", e, "Rolling back.")
-        roll_back(new_doc_id, old_doc['_id'], training_data_id, tabular_collection, training_data_collection)
+        roll_back(new_doc_id, old_doc, training_data_id, tabular_collection, training_data_collection)
         raise e
 
 
-def roll_back(new_id, old_id, training_data_id, tabular_collection, training_data_collection):
+def roll_back(new_id, old_doc, training_data_id, tabular_collection, training_data_collection):
     if training_data_id is not None:
         training_data_collection.delete_one({"_id": training_data_id})
 
     if new_id is not None:
         tabular_collection.delete_one({"_id": new_id})
+        query_set = {"status": old_doc['status']}
+        query_unset = {"previous": ""}
+
+        # When rolling back I might have the error type or not, in the previous record
+        if 'error_type' in old_doc:
+            query_set['error_type'] = old_doc['error_type']
+        else:
+            query_unset['error_type'] = ""
+
         tabular_collection.update_one(
-            {'_id': old_id},
+            {'_id': old_doc['_id']},
             {
-                "$set": {"status": "valid"},
-                "$unset": {"previous": ""}
+                "$set": query_set,
+                "$unset": query_unset
             }
         )
 
@@ -303,7 +312,7 @@ def get_records(type=None, status=None, document=None, publisher=None, year=None
         query['type'] = type
 
     if status is None:
-        query['status'] = {"$in": ['valid', 'invalid']}
+        query['status'] = {"$in": VALID_STATUSES}
     else:
         query['status'] = status
 
@@ -420,9 +429,9 @@ def delete_record(id):
     return record
 
 
-@bp.route('/record/<id>/flags', methods=['GET'])
+@bp.route('/record/<id>/status', methods=['GET'])
 @output(Flag)
-def get_flag(id):
+def get_record_status(id):
     object_id = validateObjectId(id)
     db = connect_and_get_db()
     record = db.get_collection("tabular").find_one({"_id": object_id}, {'_id': 0, 'type': 1, 'status': 1})
@@ -430,13 +439,14 @@ def get_flag(id):
     return record
 
 
-@bp.route('/record/<id>/flag', methods=['PUT', 'PATCH'])
+@bp.route('/record/<id>/mark_invalid', methods=['PUT', 'PATCH'])
 @output(Flag)
-def flag_record(id):
+def mark_record_invalid(id):
+    """The record is marked as invalid"""
     object_id = validateObjectId(id)
     db = connect_and_get_db()
     tabular_collection = db.get_collection("tabular")
-    record = tabular_collection.find_one({"_id": object_id})
+    record = tabular_collection.find_one({"_id": object_id, "status": {"$in": VALID_STATUSES}})
     if record is None:
         return 404
     else:
@@ -448,6 +458,29 @@ def flag_record(id):
         tabular_collection.update_one({'_id': record['_id']}, {'$set': changes})
         return changes, 200
 
+@bp.route('/record/<id>/mark_validated', methods=['PUT', 'PATCH'])
+@output(Flag)
+def mark_record_validated(id):
+    """The record is marked as correct"""
+    object_id = validateObjectId(id)
+    db = connect_and_get_db()
+    return _mark_validated(db, object_id)
+
+
+def _mark_validated(db, id: ObjectId):
+    tabular_collection = db.get_collection("tabular")
+    record = tabular_collection.find_one({"_id": id, "status": {"$in": VALID_STATUSES}})
+    if record is None:
+        return "Record with id=" + id + " not found.", 404
+
+    new_status = 'validated'
+    new_type = 'manual'
+
+    changes = {'status': new_status, 'type': new_type}
+
+    tabular_collection.update_one({'_id': record['_id']}, {'$set': changes})
+    return changes, 200
+
 
 def validateObjectId(id):
     try:
@@ -456,23 +489,32 @@ def validateObjectId(id):
         abort(400, "Invalid identifier (objectId)")
 
 
-@bp.route('/record/<id>/unflag', methods=['PUT', 'PATCH'])
+@bp.route('/record/<id>/reset', methods=['PUT', 'PATCH'])
 @output(Flag)
-def unflag_record(id):
+def reset_record(id):
+    """Reset the status of the record"""
     object_id = validateObjectId(id)
     db = connect_and_get_db()
-    tabular_collection = db.get_collection("tabular")
+    return _reset_record(db, object_id)
 
-    record = tabular_collection.find_one({"_id": object_id})
+
+def _reset_record(db, id: ObjectId):
+    tabular_collection = db.get_collection("tabular")
+    record = tabular_collection.find_one({"_id": id, "status": {"$in": VALID_STATUSES}})
     if record is None:
-        return "Record with id=" + id + " not found.", 404
+        return "Valid record with id=" + str(id) + " not found.", 404
+
+    if 'previous' in record:
+        status = 'curated'
+        type = 'manual'
     else:
-        status = 'valid'
+        status = 'new'
         type = 'automatic'
 
-        changes = {'status': status, 'type': type}
-        tabular_collection.update_one({'_id': record['_id']}, {'$set': changes})
-        return changes, 200
+    changes = {'status': status, 'type': type}
+    tabular_collection.update_one({'_id': record['_id']}, {'$set': changes})
+
+    return changes, 200
 
 
 @bp.route('/config', methods=['GET'])

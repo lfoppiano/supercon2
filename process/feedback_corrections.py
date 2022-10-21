@@ -125,7 +125,7 @@ def process(corrections_file, database, dry_run=False):
         year = row[20]
 
         # Iterate on the database records
-        documents = tabular_collection.find({"hash": hash, "type": "automatic", "status": "valid"})
+        documents = tabular_collection.find({"hash": hash, "type": "automatic", "status": "new"})
 
         matching = False
         for doc in documents:
@@ -191,7 +191,7 @@ def process(corrections_file, database, dry_run=False):
                     break
                 except Exception as e:
                     print("There was an exception. Rolling back. ")
-                    roll_back(new_id, doc['_id'], training_data_id, tabular_collection, training_data_collection)
+                    roll_back(new_id, doc, training_data_id, tabular_collection, training_data_collection)
                     changes_report.append({"id": doc["_id"], "new_id": str(None),
                                     "status": status, "action": "rollback", "hash": doc["hash"]})
                     break
