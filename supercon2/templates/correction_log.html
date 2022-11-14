@@ -1,0 +1,475 @@
+<!DOCTYPE XHTML>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+    <title>SuperCon2 | Database</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.5.95/css/materialdesignicons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@2.6.3/dist/vuetify.min.css" rel="stylesheet">    <link rel="icon" type="image/x-icon" href={{ url_for('static', filename='resources/img/favicon.ico' ) }} />
+    <link rel="shortcut icon" type="image/x-icon" href={{ url_for('static', filename='resources/img/favicon.ico' ) }} />
+    <link rel="stylesheet" href={{ url_for('static', filename='resources/css/style-superconductors.css') }}/>
+    <style>
+        .bg-floralwhite {
+            background: floralwhite
+        }
+        .bg-white {
+            background: white
+        }
+    </style>
+</head>
+
+<body>
+    <v-app id="app">
+        <v-container fluid>
+            <v-row class="justify-space-between ma-0">
+                <v-card flat>
+                    <h2>SuperCon<sup>2</sup> | Correction log</h2>
+                </v-card>
+            </v-row>
+            <v-data-table v-model="selectedItems" :headers="showHeaders" :items="items" :dense="true" single-select
+                loading-text="loading ..." :loading="isLoading" :multi-sort="true" class="elevation-1" :item-class="getItemClass"
+                @current-items="hasChangedCurrentItems" :page.sync="page" :footer-props="{'items-per-page-options':[20, 50, 100]}"
+                :sort-by.sync="sortBy" @page-count="hasChangedPageCount" @click:row="clickRow">
+                <template v-slot:body.prepend>
+                    <tr>
+                        <td v-for="header in showHeaders" :key="header.value">
+                            <v-radio-group v-model="header.filterKeyword" v-if="header.value === 'type'" dense
+                                hide-details>
+                                <v-row class="pb-1" v-for="radio in headerObject.type.radioGroup">
+                                    <v-radio dense :value="radio.value" class="ma-0">
+                                    </v-radio>
+                                    <v-icon small :title="radio.value" @click="header.filterKeyword = radio.value">
+                                        [[ radio.icon ]]
+                                    </v-icon>
+                                </v-row>
+                            </v-radio-group>
+                            <v-radio-group v-model="header.filterKeyword" v-else-if="header.value === 'status'" dense
+                                hide-details>
+                                <v-select :items="headerObject.status.selectItems" v-model="header.filterKeyword"></v-select>
+                            </v-radio-group>
+                            <template v-else-if="header.value === 'actions'"></template>
+                            <template v-else>
+                                <v-text-field v-model="header.filterKeyword" type="text" placeholder="keyword"
+                                    hide-details clearable>
+                                </v-text-field>
+{#                                <v-switch v-model="headerObject[header.value].shouldHideEmpty" title="Hide empty">#}
+{#                                </v-switch>#}
+                            </template>
+
+                        </td>
+                    </tr>
+                </template>
+                <template v-slot:item.hash="{ item }">
+                    <v-row>
+                        <a :href="base_url + 'document/' + item.hash"
+                            target="_blank"
+                            :style="{'text-decoration': 'none'}"
+                            class="ma-1" title="View document">
+                            [[ item.hash ]]
+                        </a>
+                        <v-icon
+                            @click="headerObject.hash.filterKeyword = item.hash"
+                            :title="'Filter by this documenft ID: ' + item.hash">
+                            mdi-filter
+                        </v-icon>
+                    </v-row>
+                </template>
+                <template v-slot:item.id="{ item }">
+                    <v-row>
+                        <span class="ma-1">
+                        [[ item.id ]]
+                        </span>
+                    </v-row>
+                </template>
+                <template v-slot:item.flag="{ item }">
+                    <v-checkbox :input-value="item.flag" @click="toggleFlag(item)" :disabled="flagIsNotWritable(item)">
+                    </v-checkbox>
+                </template>
+            </v-data-table>
+            <p><span style="color:#848484;">&copy; Contributors, 2022 |</span> <span id="version" style="color:#848484;" v-html="version"></span></p>
+        </v-container>
+    </v-app>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@2.6.3/dist/vuetify.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios@0.26.1/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjs@11.3.1/lib/browser/math.min.js"></script>
+    <script>
+        let itemClassStore = {
+            class: 'bg-white',
+            hashes: [],
+        }
+        const app = new Vue({
+            delimiters: ['[[', ']]'],
+            el: '#app',
+            vuetify: new Vuetify(),
+            data() {
+                return {
+                    base_url: '{{ base_url }}',
+                    itemDialog: {
+                        mode: '', // 'edit', 'new', 'remove'
+                        shouldShow: false,
+                    },
+                    shouldShowShortcutKeysDialog: false,
+                    isLoading: true,
+                    version: 'unknown version',
+                    editedItem: {},
+                    page: 1,
+                    pageCount: 0,
+                    itemsPerPage: 10,
+                    itemsPerPageOptions: [25, 50, 100],
+                    sortBy: ['hash'],
+                    selectedItems: [],
+                    filteredItems: [],
+                    selectedHeaders: [],
+                    headers: [
+                        { text: 'Entity ID', value: 'id', hidden: false, filter: this.idFilter, filterKeyword: '', shouldHideEmpty: false, width: 120, },
+                        { text: 'Document', value: 'hash', hidden: false, filter: this.hashFilter, filterKeyword: "{{hash}}", width: 120, shouldHideEmpty: false },
+                        { text: 'Timestamp', value: 'timestamp', hidden: true, filter: this.timestampFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'DOI', value: 'doi', hidden: false, filter: this.doiFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Authors', value: 'authors', width: 300, hidden: true, filter: this.authorsFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Title', value: 'title', width: 500, hidden: true, filter: this.titleFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Publisher', value: 'publisher', hidden: true, filter: this.publisherFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Journal', value: 'journal', hidden: true, filter: this.journalFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Year', value: 'year', hidden: true, filter: this.yearFilter, filterKeyword: '', shouldHideEmpty: false },
+                        {
+                            text: 'Type', value: 'type', hidden: true, filter: this.typeFilter, filterKeyword: 'all', width: 80,
+                            radioGroup: [{
+                                value: 'all',
+                                icon: 'mdi-filter-off'
+                           }, {
+                                value: 'manual',
+                                icon: 'mdi-human'
+                            }, {
+                                value: 'automatic',
+                                icon: 'mdi-robot'
+                            },]
+                        },
+                        { text: 'Latest error type', value: 'error_type', hidden: false, filter: this.hashFilter, shouldHideEmpty: false },
+                        {
+                            text: 'Status', value: 'status', sortable: false, hidden: true, filter: this.statusFilter, filterKeyword: 'all', width: 80,
+                            radioGroup: [{
+                                value: 'all',
+                                icon: 'mdi-filter-off'
+                            }, {
+                                value: 'valid',
+                                icon: 'mdi-thumb-up'
+                            }, {
+                                value: 'invalid',
+                                icon: 'mdi-thumb-down'
+                            },]
+                        },
+                        {
+                            text: 'Status', value: 'status', sortable: false, hidden: false, filter: this.statusFilter, filterKeyword: 'all', width: 80,
+                            // radioGroup is obsolete of the status header
+                            radioGroup: [
+                                { value: 'all',       icon: 'mdi-filter-off' },
+                                { value: 'new',       icon: 'mdi-new-box' },
+                                { value: 'curated',   icon: 'mdi-auto-fix' },
+                                { value: 'validated', icon: 'mdi-thumb-up' },
+                                { value: 'invalid',   icon: 'mdi-thumb-down' }
+                            ],
+                            selectItems: [
+                                'all', 'new', 'curated', 'validated', 'invalid'
+                            ]
+                        },
+                    ]
+                }
+            },
+            computed: {
+                showHeaders() {
+                    return this.headers.filter(s => this.selectedHeaders.includes(s));
+                },
+                selectedItem() {
+                    return this.selectedItems[0]
+                },
+                pageIsFirst() {
+                    return this.page === 1
+                },
+                pageIsLast() {
+                    return this.page === this.pageCount
+                },
+                rowNumber() {
+                    const ids = this.filteredItems.map(item => item.id)
+                    return this.selectedItems.length === 1 ? ids.indexOf(this.selectedItem.id) : undefined
+                },
+                lastFilteredItem() {
+                    return this.filteredItems[this.filteredItems.length - 1]
+                },
+                firstFilteredItem() {
+                    return this.filteredItems[0]
+                },
+                saveIsValidated() {
+                    return this.editedItem.doi && this.editedItem.hash && this.editedItem.error_type
+                },
+                headerObject() {
+                    return Object.fromEntries(new Map(
+                        this.headers.map(header => {
+                            return [header.value, header]
+                        })
+                    ))
+                },
+                itemDialogTitle() {
+                    switch (this.itemDialog.mode) {
+                        case 'edit':
+                            return 'Edit the record'
+                        case 'new':
+                            return 'Add a new record'
+                        case 'remove':
+                            return 'Remove the record'
+                    }
+                }
+            },
+            mounted() {
+                this.loadItems()
+                document.addEventListener('keydown', this.onKeyDown)
+            },
+            beforeDestroy() {
+                document.removeEventListener('keydown', this.onKeyDown)
+            },
+            async beforeMount() {
+                let url = '{{ url_for("supercon.get_version") }}'
+                try {
+                    const result = await axios.get(url, {})
+                    this.version = result.data['version']
+                } catch (e) {
+                    console.error(e)
+                    window.alert(JSON.stringify(e.response.data))
+                } finally {
+                }
+            },
+            methods: {
+                copyTextToClipboard(text) {
+                    navigator.clipboard.writeText(text)
+                },
+                loadItems() {
+                    this.isLoading = true
+                    const url =
+                        '{{ url_for("supercon.get_curation_log") }}'
+                    axios.get(url).then((data) => {
+                        this.items = data.data
+                        return
+                    }).finally(() => {
+                        this.isLoading = false
+                    })
+                },
+                hasChangedPageCount(pageCount) {
+                    this.pageCount = pageCount
+                },
+                clickRow(item, event) {
+                    event.select(!event.isSelected)
+                },
+                hasChangedCurrentItems(items) {
+                    this.filteredItems = items
+                },
+                hashFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.hash, item.hash)
+                },
+                idFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.id, item.id)
+                },
+                timestampFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.timestamp, item.timestamp)
+                },
+                doiFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.doi, item.doi)
+                },
+                authorsFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.authors, item.authors)
+                },
+                titleFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.title, item.title)
+                },
+                publisherFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.publisher, item.publisher)
+                },
+                journalFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.journal, item.journal)
+                },
+                yearFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.year, item.year)
+                },
+                keywordFilter(header, target) {
+                    const keyword = this.sanitizeString(header.filterKeyword)
+                    target = this.sanitizeString(target);
+                    const shouldHideEmpty = header.shouldHideEmpty
+                    if (!keyword && !shouldHideEmpty) {
+                        return true
+                    }
+                    if (!target) {
+                        return false
+                    }
+                    const target_lower = target.toLowerCase()
+                    const keyword_lower = keyword.toLowerCase()
+                    return target_lower.indexOf(keyword_lower) > -1
+                },
+                sanitizeString(target) {
+                    if (typeof target === 'string') {
+                        return target.trim()
+                    } else {
+                        return ''
+                    }
+                },
+                typeFilter(value, search, item) {
+                    const keyword = this.headerObject.type.filterKeyword
+                    switch (keyword) {
+                        case 'all':
+                            return true
+                        default:
+                            return item.type === keyword
+                    }
+                },
+                statusFilter(value, search, item) {
+                    const keyword = this.headerObject.status.filterKeyword
+                    switch (keyword) {
+                        case 'all':
+                            return true
+                        default:
+                            return item.status === keyword
+                    }
+                },
+                flagFilter(value, search, item) {
+                    const keyword = this.headerObject.flag.filterKeyword
+                    switch (keyword) {
+                        case 'all':
+                            return true
+                        case 'flag':
+                            return item.flag
+                        case 'unflag':
+                            return !item.flag
+                    }
+                },
+                sortByPhysicalQuantity(a, b) {
+                    try {
+                        a = math.unit(a)
+                    } catch {
+                        return -1
+                    }
+                    try {
+                        b = math.unit(b)
+                    } catch {
+                        return 1
+                    }
+                    return math.compare(a, b)
+                },
+                openEditItemDialog(item) {
+                    // make a deep copy so that the record is not updated in the table
+                    this.editedItem = JSON.parse(JSON.stringify(item))
+                    this.itemDialog = {
+                        shouldShow: true,
+                        mode: 'edit'
+                    }
+                },
+                openCreateItemDialog(item) {
+                    let newItem = {}
+                    let fields = ['hash', 'doi', "authors", "title", "publisher", "journal", "year"]
+
+                    fields.forEach(function (field) {
+                        newItem[field] = item[field]
+                    })
+                    this.editedItem = newItem
+                    this.itemDialog = {
+                        shouldShow: true,
+                        mode: 'new'
+                    }
+                },
+                openItemDialogToRemove(item) {
+                    this.editedItem = JSON.parse(JSON.stringify(item))
+                    this.itemDialog = {
+                        shouldShow: true,
+                        mode: 'remove'
+                    }
+                },
+                close() {
+                    this.itemDialog.shouldShow = false
+                },
+                async save() {
+                    if (this.editedItem.id) {
+                        await this.updateItem()
+                    } else {
+                        await this.createItem()
+                    }
+                    this.loadItems()
+                },
+                async createItem() {
+                    const url = '{{ url_for("supercon.create_record") }}'
+                    try {
+                        await axios.post(url, this.editedItem)
+                        this.close()
+                    } catch (e) {
+                        console.error(e)
+                        window.alert(JSON.stringify(e.response.data))
+                    } finally {
+                        //
+                    }
+                },
+                async updateItem() {
+                    let url = '{{ url_for("supercon.update_record", id = "id") }}'
+                    url = url.replace(
+                        "id",
+                        this.editedItem.id
+                    )
+                    // delete as non-editable item
+                    delete this.editedItem.flag
+                    delete this.editedItem.status
+                    delete this.editedItem.type
+                    // Deletes sentenceIsExpanded field because this field is for only frontend. The backend doesn't allow an unknown field.
+                    delete this.editedItem.sentenceIsExpanded
+                    try {
+                        await axios.put(url, this.editedItem)
+                        this.close()
+                    } catch (e) {
+                        console.error(e)
+                        window.alert(JSON.stringify(e.response.data))
+                    } finally {
+                        //
+                    }
+                },
+                flagIsNotWritable(record) {
+                    return record.type === 'manual' && record.status === 'validated'
+                },
+                async removeRecord() {
+                    let url = '{{ url_for("supercon.delete_record", id="record_id") }}'
+                    url = url.replace(
+                        "record_id",
+                        this.editedItem.id
+                    )
+
+                    try {
+                        await axios.delete(url, {})
+                        this.loadItems()
+                        this.itemDialog.shouldShow = false
+                    } catch (e) {
+                        console.error(e)
+                        window.alert(JSON.stringify(e.response.data))
+                    } finally {
+                        //
+                    }
+                },
+                getItemClass(item) {
+                    const store = itemClassStore
+                    // to prevent reverse coloring when re-rendering
+                    if (store.hashes.length > 1 && item.hash === store.hashes[0]) {
+                        // initialize store
+                        store.hashes = []
+                        store.class = "bg-white"
+                    }
+                    if (item.hash === store.hashes[store.hashes.length-1]) {
+                        return store.class
+                    } else {
+                        store.hashes.push(item.hash)
+                        store.class = store.class === 'bg-floralwhite' ? 'bg-white' : 'bg-floralwhite'
+                        return store.class
+                    }
+                }
+            },
+            created() {
+                this.selectedHeaders = this.headers.filter(h => !h.hidden)
+            },
+        })
+    </script>
+
+</body>
+
+</html>

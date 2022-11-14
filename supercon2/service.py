@@ -127,6 +127,11 @@ def get_stats():
     return render_template("stats.html", by_publisher=by_publisher_fixed, by_year=by_year_fixed,
                            by_journal=by_journal_fixed, version=get_version()['version'])
 
+@bp.route("/correction_logger", methods=["GET"])
+def get_correction_log():
+    base_url = urllib.parse.urljoin(request.host_url, config['root-path'])
+    return render_template("correction_log.html", version=get_version()['version'], base_url=base_url)
+
 def replace_empty_key(input):
     output = [{k: v for k, v in item.items()} for item in input]
     for pub in output:
@@ -295,6 +300,23 @@ def get_tabular_from_path_by_type_publisher_year(type, publisher, year):
 def get_tabular_from_path_by_type_year(type, year):
     return get_records(type, publisher=None, year=year)
 
+@bp.route("/records_curated", methods=["GET"])
+@output(Record(many=True))
+def get_curation_log():
+    db = connect_and_get_db()
+
+    pipeline = [{"$match": {"previous": {"$exists": 1}, "status": {"$not": {"$in": ["empty", "new"]}}}}]
+    entries = []
+    tabular_collection = db.get_collection("tabular")
+
+    cursor_aggregation = tabular_collection.aggregate(pipeline)
+
+    entities = []
+    for entry in cursor_aggregation:
+        entry['id'] = str(entry['_id'])
+        entities.append(entry)
+
+    return entities
 
 def get_records(type=None, status=None, document=None, publisher=None, year=None, start=-1, limit=-1):
     db = connect_and_get_db()
