@@ -134,6 +134,13 @@ def get_correction_log():
     base_url = urllib.parse.urljoin(request.host_url, config['root-path'])
     return render_template("correction_log.html", version=get_version()['version'], base_url=base_url)
 
+@bp.route("/correction_logger/document/<hash>", methods=["GET"])
+def get_correction_log_filter_by_document(hash):
+    # FIXME: DRY
+    base_url = urllib.parse.urljoin(request.host_url, config['root-path'])
+    return render_template("correction_log.html", hash=hash, version=get_version()['version'], base_url=base_url)
+
+
 
 def replace_empty_key(input):
     output = [{k: v for k, v in item.items()} for item in input]
