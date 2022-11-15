@@ -1,5 +1,6 @@
 import json
 import urllib
+from collections import OrderedDict
 from datetime import datetime
 from typing import Union
 
@@ -14,11 +15,12 @@ from commons.correction_utils import write_correction, write_raw_training_data
 from commons.label_studio_commons import to_label_studio_format_single
 from commons.mongo_utils import connect_mongo
 from process.utils import json_serial
-from supercon2.schemas import Publishers, Record, Years, Flag, RecordParamsIn, UpdatedRecord
+from supercon2.schemas import Record, Flag, RecordParamsIn, UpdatedRecord, Publishers, Years
 
 bp = APIBlueprint('supercon', __name__)
 config = []
 VALID_STATUSES = ["invalid", "new", "curated", "validated"]
+
 
 @bp.route('/version')
 def get_version():
@@ -126,6 +128,7 @@ def get_stats():
 
     return render_template("stats.html", by_publisher=by_publisher_fixed, by_year=by_year_fixed,
                            by_journal=by_journal_fixed, version=get_version()['version'])
+
 
 def replace_empty_key(input):
     output = [{k: v for k, v in item.items()} for item in input]
@@ -241,6 +244,20 @@ def create_record(record: Record):
     return_info.id = new_id
 
     return return_info
+
+
+@bp.route("/error_types", methods=["GET"])
+def get_error_types():
+    error_types = OrderedDict()
+
+    error_types['from_table'] = "From table"
+    error_types['extraction'] = "Extraction"
+    error_types['tc_classification'] = "Tc classification"
+    error_types['linking'] = "Linking"
+    error_types['composition_resolution'] = "Composition resolution"
+    error_types['value_resolution'] = "Value resolution"
+
+    return error_types
 
 
 def validate_record(record):
@@ -373,6 +390,7 @@ def get_automatic_database():
     base_url = urllib.parse.urljoin(request.host_url, config['root-path'])
     return render_template("database.html", base_url=base_url)
 
+
 @bp.route("/database/document/<hash>", methods=["GET"])
 def get_automatic_database_filter_by_document(hash):
     # FIXME: DRY
@@ -458,6 +476,7 @@ def mark_record_invalid(id):
         tabular_collection.update_one({'_id': record['_id']}, {'$set': changes})
         return changes, 200
 
+
 @bp.route('/record/<id>/mark_validated', methods=['PUT', 'PATCH'])
 @output(Flag)
 def mark_record_validated(id):
@@ -520,6 +539,8 @@ def _reset_record(db, id: ObjectId):
 @bp.route('/config', methods=['GET'])
 def get_config():
     return config
+
+
 # def get_config(config_file='config.yaml'):
 #     return load_config_yaml(config_file)
 
@@ -612,7 +633,8 @@ def get_training_data_list():
             "id": str(training_data_item['_id']),
             "text": text,
             "status": training_data_item['status'],
-            "timestamp": training_data_item['timestamp'].replace(microsecond=0).isoformat() if "timestamp" in training_data_item else "",
+            "timestamp": training_data_item['timestamp'].replace(
+                microsecond=0).isoformat() if "timestamp" in training_data_item else "",
             "annotated_text": annotated_text,
             "task_id": task_id,
             "hash": training_data_item['hash'],
