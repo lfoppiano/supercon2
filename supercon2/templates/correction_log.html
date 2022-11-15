@@ -63,12 +63,12 @@
                 </template>
                 <template v-slot:item.hash="{ item }">
                     <v-row>
-                        <a :href="base_url + 'document/' + item.hash"
-                            target="_blank"
-                            :style="{'text-decoration': 'none'}"
-                            class="ma-1" title="View document">
+{#                        <a :href="base_url + 'document/' + item.hash"#}
+{#                            target="_blank"#}
+{#                            :style="{'text-decoration': 'none'}"#}
+{#                            class="ma-1" title="View document">#}
                             [[ item.hash ]]
-                        </a>
+{#                        </a>#}
                         <v-icon
                             @click="headerObject.hash.filterKeyword = item.hash"
                             :title="'Filter by this documenft ID: ' + item.hash">
@@ -167,8 +167,8 @@
                     filteredItems: [],
                     selectedHeaders: [],
                     headers: [
-                        { text: 'Record ID', value: 'id', hidden: false, filter: this.idFilter, filterKeyword: '', shouldHideEmpty: false, width: 120, },
-                        {#{ text: 'Previous ID', value: 'previous', hidden: false, filter: this.idFilter, filterKeyword: '', shouldHideEmpty: false, width: 120, },#}
+                        { text: 'Record id', value: 'id', hidden: false, filter: this.idFilter, filterKeyword: '', shouldHideEmpty: false, width: 120, },
+                        { text: 'Update count', value: 'update_count', hidden: false, shouldHideEmpty: false, width: 10, },
                         { text: 'Raw Material', value: 'rawMaterial', hidden: true, filter: this.rawMaterialFilter, filterKeyword: '', shouldHideEmpty: false, width: 150 },
                         { text: 'Name', value: 'name', hidden: true, filter: this.nameFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'Formula', value: 'formula', hidden: true, filter: this.formulaFilter, filterKeyword: '', shouldHideEmpty: false , width: 150 },

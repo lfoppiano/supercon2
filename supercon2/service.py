@@ -320,8 +320,17 @@ def get_curation_log():
     entities = []
     for entry in cursor_aggregation:
         entry['id'] = str(entry['_id'])
+        previous_id = entry['previous']
         entry['previous'] = str(entry['previous'])
         entities.append(entry)
+
+        count = 0
+        while previous_id is not None:
+            previous_record = tabular_collection.find_one({"_id": previous_id})
+            previous_id = previous_record['previous'] if 'previous' in previous_record else None
+            count += 1
+
+        entry['update_count'] = count
 
     return entities
 

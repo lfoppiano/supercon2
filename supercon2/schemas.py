@@ -66,6 +66,7 @@ class Record(Schema):
     journal = String(allow_none=True)
     year = String(allow_none=True)
     error_type = String(allow_none=True)
+    update_count = Integer(allow_none=True)
 
 
 class Publishers(Schema):
