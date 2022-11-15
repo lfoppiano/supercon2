@@ -131,15 +131,17 @@ def get_stats():
 
 @bp.route("/correction_logger", methods=["GET"])
 def get_correction_log():
-    base_url = urllib.parse.urljoin(request.host_url, config['root-path'])
+    base_url = get_base_url(config)
     return render_template("correction_log.html", version=get_version()['version'], base_url=base_url)
 
 @bp.route("/correction_logger/document/<hash>", methods=["GET"])
 def get_correction_log_filter_by_document(hash):
-    # FIXME: DRY
-    base_url = urllib.parse.urljoin(request.host_url, config['root-path'])
+    base_url = get_base_url(config)
     return render_template("correction_log.html", hash=hash, version=get_version()['version'], base_url=base_url)
 
+
+def get_base_url(config):
+    return urllib.parse.urljoin(request.host_url, config['root-path'])
 
 
 def replace_empty_key(input):
@@ -416,14 +418,13 @@ def get_records(type=None, status=None, document=None, publisher=None, year=None
 
 @bp.route("/database", methods=["GET"])
 def get_automatic_database():
-    base_url = urllib.parse.urljoin(request.host_url, config['root-path'])
+    base_url = get_base_url(config)
     return render_template("database.html", base_url=base_url)
 
 
 @bp.route("/database/document/<hash>", methods=["GET"])
 def get_automatic_database_filter_by_document(hash):
-    # FIXME: DRY
-    base_url = urllib.parse.urljoin(request.host_url, config['root-path'])
+    base_url = get_base_url(config)
     return render_template("database.html", hash=hash, base_url=base_url)
 
 
