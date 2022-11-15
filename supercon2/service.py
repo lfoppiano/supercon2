@@ -130,6 +130,22 @@ def get_stats():
                            by_journal=by_journal_fixed, version=get_version()['version'])
 
 
+
+@bp.route("/correction_logger", methods=["GET"])
+def get_correction_log():
+    base_url = get_base_url(config)
+    return render_template("correction_log.html", version=get_version()['version'], base_url=base_url)
+
+@bp.route("/correction_logger/document/<hash>", methods=["GET"])
+def get_correction_log_filter_by_document(hash):
+    base_url = get_base_url(config)
+    return render_template("correction_log.html", hash=hash, version=get_version()['version'], base_url=base_url)
+
+
+def get_base_url(config):
+    return urllib.parse.urljoin(request.host_url, config['root-path'])
+
+
 def replace_empty_key(input):
     output = [{k: v for k, v in item.items()} for item in input]
     for pub in output:
@@ -313,6 +329,37 @@ def get_tabular_from_path_by_type_year(type, year):
     return get_records(type, publisher=None, year=year)
 
 
+@bp.route("/records_curated", methods=["GET"])
+@output(Record(many=True))
+def get_curation_log():
+    db = connect_and_get_db()
+
+    pipeline = [
+        {"$match": {"previous": {"$exists": 1}, "status": {"$not": {"$in": ["empty", "new", "obsolete"]}}}}
+    ]
+    entries = []
+    tabular_collection = db.get_collection("tabular")
+
+    cursor_aggregation = tabular_collection.aggregate(pipeline)
+
+    entities = []
+    for entry in cursor_aggregation:
+        entry['id'] = str(entry['_id'])
+        previous_id = entry['previous']
+        entry['previous'] = str(entry['previous'])
+        entities.append(entry)
+
+        count = 0
+        while previous_id is not None:
+            previous_record = tabular_collection.find_one({"_id": previous_id})
+            previous_id = previous_record['previous'] if 'previous' in previous_record else None
+            count += 1
+
+        entry['update_count'] = count
+
+    return entities
+
+
 def get_records(type=None, status=None, document=None, publisher=None, year=None, start=-1, limit=-1):
     db = connect_and_get_db()
 
@@ -387,14 +434,13 @@ def get_records(type=None, status=None, document=None, publisher=None, year=None
 
 @bp.route("/database", methods=["GET"])
 def get_automatic_database():
-    base_url = urllib.parse.urljoin(request.host_url, config['root-path'])
+    base_url = get_base_url(config)
     return render_template("database.html", base_url=base_url)
 
 
 @bp.route("/database/document/<hash>", methods=["GET"])
 def get_automatic_database_filter_by_document(hash):
-    # FIXME: DRY
-    base_url = urllib.parse.urljoin(request.host_url, config['root-path'])
+    base_url = get_base_url(config)
     return render_template("database.html", hash=hash, base_url=base_url)
 
 
