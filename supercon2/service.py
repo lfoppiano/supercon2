@@ -320,6 +320,7 @@ def get_curation_log():
     entities = []
     for entry in cursor_aggregation:
         entry['id'] = str(entry['_id'])
+        entry['previous'] = str(entry['previous'])
         entities.append(entry)
 
     return entities
