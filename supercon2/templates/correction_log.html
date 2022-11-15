@@ -45,10 +45,10 @@
                                     </v-icon>
                                 </v-row>
                             </v-radio-group>
-                            <v-radio-group v-model="header.filterKeyword" v-else-if="header.value === 'status'" dense
-                                hide-details>
-                                <v-select :items="headerObject.status.selectItems" v-model="header.filterKeyword"></v-select>
-                            </v-radio-group>
+{#                            <v-radio-group v-model="header.filterKeyword" v-else-if="header.value === 'status'" dense#}
+{#                                hide-details>#}
+{#                                <v-select :items="headerObject.status.selectItems" v-model="header.filterKeyword"></v-select>#}
+{#                            </v-radio-group>#}
                             <template v-else-if="header.value === 'actions'"></template>
                             <template v-else>
                                 <v-text-field v-model="header.filterKeyword" type="text" placeholder="keyword"
@@ -77,11 +77,9 @@
                     </v-row>
                 </template>
                 <template v-slot:item.id="{ item }">
-                    <v-row>
-                        <span class="ma-1">
+                    <span class="ma-1" @click="openCreateItemDialog(item)">
                         [[ item.id ]]
-                        </span>
-                    </v-row>
+                    </span>
                 </template>
                 <template v-slot:item.flag="{ item }">
                     <v-checkbox :input-value="item.flag" @click="toggleFlag(item)" :disabled="flagIsNotWritable(item)">
@@ -124,14 +122,11 @@
                     filteredItems: [],
                     selectedHeaders: [],
                     headers: [
-                        { text: 'Entity ID', value: 'id', hidden: false, filter: this.idFilter, filterKeyword: '', shouldHideEmpty: false, width: 120, },
+                        { text: 'Record ID', value: 'id', hidden: false, filter: this.idFilter, filterKeyword: '', shouldHideEmpty: false, width: 120, },
                         { text: 'Document', value: 'hash', hidden: false, filter: this.hashFilter, filterKeyword: "{{hash}}", width: 120, shouldHideEmpty: false },
-                        { text: 'Timestamp', value: 'timestamp', hidden: true, filter: this.timestampFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Timestamp', value: 'timestamp', hidden: false, filter: this.timestampFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'DOI', value: 'doi', hidden: false, filter: this.doiFilter, filterKeyword: '', shouldHideEmpty: false },
-                        { text: 'Authors', value: 'authors', width: 300, hidden: true, filter: this.authorsFilter, filterKeyword: '', shouldHideEmpty: false },
-                        { text: 'Title', value: 'title', width: 500, hidden: true, filter: this.titleFilter, filterKeyword: '', shouldHideEmpty: false },
-                        { text: 'Publisher', value: 'publisher', hidden: true, filter: this.publisherFilter, filterKeyword: '', shouldHideEmpty: false },
-                        { text: 'Journal', value: 'journal', hidden: true, filter: this.journalFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Title', value: 'title', width:  500, hidden: true, filter: this.titleFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'Year', value: 'year', hidden: true, filter: this.yearFilter, filterKeyword: '', shouldHideEmpty: false },
                         {
                             text: 'Type', value: 'type', hidden: true, filter: this.typeFilter, filterKeyword: 'all', width: 80,

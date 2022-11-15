@@ -20,6 +20,7 @@ bp = APIBlueprint('supercon', __name__)
 config = []
 VALID_STATUSES = ["invalid", "new", "curated", "validated"]
 
+
 @bp.route('/version')
 def get_version():
     version = None
@@ -127,10 +128,12 @@ def get_stats():
     return render_template("stats.html", by_publisher=by_publisher_fixed, by_year=by_year_fixed,
                            by_journal=by_journal_fixed, version=get_version()['version'])
 
+
 @bp.route("/correction_logger", methods=["GET"])
 def get_correction_log():
     base_url = urllib.parse.urljoin(request.host_url, config['root-path'])
     return render_template("correction_log.html", version=get_version()['version'], base_url=base_url)
+
 
 def replace_empty_key(input):
     output = [{k: v for k, v in item.items()} for item in input]
@@ -300,12 +303,15 @@ def get_tabular_from_path_by_type_publisher_year(type, publisher, year):
 def get_tabular_from_path_by_type_year(type, year):
     return get_records(type, publisher=None, year=year)
 
+
 @bp.route("/records_curated", methods=["GET"])
 @output(Record(many=True))
 def get_curation_log():
     db = connect_and_get_db()
 
-    pipeline = [{"$match": {"previous": {"$exists": 1}, "status": {"$not": {"$in": ["empty", "new"]}}}}]
+    pipeline = [
+        {"$match": {"previous": {"$exists": 1}, "status": {"$not": {"$in": ["empty", "new", "obsolete"]}}}}
+    ]
     entries = []
     tabular_collection = db.get_collection("tabular")
 
@@ -317,6 +323,7 @@ def get_curation_log():
         entities.append(entry)
 
     return entities
+
 
 def get_records(type=None, status=None, document=None, publisher=None, year=None, start=-1, limit=-1):
     db = connect_and_get_db()
@@ -394,6 +401,7 @@ def get_records(type=None, status=None, document=None, publisher=None, year=None
 def get_automatic_database():
     base_url = urllib.parse.urljoin(request.host_url, config['root-path'])
     return render_template("database.html", base_url=base_url)
+
 
 @bp.route("/database/document/<hash>", methods=["GET"])
 def get_automatic_database_filter_by_document(hash):
@@ -480,6 +488,7 @@ def mark_record_invalid(id):
         tabular_collection.update_one({'_id': record['_id']}, {'$set': changes})
         return changes, 200
 
+
 @bp.route('/record/<id>/mark_validated', methods=['PUT', 'PATCH'])
 @output(Flag)
 def mark_record_validated(id):
@@ -542,6 +551,8 @@ def _reset_record(db, id: ObjectId):
 @bp.route('/config', methods=['GET'])
 def get_config():
     return config
+
+
 # def get_config(config_file='config.yaml'):
 #     return load_config_yaml(config_file)
 
@@ -634,7 +645,8 @@ def get_training_data_list():
             "id": str(training_data_item['_id']),
             "text": text,
             "status": training_data_item['status'],
-            "timestamp": training_data_item['timestamp'].replace(microsecond=0).isoformat() if "timestamp" in training_data_item else "",
+            "timestamp": training_data_item['timestamp'].replace(
+                microsecond=0).isoformat() if "timestamp" in training_data_item else "",
             "annotated_text": annotated_text,
             "task_id": task_id,
             "hash": training_data_item['hash'],
