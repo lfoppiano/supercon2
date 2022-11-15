@@ -1,5 +1,6 @@
 import json
 import urllib
+from collections import OrderedDict
 from datetime import datetime
 from typing import Union
 
@@ -14,7 +15,7 @@ from commons.correction_utils import write_correction, write_raw_training_data
 from commons.label_studio_commons import to_label_studio_format_single
 from commons.mongo_utils import connect_mongo
 from process.utils import json_serial
-from supercon2.schemas import Publishers, Record, Years, Flag, RecordParamsIn, UpdatedRecord
+from supercon2.schemas import Record, Flag, RecordParamsIn, UpdatedRecord, Publishers, Years
 
 bp = APIBlueprint('supercon', __name__)
 config = []
@@ -127,6 +128,7 @@ def get_stats():
 
     return render_template("stats.html", by_publisher=by_publisher_fixed, by_year=by_year_fixed,
                            by_journal=by_journal_fixed, version=get_version()['version'])
+
 
 
 @bp.route("/correction_logger", methods=["GET"])
@@ -258,6 +260,20 @@ def create_record(record: Record):
     return_info.id = new_id
 
     return return_info
+
+
+@bp.route("/error_types", methods=["GET"])
+def get_error_types():
+    error_types = OrderedDict()
+
+    error_types['from_table'] = "From table"
+    error_types['extraction'] = "Extraction"
+    error_types['tc_classification'] = "Tc classification"
+    error_types['linking'] = "Linking"
+    error_types['composition_resolution'] = "Composition resolution"
+    error_types['value_resolution'] = "Value resolution"
+
+    return error_types
 
 
 def validate_record(record):

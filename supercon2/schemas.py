@@ -77,5 +77,9 @@ class Years(Schema):
     years = List(Field)
 
 
-class Journals(Schema):
-    journals = List(Field)
+# class Journals(Schema):
+#     journals = List(Field)
+
+
+# class ErrorTypes(Dict):
+#     error_types = Dict(keys=String(), values=String())
