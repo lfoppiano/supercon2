@@ -59,7 +59,8 @@ The `supercon2` service provides the following features:
 
 **Future plans**
  - Undo/redo functionality: possibility to revert incorrect edits and modification of the database 
- - Versioning of documents
+ - Document versioning
+ - ...
 
 ### Keystrokes
 
