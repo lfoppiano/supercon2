@@ -160,7 +160,7 @@
                                         v-else
                                         v-model="editedItem[col.key]"
                                         :label="headerObject[col.key].text"
-                                        :disabled="col.disabled">
+                                        :disabled="itemDialog.mode === 'remove' ? true : col.disabled">
                                     </v-text-field>
                                 </v-col>
                             </v-row>
