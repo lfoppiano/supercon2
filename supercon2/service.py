@@ -130,11 +130,11 @@ def get_stats():
                            by_journal=by_journal_fixed, version=get_version()['version'])
 
 
-
 @bp.route("/correction_logger", methods=["GET"])
 def get_correction_log():
     base_url = get_base_url(config)
     return render_template("correction_log.html", version=get_version()['version'], base_url=base_url)
+
 
 @bp.route("/correction_logger/document/<hash>", methods=["GET"])
 def get_correction_log_filter_by_document(hash):
