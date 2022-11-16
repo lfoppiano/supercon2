@@ -449,6 +449,11 @@ def get_document(hash):
     return render_template("document.html", hash=hash)
 
 
+@bp.route('/document_old/<hash>', methods=['GET'])
+def get_document(hash):
+    return render_template("document_old.html", hash=hash)
+
+
 @bp.route('/annotation/<hash>', methods=['GET'])
 def get_annotations(hash):
     """Get annotations (latest version)"""
