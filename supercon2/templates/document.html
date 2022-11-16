@@ -1,0 +1,57 @@
+<!DOCTYPE XHTML>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+    <title>SuperCon2 | PDF viewer</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.5.95/css/materialdesignicons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@2.6.3/dist/vuetify.min.css" rel="stylesheet">    <link rel="icon" type="image/x-icon" href={{ url_for('static', filename='resources/img/favicon.ico' ) }} />
+    <link rel="shortcut icon" type="image/x-icon" href={{ url_for('static', filename='resources/img/favicon.ico' ) }} />
+    <link rel="stylesheet" href={{ url_for('static', filename='resources/css/style-superconductors.css') }}/>
+    <style>
+        .bg-floralwhite {
+            background: floralwhite
+        }
+        .bg-white {
+            background: white
+        }
+    </style>
+</head>
+
+<body>
+    <v-app id="app">
+        <v-container fluid>
+            <v-row class="justify-space-between ma-0">
+                <v-card flat>
+                    <h2>SuperCon<sup>2</sup> | PDF viewer</h2>
+                </v-card>
+            </v-row>
+            <p><span style="color:#848484;">&copy; Contributors, 2022 |</span> <span id="version" style="color:#848484;" v-html="version"></span></p>
+        </v-container>
+    </v-app>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@2.6.3/dist/vuetify.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios@0.26.1/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjs@11.3.1/lib/browser/math.min.js"></script>
+    <script>
+        let itemClassStore = {
+            class: 'bg-white',
+            hashes: [],
+        }
+        const app = new Vue({
+            delimiters: ['[[', ']]'],
+            el: '#app',
+            vuetify: new Vuetify(),
+            data() {
+                return {
+                    base_url: '{{ base_url }}',
+                }
+            }
+        })
+    </script>
+
+</body>
+
+</html>

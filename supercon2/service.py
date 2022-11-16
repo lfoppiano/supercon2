@@ -427,7 +427,7 @@ def get_records(type=None, status=None, document=None, publisher=None, year=None
             # aggregation_query = [{"$sort": {"hash": 1, "timestamp": 1}}, {"$group": {"_id": "$hash", "lastDate": {"$last": "$timestamp"}}}]
             # aggregation_query = [{"$match": {"type": type}}] + aggregation_query
             # cursor_aggregation = document_collection.aggregate(aggregation_query)
-            entry['doc_url'] = url_for('supercon.get_document', hash=entry['hash'])
+            entry['doc_url'] = url_for('supercon.get_document_old', hash=entry['hash'])
 
     return entries
 
@@ -450,7 +450,7 @@ def get_document(hash):
 
 
 @bp.route('/document_old/<hash>', methods=['GET'])
-def get_document(hash):
+def get_document_old(hash):
     return render_template("document_old.html", hash=hash)
 
 
