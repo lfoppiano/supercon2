@@ -360,7 +360,7 @@
                             label: '*Error type',
                             rules: [(value) => !!value || 'This field is required'],
                             errorMessages: [],
-                            selectBoxItems: ['From table', 'Extraction', 'Linking', 'Tc classification', 'Composition resolution', 'Value resolution']
+                            selectBoxItems: [] // set by the loadErrorTypes method
                         }]
                     }, {
                         config: {
@@ -477,6 +477,7 @@
             },
             mounted() {
                 this.loadItems()
+                this.loadErrorTypes()
                 document.addEventListener('keydown', this.onKeyDown)
             },
             beforeDestroy() {
@@ -510,6 +511,18 @@
                         return
                     }).finally(() => {
                         this.isLoading = false
+                    })
+                },
+                loadErrorTypes() {
+                    const url = '{{ url_for("supercon.get_error_types") }}'
+                    axios.get(url).then((data) => {
+                        const errorTypes = Object.values(data.data)
+                        this.rowsOnItemEditDialog[0].cols.find(col => {
+                            return col.key === "error_type"
+                        }).selectBoxItems = errorTypes
+                        return
+                    }).finally(() => {
+                        //
                     })
                 },
                 hasChangedPageCount(pageCount) {
