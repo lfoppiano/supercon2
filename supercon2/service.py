@@ -75,16 +75,16 @@ def get_publishers():
 
 
 def connect_and_get_db():
-    connection = connect_mongo(config=config)
+    client = connect_mongo(config=config)
     db_name = config['mongo']['db']
-    db = connection[db_name]
-    return db
+    db = client[db_name]
+    return db, client
 
 
 @bp.route('/years')
 @output(Years)
 def get_years():
-    db = connect_and_get_db()
+    db, _ = connect_and_get_db()
 
     distinct_years = db.tabular.distinct("year")
     filtered_distinct_years = list(filter(lambda x: x is not None and 1900 < x < 3000, distinct_years))
@@ -93,7 +93,7 @@ def get_years():
 
 @bp.route("/stats", methods=["GET"])
 def get_stats():
-    db = connect_and_get_db()
+    db, _ = connect_and_get_db()
     tabular_collection = db.get_collection("tabular")
 
     pipeline_group_by_publisher = [
@@ -161,10 +161,10 @@ def replace_empty_key(input):
 def update_record(id, record: Union[Record, dict]):
     object_id = validateObjectId(id)
     validate_record(record)
-    db = connect_and_get_db()
+    db, client = connect_and_get_db()
 
     try:
-        new_id = _update_record(object_id, record, db=db)
+        new_id = _update_record(object_id, record, client, db)
     except Exception as e:
         abort(400, str(e))
 
@@ -185,7 +185,7 @@ def find_latest(current_record, collection):
         return find_latest(next_record, collection)
 
 
-def _update_record(object_id: ObjectId, new_doc: Union[Record, dict], db):
+def _update_record(object_id: ObjectId, new_doc: Union[Record, dict], client, db):
     tabular_collection = db.get_collection("tabular")
     document_collection = db.get_collection("document")
     training_data_collection = db.get_collection("training_data")
@@ -204,25 +204,21 @@ def _update_record(object_id: ObjectId, new_doc: Union[Record, dict], db):
         raise Exception(message)
 
     new_doc_id = None
-    training_data_id = None
-    try:
-        # If there is an error type, we fetch it and add it to the record that will be marked obsolete
-        error_type = None
-        if 'error_type' in new_doc:
-            error_type = new_doc['error_type']
-            # del record['error_type']
+    with client.start_session() as session:
+        with session.start_transaction():
+            # If there is an error type, we fetch it and add it to the record that will be marked obsolete
+            error_type = None
+            if 'error_type' in new_doc:
+                error_type = new_doc['error_type']
+                # del record['error_type']
 
-        new_doc_id = write_correction(old_doc, new_doc, tabular_collection, error_type=error_type)
-        training_data_id = write_raw_training_data(old_doc, new_doc_id, document_collection, training_data_collection)
-        return new_doc_id
-    except Exception as e:
-        # Roll back!
-        print("Exception:", e, "Rolling back.")
-        roll_back(new_doc_id, old_doc, training_data_id, tabular_collection, training_data_collection)
-        raise e
+            new_doc_id = write_correction(old_doc, new_doc, tabular_collection, error_type=error_type)
+            training_data_id = write_raw_training_data(old_doc, new_doc_id, document_collection, training_data_collection)
+
+    return new_doc_id
 
 
-def roll_back(new_id, old_doc, training_data_id, tabular_collection, training_data_collection):
+def roll_back_update(new_id, old_doc, training_data_id, tabular_collection, training_data_collection):
     if training_data_id is not None:
         training_data_collection.delete_one({"_id": training_data_id})
 
@@ -291,7 +287,7 @@ def validate_record(record):
 
 
 def add_record(record: Record):
-    db = connect_and_get_db()
+    db, _ = connect_and_get_db()
 
     tabular_collection = db.get_collection("tabular")
 
@@ -332,7 +328,7 @@ def get_tabular_from_path_by_type_year(type, year):
 @bp.route("/records_curated", methods=["GET"])
 @output(Record(many=True))
 def get_curation_log():
-    db = connect_and_get_db()
+    db, _ = connect_and_get_db()
 
     pipeline = [
         {"$match": {"previous": {"$exists": 1}, "status": {"$not": {"$in": ["empty", "new", "obsolete"]}}}}
@@ -361,7 +357,7 @@ def get_curation_log():
 
 
 def get_records(type=None, status=None, document=None, publisher=None, year=None, start=-1, limit=-1):
-    db = connect_and_get_db()
+    db, _ = connect_and_get_db()
 
     # pipeline = [
     #     {"$group": {"_id": "$hash", "versions": {"$addToSet": "$timestamp"}, "count": {"$sum": 1}}},
@@ -452,7 +448,7 @@ def get_document(hash):
 @bp.route('/annotation/<hash>', methods=['GET'])
 def get_annotations(hash):
     """Get annotations (latest version)"""
-    db = connect_and_get_db()
+    db, _ = connect_and_get_db()
     annotations = db.get_collection("document").find({"hash": hash}).sort("timestamp", -1)
     annotation = annotations[0]
     del annotation["_id"]
@@ -462,7 +458,7 @@ def get_annotations(hash):
 @bp.route('/pdf/<hash>', methods=['GET'])
 def get_binary(hash):
     """GET PDF / binary file """
-    db = connect_and_get_db()
+    db, _ = connect_and_get_db()
     fs_binary = gridfs.GridFS(db, collection='binary')
 
     file = fs_binary.find_one({"hash": hash})
@@ -476,7 +472,7 @@ def get_binary(hash):
 @output(Record)
 def get_record(id):
     object_id = validateObjectId(id)
-    db = connect_and_get_db()
+    db, _ = connect_and_get_db()
     record = db.get_collection("tabular").find_one({"_id": object_id})
 
     record['id'] = str(record['_id'])
@@ -487,8 +483,15 @@ def get_record(id):
 @output(Record)
 def delete_record(id):
     object_id = validateObjectId(id)
-    db = connect_and_get_db()
-    record = db.get_collection("tabular").update_one({"_id": object_id}, {"$set": {"status": "removed"}})
+    db, client = connect_and_get_db()
+
+    with client.start_session() as session:
+        document_collection = db.get_collection("document")
+        training_data_collection = db.get_collection("training_data")
+        tabular_collection = db.get_collection("tabular")
+        with session.start_transaction():
+            record = tabular_collection.update_one({"_id": object_id}, {"$set": {"status": "removed"}})
+            training_data_id = write_raw_training_data(record, object_id, document_collection, training_data_collection)
 
     return record
 
@@ -497,7 +500,7 @@ def delete_record(id):
 @output(Flag)
 def get_record_status(id):
     object_id = validateObjectId(id)
-    db = connect_and_get_db()
+    db, _ = connect_and_get_db()
     record = db.get_collection("tabular").find_one({"_id": object_id}, {'_id': 0, 'type': 1, 'status': 1})
 
     return record
@@ -508,7 +511,7 @@ def get_record_status(id):
 def mark_record_invalid(id):
     """The record is marked as invalid"""
     object_id = validateObjectId(id)
-    db = connect_and_get_db()
+    db, _ = connect_and_get_db()
     tabular_collection = db.get_collection("tabular")
     record = tabular_collection.find_one({"_id": object_id, "status": {"$in": VALID_STATUSES}})
     if record is None:
@@ -528,7 +531,7 @@ def mark_record_invalid(id):
 def mark_record_validated(id):
     """The record is marked as correct"""
     object_id = validateObjectId(id)
-    db = connect_and_get_db()
+    db, _ = connect_and_get_db()
     return _mark_validated(db, object_id)
 
 
@@ -559,7 +562,7 @@ def validateObjectId(id):
 def reset_record(id):
     """Reset the status of the record"""
     object_id = validateObjectId(id)
-    db = connect_and_get_db()
+    db, _ = connect_and_get_db()
     return _reset_record(db, object_id)
 
 
@@ -599,7 +602,7 @@ def get_training_data():
 @bp.route('/training/data/<id>', methods=['GET'])
 def export_training_data(id):
     object_id = validateObjectId(id)
-    db = connect_and_get_db()
+    db, _ = connect_and_get_db()
     training_data_collection = db.get_collection("training_data")
 
     single_training_data = training_data_collection.find_one({'_id': object_id}, {'tokens': 0})
@@ -616,7 +619,7 @@ def export_training_data(id):
 
 @bp.route('/biblio/<hash>')
 def get_biblio_by_hash(hash):
-    db = connect_and_get_db()
+    db, _ = connect_and_get_db()
     last_documents = db.get_collection("document").find({"hash": hash}).sort("timestamp", -1)
     last_document = last_documents[0]
     return last_document['biblio']
@@ -624,7 +627,7 @@ def get_biblio_by_hash(hash):
 
 @bp.route('/training/data/status/<status>')
 def export_training_data_by_status(status):
-    db = connect_and_get_db()
+    db, _ = connect_and_get_db()
     new_format, _ = get_training_data_by_status(status, db)
 
     return Response(json.dumps(new_format, default=json_serial), mimetype="application/json")
@@ -662,7 +665,7 @@ def get_span_end():
 
 @bp.route('/training/data', methods=['GET'])
 def get_training_data_list():
-    db = connect_and_get_db()
+    db, _ = connect_and_get_db()
     training_data_collection = db.get_collection("training_data")
 
     training_data_list = list(training_data_collection.find({}, {'tokens': 0}))
@@ -773,7 +776,7 @@ def get_project_label_studio(project_id):
 
 @bp.route("/label/studio/project/<project_id>/records", methods=['POST', 'PUT'])
 def post_tasks_to_label_studio_project(project_id):
-    db = connect_and_get_db()
+    db, _ = connect_and_get_db()
     tasks_to_send, ids = get_training_data_by_status('new', db)
 
     if len(tasks_to_send) == 0:
@@ -825,7 +828,7 @@ def post_tasks_to_label_studio_project(project_id):
 
 @bp.route("/label/studio/project/<project_id>/record/<record_id>", methods=['POST', 'PUT'])
 def post_task_to_label_studio_project(project_id, record_id):
-    db = connect_and_get_db()
+    db, _ = connect_and_get_db()
     task_to_send, task_id = get_training_data_by_id_and_status(record_id, 'new', db)
 
     if not task_to_send:
@@ -872,11 +875,13 @@ def post_task_to_label_studio_project(project_id, record_id):
 
 @bp.route("/training/data/<id>", methods=['DELETE'])
 def delete_training_data_record(id):
-    db = connect_and_get_db()
-    training_data_collection = db.get_collection("training_data")
-
+    db, client = connect_and_get_db()
     object_id = validateObjectId(id)
-    result = training_data_collection.delete_one({"_id": object_id})
+
+    with client.start_session(causal_consistency=True) as session:
+        training_data_collection = db.get_collection("training_data")
+        with session.start_transaction():
+            result = training_data_collection.delete_one({"_id": object_id})
 
     return Response(json.dumps({"deleted": result.deleted_count}, default=json_serial), mimetype="application/json")
 
