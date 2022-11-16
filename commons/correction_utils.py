@@ -100,7 +100,7 @@ def post_process_fields(doc, remove_trailing_space=True, skip_none=True):
     return new_doc
 
 
-def write_raw_training_data(old_doc, new_doc_id, document_collection, training_data_collection, dry_run=False) -> ObjectId:
+def write_raw_training_data(old_doc, new_doc_id, document_collection, training_data_collection, action=None, dry_run=False) -> ObjectId:
     """Training data generation"""
 
     hash = old_doc['hash']
@@ -128,17 +128,20 @@ def write_raw_training_data(old_doc, new_doc_id, document_collection, training_d
                 if dry_run:
                     print("Adding training data for span", span['id'])
                 else:
-                    result = training_data_collection.insert_one(
-                        {
-                            "text": passage['text'],
-                            "spans": passage['spans'],
-                            "tokens": passage['tokens'],
-                            "hash": hash,
-                            "corrected_record_id": str(new_doc_id),
-                            "status": "new",
-                            "timestamp": datetime.utcnow()
-                        }
-                    )
+                    object = {
+                        "text": passage['text'],
+                        "spans": passage['spans'],
+                        "tokens": passage['tokens'],
+                        "hash": hash,
+                        "corrected_record_id": str(new_doc_id),
+                        "status": "new",
+                        "timestamp": datetime.utcnow()
+                    }
+                    if action:
+                        object['action'] = action
+
+                    result = training_data_collection.insert_one(object)
+
                     return result.inserted_id
 
     print("If we are here, it means we did not manage to identify the correct passage to create the training data. ")

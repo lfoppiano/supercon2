@@ -213,7 +213,7 @@ def _update_record(object_id: ObjectId, new_doc: Union[Record, dict], client, db
                 # del record['error_type']
 
             new_doc_id = write_correction(old_doc, new_doc, tabular_collection, error_type=error_type)
-            training_data_id = write_raw_training_data(old_doc, new_doc_id, document_collection, training_data_collection)
+            training_data_id = write_raw_training_data(old_doc, new_doc_id, document_collection, training_data_collection, action="update")
 
     return new_doc_id
 
@@ -491,7 +491,7 @@ def delete_record(id):
         tabular_collection = db.get_collection("tabular")
         with session.start_transaction():
             record = tabular_collection.update_one({"_id": object_id}, {"$set": {"status": "removed"}})
-            training_data_id = write_raw_training_data(record, object_id, document_collection, training_data_collection)
+            training_data_id = write_raw_training_data(record, object_id, document_collection, training_data_collection, action="delete")
 
     return record
 
