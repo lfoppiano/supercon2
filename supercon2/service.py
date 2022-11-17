@@ -329,6 +329,12 @@ def get_tabular_from_path_by_type_year(type, year):
     return get_records(type, publisher=None, year=year)
 
 
+@bp.route("/records/document/<hash>", methods=["GET"])
+@output(Record(many=True))
+def get_records_by_document(hash):
+    return get_records(document=hash)
+
+
 @bp.route("/records_curated", methods=["GET"])
 @output(Record(many=True))
 def get_curation_log():
