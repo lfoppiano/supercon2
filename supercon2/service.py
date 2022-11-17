@@ -15,7 +15,7 @@ from commons.correction_utils import write_correction, write_raw_training_data
 from commons.label_studio_commons import to_label_studio_format_single
 from commons.mongo_utils import connect_mongo
 from process.utils import json_serial
-from supercon2.schemas import Record, Flag, RecordParamsIn, UpdatedRecord, Publishers, Years
+from supercon2.schemas import Record, Flag, RecordParamsIn, UpdatedRecord, Publishers, Years, ProcessRecord
 
 bp = APIBlueprint('supercon', __name__)
 config = []
@@ -130,16 +130,28 @@ def get_stats():
                            by_journal=by_journal_fixed, version=get_version()['version'])
 
 
-@bp.route("/correction_logger", methods=["GET"])
-def get_correction_log():
+@bp.route("/curation_log", methods=["GET"])
+def get_curation_log():
     base_url = get_base_url(config)
-    return render_template("correction_log.html", version=get_version()['version'], base_url=base_url)
+    return render_template("curation_log.html", version=get_version()['version'], base_url=base_url)
 
 
-@bp.route("/correction_logger/document/<hash>", methods=["GET"])
-def get_correction_log_filter_by_document(hash):
+@bp.route("/curation_log/document/<hash>", methods=["GET"])
+def get_curation_log_filter_by_document(hash):
     base_url = get_base_url(config)
-    return render_template("correction_log.html", hash=hash, version=get_version()['version'], base_url=base_url)
+    return render_template("curation_log.html", hash=hash, version=get_version()['version'], base_url=base_url)
+
+
+@bp.route("/process_log", methods=["GET"])
+def get_process_log():
+    base_url = get_base_url(config)
+    return render_template("process_log.html", version=get_version()['version'], base_url=base_url)
+
+
+@bp.route("/process_log/document/<hash>", methods=["GET"])
+def get_process_log_filter_by_document(hash):
+    base_url = get_base_url(config)
+    return render_template("process_log.html", hash=hash, version=get_version()['version'], base_url=base_url)
 
 
 def get_base_url(config):
@@ -353,9 +365,9 @@ def get_records_by_document(hash):
     return get_records(document=hash)
 
 
-@bp.route("/records_curated", methods=["GET"])
+@bp.route("/curation/records", methods=["GET"])
 @output(Record(many=True))
-def get_curation_log():
+def get_curation_records():
     db = connect_and_get_db()
 
     pipeline = [
@@ -385,6 +397,27 @@ def get_curation_log():
             count += 1
 
         entry['update_count'] = count
+
+    return entities
+
+
+@bp.route("/process/records", methods=["GET"])
+@output(ProcessRecord(many=True))
+def get_process_records():
+    db = connect_and_get_db()
+
+    pipeline = [
+        # {"$match": {"previous": {"$exists": 1}, "status": {"$not": {"$in": ["empty", "new", "obsolete"]}}}}
+        {"$match": {"status": {"$not": {"$in": ["empty", "new", "obsolete"]}}}}
+    ]
+    logger_collection = db.get_collection("logger")
+
+    cursor = logger_collection.find()
+
+    entities = []
+    for entry in cursor:
+        entry['id'] = str(entry['_id'])
+        entities.append(entry)
 
     return entities
 
@@ -521,10 +554,10 @@ def _delete_record(id, error_type, db):
     try:
         old_doc = tabular_collection.find_one({"_id": id})
         update_query = {"$set": {
-                "status": "removed",
-                "error_type": error_type,
-                "timestamp": datetime.utcnow()
-            }
+            "status": "removed",
+            "error_type": error_type,
+            "timestamp": datetime.utcnow()
+        }
         }
         record_information = tabular_collection.update_one({"_id": id}, update_query)
         training_data_id = write_raw_training_data(old_doc, old_doc['_id'], document_collection,
