@@ -516,10 +516,14 @@
                 loadErrorTypes() {
                     const url = '{{ url_for("supercon.get_error_types") }}'
                     axios.get(url).then((data) => {
-                        const errorTypes = Object.values(data.data)
-                        this.rowsOnItemEditDialog[0].cols.find(col => {
+                        let errorTypes = [];
+                        for (var prop in data.data) {
+                            errorTypes.push ({'value': prop, 'text': data.data[prop]})
+                        }
+                        let dialog = this.rowsOnItemEditDialog[0].cols.find(col => {
                             return col.key === "error_type"
-                        }).selectBoxItems = errorTypes
+                        });
+                        dialog.selectBoxItems= errorTypes;
                         return
                     }).finally(() => {
                         //
@@ -898,6 +902,8 @@
                         "record_id",
                         this.editedItem.id
                     )
+
+                    url = url + "?error_type=" + this.editedItem.error_type;
 
                     try {
                         await axios.delete(url, {})

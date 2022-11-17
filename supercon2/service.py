@@ -522,12 +522,14 @@ def _delete_record(id, error_type, db):
 
 @bp.route('/record/<id>', methods=['DELETE'])
 @output(UpdatedRecord)
-def delete_record(id, error_type):
+def delete_record(id):
     object_id = validateObjectId(id)
     db = connect_and_get_db()
 
-    if error_type not in get_error_types.keys():
-        abort(400, "The specified error type: " + str(error_type) + " is invalid.")
+    error_type = request.args.get('error_type')
+
+    if error_type is None or error_type not in get_error_types().keys():
+        abort(400, "The specified error type: " + str(error_type) + " is invalid or missing.")
 
     try:
         _delete_record(object_id, error_type, db=db)
