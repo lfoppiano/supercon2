@@ -14,3 +14,4 @@ deepdiff
 xlrd
 waitress==2.1.1
 label-studio-sdk
+mongomock

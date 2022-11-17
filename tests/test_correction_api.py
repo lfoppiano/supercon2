@@ -4,7 +4,7 @@ import pytest
 from bson import ObjectId
 
 from commons.correction_utils import post_process_fields
-from supercon2.service import _update_record, mark_record_validated, _mark_validated, _reset_record
+from supercon2.service import _update_record, _mark_validated, _reset_record
 
 
 def test_update_record_should_update_record(mongodb):
@@ -31,7 +31,7 @@ def test_update_record_should_update_record(mongodb):
 
     original_identifier = '61e136f56e3ec3a715592988'
     original_identifier_object_id = ObjectId(original_identifier)
-    inserted_id = _update_record(original_identifier_object_id, new_record, mongodb)
+    inserted_id = _update_record(original_identifier_object_id, new_record, mongodb.client, mongodb)
 
     records_by_document_after = len(list(mongodb.tabular.find({'hash': '48ba234393'})))
 
@@ -78,7 +78,7 @@ def test_update_record_should_create_training_data(mongodb):
 
     original_identifier = '61e136f56e3ec3a715592988'
     original_identifier_object_id = ObjectId(original_identifier)
-    inserted_id = _update_record(original_identifier_object_id, new_record, mongodb)
+    inserted_id = _update_record(original_identifier_object_id, new_record, mongodb.client, mongodb)
 
     training_data_by_document_after = len(list(mongodb.training_data.find({'hash': '48ba234393'})))
     assert training_data_by_document_after > training_data_by_document_before
@@ -107,7 +107,7 @@ def test_update_record_with_failure_should_rollback(mongodb, mocker: MagicMock):
 
     inserted_id = None
     with pytest.raises(Exception):
-        inserted_id = _update_record(original_identifier_object_id, new_record, mongodb)
+        inserted_id = _update_record(original_identifier_object_id, new_record, mongodb.client, mongodb)
 
     assert inserted_id is None
 
@@ -218,7 +218,7 @@ def test_flow_new_validated_curated(mongodb):
                "materialId": "-964232725",
                "formula": "Mg B2"}
 
-    new_object_id = _update_record(object_id, new_doc, mongodb)
+    new_object_id = _update_record(object_id, new_doc, mongodb.client, mongodb)
 
     object_after = mongodb.tabular.find_one({"_id": new_object_id})
     assert object_after['status'] == "curated"
@@ -236,7 +236,7 @@ def test_flow_new_curated_reset(mongodb):
                "materialId": "-964232725",
                "formula": "Mg B2"}
 
-    new_object_id = _update_record(ObjectId("61e136f56e3ec3a715592988"), new_doc, mongodb)
+    new_object_id = _update_record(ObjectId("61e136f56e3ec3a715592988"), new_doc, mongodb.client, mongodb)
 
     object_after = mongodb.tabular.find_one({"_id": new_object_id})
     assert object_after['status'] == "curated"
@@ -260,7 +260,7 @@ def test_flow_new_curated_validated_reset(mongodb):
                "materialId": "-964232725",
                "formula": "Mg B2"}
 
-    new_object_id = _update_record(ObjectId("61e136f56e3ec3a715592988"), new_doc, mongodb)
+    new_object_id = _update_record(ObjectId("61e136f56e3ec3a715592988"), new_doc, mongodb.client, mongodb)
 
     obsolete_record = mongodb.tabular.find_one({"_id": object_id})
     assert obsolete_record['status'] == "obsolete"

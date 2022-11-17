@@ -1,4 +1,5 @@
 import logging
+from contextlib import contextmanager
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -9,6 +10,17 @@ from _pytest._py.path import LocalPath
 
 LOGGER = logging.getLogger(__name__)
 
+@contextmanager
+def session_with_transaction(client):
+    try:
+        with client.start_session() as session:
+            with session.start_transaction():
+                yield client
+    except Exception as e:
+        if str(e) == "Mongomock does not support sessions yet":
+            yield client
+        else:
+            raise e
 
 @pytest.fixture(scope='session', autouse=True)
 def setup_logging():
