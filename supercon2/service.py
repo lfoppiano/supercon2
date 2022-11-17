@@ -359,7 +359,8 @@ def get_curation_log():
     db = connect_and_get_db()
 
     pipeline = [
-        {"$match": {"previous": {"$exists": 1}, "status": {"$not": {"$in": ["empty", "new", "obsolete"]}}}}
+        # {"$match": {"previous": {"$exists": 1}, "status": {"$not": {"$in": ["empty", "new", "obsolete"]}}}}
+        {"$match": {"status": {"$not": {"$in": ["empty", "new", "obsolete"]}}}}
     ]
     entries = []
     tabular_collection = db.get_collection("tabular")
@@ -369,8 +370,12 @@ def get_curation_log():
     entities = []
     for entry in cursor_aggregation:
         entry['id'] = str(entry['_id'])
-        previous_id = entry['previous']
-        entry['previous'] = str(entry['previous'])
+
+        previous_id = None
+        if 'previous' in entry:
+            previous_id = entry['previous']
+            entry['previous'] = str(entry['previous'])
+
         entities.append(entry)
 
         count = 0
