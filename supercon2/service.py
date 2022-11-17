@@ -213,16 +213,17 @@ def _update_record(object_id: ObjectId, new_doc: Union[Record, dict], db):
             # del record['error_type']
 
         new_doc_id = write_correction(old_doc, new_doc, tabular_collection, error_type=error_type)
-        training_data_id = write_raw_training_data(old_doc, new_doc_id, document_collection, training_data_collection)
+        training_data_id = write_raw_training_data(old_doc, new_doc_id, document_collection, training_data_collection,
+                                                   action="update")
         return new_doc_id
     except Exception as e:
         # Roll back!
         print("Exception:", e, "Rolling back.")
-        roll_back(new_doc_id, old_doc, training_data_id, tabular_collection, training_data_collection)
+        rollback(new_doc_id, old_doc, training_data_id, tabular_collection, training_data_collection)
         raise e
 
 
-def roll_back(new_id, old_doc, training_data_id, tabular_collection, training_data_collection):
+def rollback(new_id, old_doc, training_data_id, tabular_collection, training_data_collection):
     if training_data_id is not None:
         training_data_collection.delete_one({"_id": training_data_id})
 
@@ -243,6 +244,23 @@ def roll_back(new_id, old_doc, training_data_id, tabular_collection, training_da
                 "$set": query_set,
                 "$unset": query_unset
             }
+        )
+
+
+def rollback_delete(previous_record, training_data_id, tabular_collection, training_data_collection):
+    if training_data_id is not None:
+        training_data_collection.delete_one({"_id": training_data_id})
+
+    if previous_record is not None:
+        query_update = {"$set": {"status": previous_record['status']}}
+        if 'error_type' in previous_record:
+            query_update["$set"]["error_type"] = previous_record['error_type']
+
+        query_update['$set']['timestamp'] = previous_record['timestamp']
+
+        tabular_collection.update_one(
+            {'_id': previous_record['_id']},
+            query_update
         )
 
 
@@ -489,14 +507,53 @@ def get_record(id):
     return record
 
 
+def _delete_record(id, error_type, db):
+    tabular_collection = db.get_collection("tabular")
+    document_collection = db.get_collection("document")
+    training_data_collection = db.get_collection("training_data")
+    old_doc = None
+    training_data_id = None
+    try:
+        old_doc = tabular_collection.find_one({"_id": id})
+        update_query = {"$set": {
+                "status": "removed",
+                "error_type": error_type,
+                "timestamp": datetime.utcnow()
+            }
+        }
+        record_information = tabular_collection.update_one({"_id": id}, update_query)
+        training_data_id = write_raw_training_data(old_doc, old_doc['_id'], document_collection,
+                                                   training_data_collection, action="delete")
+
+    except Exception as e:
+        # Rollback!
+        print("Exception:", e, "Rolling back.")
+        rollback_delete(old_doc, training_data_id, tabular_collection, training_data_collection)
+        raise e
+
+    return record_information
+
+
 @bp.route('/record/<id>', methods=['DELETE'])
-@output(Record)
+@output(UpdatedRecord)
 def delete_record(id):
     object_id = validateObjectId(id)
     db = connect_and_get_db()
-    record = db.get_collection("tabular").update_one({"_id": object_id}, {"$set": {"status": "removed"}})
 
-    return record
+    error_type = request.args.get('error_type')
+
+    if error_type is None or error_type not in get_error_types().keys():
+        abort(400, "The specified error type: " + str(error_type) + " is invalid or missing.")
+
+    try:
+        _delete_record(object_id, error_type, db=db)
+    except Exception as e:
+        abort(400, str(e))
+
+    return_info = UpdatedRecord()
+    return_info.id = object_id
+
+    return return_info
 
 
 @bp.route('/record/<id>/status', methods=['GET'])
