@@ -74,6 +74,11 @@
                         </td>
                     </tr>
                 </template>
+                <template v-slot:item.name="{ item }">
+                    <a :href="'#' + item.materialId">
+                        ↓
+                    </a>
+                </template>
                 <template v-slot:item.hash="{ item }">
                     <v-row>
                         <a :href="base_url + 'document_old/' + item.hash"
@@ -208,7 +213,7 @@
                                     'height': box.height * scale,
                                     'border': '2px solid',
                                     'border-color': colors[getPlainType(span.type)]
-                                }"></div>
+                                }" :id="span.id"></div>
                             </div>
                         </div>
                     </div>
