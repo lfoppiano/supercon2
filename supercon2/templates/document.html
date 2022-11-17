@@ -29,13 +29,37 @@
                 </v-card>
             </v-row>
             <p><span style="color:#848484;">&copy; Contributors, 2022 |</span> <span id="version" style="color:#848484;" v-html="version"></span></p>
+            <div id="pdfViewer" :style="{'position': 'absolute'}">
+                <div id="pdfAnnotaions">
+                    <div v-for="passage in passages">
+                        <div v-for="span in passage.spans">
+                            <div v-for="box in span.boundingBoxes">
+                                <div :style="{
+                                    'position': 'absolute',
+                                    'left': box.x * scale,
+                                    'top': (Math.floor(pages[0].height) * (box.page-1) + box.y) * scale,
+                                    'width': box.width * scale,
+                                    'height': box.height * scale,
+                                    'border': '2px solid',
+                                    'border-color': colors[getPlainType(span.type)]
+                                }"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </v-container>
     </v-app>
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vuetify@2.6.3/dist/vuetify.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios@0.26.1/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mathjs@11.3.1/lib/browser/math.min.js"></script>
-    <script>
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.0.279"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.0.279/build/pdf.worker.min.js"></script>
+    <script type="module">
+        import { colors } from "{{ url_for('static', filename='grobid/colors.js')}}"
+
+        const scale = 1.5
         let itemClassStore = {
             class: 'bg-white',
             hashes: [],
@@ -47,8 +71,69 @@
             data() {
                 return {
                     base_url: '{{ base_url }}',
+                    hash: '{{hash}}',
+                    version: "",
+                    passages: [],
+                    pages: [],
+                    scale,
+                    colors,
                 }
-            }
+            },
+            created() {
+
+            },
+            mounted() {
+                this.loadPdfs()
+                this.loadAnnotations()
+            },
+            methods: {
+                getPlainType(type) {
+                    return type.replace("<","").replace(">","")
+                },
+                async loadAnnotations() {
+                    let url = "{{ url_for('supercon.get_annotations', hash='_HASH_') }}"
+                    url = url.replace("_HASH_", this.hash)
+                    try {
+                        const result = await axios.get(url, {})
+                        console.log(result)
+                        this.passages = result.data.passages
+                        this.pages = result.data.pages
+                    } catch (e) {
+                        console.error(e)
+                        window.alert(JSON.stringify(e.response.data))
+                    } finally {
+                    }
+                },
+                async loadPdfs() {
+                    var url = "{{ url_for('supercon.get_binary', hash='_HASH_') }}"
+                    url = url.replace("_HASH_", this.hash)
+
+                    const loadingTask = await pdfjsLib.getDocument(url)
+                    loadingTask.promise.then(async function(pdf) {
+                        for (let i = 1; i <= pdf.numPages; i++) {
+                            const page = await pdf.getPage(i)
+
+                            const viewport = page.getViewport({scale});
+
+                            const canvas = document.createElement("canvas")
+                            const context = canvas.getContext('2d');
+                            const pdfViewer = document.getElementById('pdfViewer')
+                            pdfViewer.append(canvas)
+                            canvas.height = viewport.height;
+                            canvas.width = viewport.width;
+
+                            const renderContext = {
+                                canvasContext: context,
+                                viewport: viewport
+                            };
+                            const renderTask = page.render(renderContext);
+                            renderTask.promise.then(function () {
+                                console.log('Page rendered');
+                            })
+                        }
+                    })
+                }
+            },
         })
     </script>
 
