@@ -14,10 +14,6 @@ from process.grobid_client_generic import GrobidClientGeneric
 # supercon_sakai: database containing the re-processed documents corrected by sakai-san
 # supercon_sakai_original: database containing the original records corrected by sakai-san
 
-# This part will be implemented in the service
-from supercon2.service import roll_back
-
-
 def create_training_data_from_passage(passage):
     if 'spans' not in passage or 'text' not in passage:
         return None
@@ -88,8 +84,9 @@ def flag_as_invalid(doc_id, collection, dry_run=False):
     return collection.update_one({'_id': doc_id}, {'$set': changes})
 
 
-def process(corrections_file, database, dry_run=False):
+def process(corrections_file, mongo, db_name, dry_run=False):
     changes_report = []
+    database = mongo.get_database(db_name)
 
     tabular_collection = database.get_collection("tabular")
     document_collection = database.get_collection("document")
@@ -182,19 +179,19 @@ def process(corrections_file, database, dry_run=False):
             else:
                 new_id = None
                 training_data_id = None
-                try:
-                    new_id = write_correction(doc, corrections, tabular_collection, dry_run=dry_run)
-                    training_data_id = write_raw_training_data(doc, new_id, document_collection,
-                                                               training_data_collection)
-                    changes_report.append({"id": str(doc["_id"]), "new_id": str(new_id),
-                                    "status": status, "action": "update", "hash": doc["hash"]})
-                    break
-                except Exception as e:
-                    print("There was an exception. Rolling back. ")
-                    roll_back(new_id, doc, training_data_id, tabular_collection, training_data_collection)
-                    changes_report.append({"id": doc["_id"], "new_id": str(None),
+                with mongo.start_session() as session:
+                    with session.start_transaction():
+                        try:
+                            new_id = write_correction(doc, corrections, tabular_collection, dry_run=dry_run)
+                            training_data_id = write_raw_training_data(doc, new_id, document_collection,
+                                                                       training_data_collection)
+                            changes_report.append({"id": str(doc["_id"]), "new_id": str(new_id),
+                                            "status": status, "action": "update", "hash": doc["hash"]})
+                        except Exception as e:
+                            session.abort_transaction()
+                            changes_report.append({"id": doc["_id"], "new_id": str(None),
                                     "status": status, "action": "rollback", "hash": doc["hash"]})
-                    break
+                break
 
         if not matching:
             print("Record did not match!")
@@ -286,9 +283,8 @@ if __name__ == '__main__':
 
     if db_name is None:
         db_name = config["mongo"]["db"]
-    database = mongo.get_database(db_name)
 
-    report = process(corrections, database, dry_run=dry_run)
+    report = process(corrections, mongo, db_name, dry_run=dry_run)
 
     if report_file is None:
         print(json.dumps(report))
