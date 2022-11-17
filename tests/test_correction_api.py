@@ -4,7 +4,8 @@ import pytest
 from bson import ObjectId
 
 from commons.correction_utils import post_process_fields
-from supercon2.service import _update_record, mark_record_validated, _mark_validated, _reset_record
+from supercon2.service import _update_record, mark_record_validated, _mark_validated, _reset_record, delete_record, \
+    _delete_record
 
 
 def test_update_record_should_update_record(mongodb):
@@ -55,6 +56,28 @@ def test_update_record_should_update_record(mongodb):
     assert final_record['appliedPressure'] == "3 GPa"
 
 
+def test_delete_record_should_create_training_data(mongodb):
+    assert 'tabular' in mongodb.list_collection_names()
+
+    training_data_by_document_before = len(list(mongodb.training_data.find({'hash': '48ba234394'})))
+
+    original_identifier = '61e136f56e3ec3a71559298b'
+    original_identifier_object_id = ObjectId(original_identifier)
+    operation_status = _delete_record(original_identifier_object_id, "extraction", mongodb)
+
+    deleted_record = mongodb.tabular.find_one({"_id": original_identifier_object_id})
+    assert deleted_record['status'] == 'removed'
+
+    training_data_by_document_after = len(list(mongodb.training_data.find({'hash': '48ba234394'})))
+    assert training_data_by_document_after > training_data_by_document_before
+
+    new_training_data = mongodb.training_data.find_one({"corrected_record_id": str(original_identifier)})
+
+    assert new_training_data is not None
+    assert new_training_data['status'] == 'new'
+    assert new_training_data['action'] == 'delete'
+
+
 def test_update_record_should_create_training_data(mongodb):
     assert 'tabular' in mongodb.list_collection_names()
 
@@ -87,6 +110,7 @@ def test_update_record_should_create_training_data(mongodb):
 
     assert new_training_data is not None
     assert new_training_data['status'] == 'new'
+    assert new_training_data['action'] == 'update'
 
 
 def test_update_record_with_failure_should_rollback(mongodb, mocker: MagicMock):
@@ -120,6 +144,42 @@ def test_update_record_with_failure_should_rollback(mongodb, mocker: MagicMock):
 
     assert old_record_from_db['status'] == "new"
     assert old_record_from_db['type'] == "automatic"
+    assert 'error_type' not in old_record_from_db or old_record_from_db['error_type'] == ''
+
+    assert training_data_after == training_data_before
+
+
+def test_delete_record_with_failure_should_rollback(mongodb, mocker: MagicMock):
+    def write_training_data_mock(a, b, c, d):
+        raise Exception("Mocking bird")
+
+    mocker.patch('supercon2.service.write_raw_training_data', write_training_data_mock)
+
+    assert 'tabular' in mongodb.list_collection_names()
+
+    records_by_document_before = len(list(mongodb.tabular.find({'hash': '48ba234394'})))
+    training_data_before = len(list(mongodb.training_data.find({'hash': '48ba234394'})))
+
+    new_record = {}
+
+    original_identifier = '61e136f56e3ec3a71559298b'
+    original_identifier_object_id = ObjectId(original_identifier)
+
+    result_operation = None
+    with pytest.raises(Exception):
+        result_operation = _delete_record(original_identifier_object_id, mongodb)
+
+    assert result_operation is None
+
+    records_by_document_after = len(list(mongodb.tabular.find({'hash': '48ba234394'})))
+    training_data_after = len(list(mongodb.training_data.find({'hash': '48ba234394'})))
+
+    assert records_by_document_after == records_by_document_before
+
+    old_record_from_db = mongodb.tabular.find_one({'_id': original_identifier_object_id})
+
+    assert old_record_from_db['status'] == "curated"
+    assert old_record_from_db['type'] == "manual"
     assert 'error_type' not in old_record_from_db or old_record_from_db['error_type'] == ''
 
     assert training_data_after == training_data_before
