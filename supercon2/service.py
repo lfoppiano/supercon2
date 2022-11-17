@@ -256,6 +256,8 @@ def rollback_delete(previous_record, training_data_id, tabular_collection, train
         if 'error_type' in previous_record:
             query_update["$set"]["error_type"] = previous_record['error_type']
 
+        query_update['$set']['timestamp'] = previous_record['timestamp']
+
         tabular_collection.update_one(
             {'_id': previous_record['_id']},
             query_update
@@ -507,7 +509,13 @@ def _delete_record(id, error_type, db):
     training_data_id = None
     try:
         old_doc = tabular_collection.find_one({"_id": id})
-        record_information = tabular_collection.update_one({"_id": id}, {"$set": {"status": "removed", "error_type": error_type}})
+        update_query = {"$set": {
+                "status": "removed",
+                "error_type": error_type,
+                "timestamp": datetime.utcnow()
+            }
+        }
+        record_information = tabular_collection.update_one({"_id": id}, update_query)
         training_data_id = write_raw_training_data(old_doc, old_doc['_id'], document_collection,
                                                    training_data_collection, action="delete")
 
