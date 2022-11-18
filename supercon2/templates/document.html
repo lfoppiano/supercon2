@@ -23,7 +23,7 @@
 <body>
     <div id="app">
     </div>
-    // why use type as text/x-template: https://github.com/vuetifyjs/vuetify/issues/11599
+    <!-- why use type as text/x-template: https://github.com/vuetifyjs/vuetify/issues/11599 -->
     <script type="text/x-template" id="app-template">
         <v-app>
             <v-container fluid>
@@ -80,11 +80,11 @@
                     </template>
                     <template v-slot:item.rawMaterial="{ item }">
                         [[ item.rawMaterial ]]
-                        <v-icon @click="goToPdf(item.materialId)">mdi-arrow-down-thick</v-icon>
+                        <v-icon @click="scrollToPdf(item.materialId, item)">mdi-arrow-down-thick</v-icon>
                     </template>
                     <template v-slot:item.criticalTemperature="{ item }">
                         [[ item.criticalTemperature ]]
-                        <v-icon @click="goToPdf(item.criticalTemperatureId)">mdi-arrow-down-thick</v-icon>
+                        <v-icon @click="scrollToPdf(item.criticalTemperatureId, item)">mdi-arrow-down-thick</v-icon>
                     </template>
                     <template v-slot:item.hash="{ item }">
                         <v-row>
@@ -149,7 +149,44 @@
                         </v-row>
                     </template>
                 </v-data-table>
-                <p><span style="color:#848484;">&copy; Contributors, 2022 |</span> <span id="version" style="color:#848484;" v-html="version"></span></p>
+                <div v-if="floatingItems.length > 0 && selectedSpanId.length > 0"
+                    :style="{position: 'sticky', 'z-index': 2, top: 0}" class="mt-4">
+                    <v-data-table
+                        id="floating-table"
+                        :headers="showHeaders" :items="floatingItems"
+                        hide-default-footer disable-sort class="elevation-1"
+                    >
+                        <template v-slot:item.id="{ item }">
+                            [[ "..." + item.id.substring(item.id.length - 8) ]]
+                        </template>
+                        <template v-slot:item.sentence="{ item }">
+                            [[ item.sentence.slice(0, 30) + ' ...' ]]
+                        </template>
+                        <template v-slot:item.actions="{ item }">
+                            <v-row>
+                                <v-icon small class="mr-1" @click="markRecordValidated(item)" title="Mark as validated">
+                                    mdi-thumb-up
+                                </v-icon>
+                                <v-icon small class="mr-1" @click="markRecordInvalid(item)" title="Mark as invalid">
+                                    mdi-thumb-down
+                                </v-icon>
+                                <v-icon small class="mr-1" @click="resetRecord(item)" title="Reset status">
+                                    mdi-restart
+                                </v-icon>
+                                <v-icon small class="mr-1" @click="openEditItemDialog(item)" title="Edit">
+                                    mdi-pencil
+                                </v-icon>
+                                <v-icon small class="mr-1" @click="openItemDialogToRemove(item)" title="Remove">
+                                    mdi-delete-outline
+                                </v-icon>
+                                <v-icon small class="mr-1" @click="openCreateItemDialog(item)" title="Add new">
+                                    mdi-folder-plus-outline
+                                </v-icon>
+                            </v-row>
+                        </template>
+                    </v-data-table>
+                    <v-icon @click="selectedSpanId = ''">mdi-close</v-icon>
+                </div>
                 <v-dialog v-model="itemDialog.shouldShow">
                     <v-card>
                         <v-card-title>[[ itemDialogTitle ]]</v-card-title>
@@ -207,7 +244,7 @@
                         </v-card-text>
                     </v-card>
                 </v-dialog>
-                <div id="pdfViewer" :style="{'position': 'relative'}">
+                <div id="pdfViewer" :style="{'position': 'relative'}" class="mt-4">
                     <div id="pdfAnnotaions">
                         <div v-for="passage in passages">
                             <div v-for="span in passage.spans">
@@ -222,7 +259,6 @@
                                         'border-color': colors[getPlainType(span.type)]
                                     }" :id="span.id"></div>
                                     <v-icon :style="{
-                                        'scroll-behavior': 'smooth',
                                         'position': 'absolute',
                                         'left': box.x2 * scale,
                                         'top': (Math.floor(pages[0].height) * (box.page-1) + box.y - 5) * scale,
@@ -282,6 +318,7 @@
                     itemsPerPageOptions: [25, 50, 100],
                     sortBy: ['hash'],
                     selectedItems: [],
+                    floatingItems: [],
                     selectedSpanId: "",
                     filteredItems: [],
                     selectedHeaders: [],
@@ -307,11 +344,11 @@
                         // { text: 'Applied Pressure ID', value: 'appliedPressureId', hidden: true },
                         { text: 'Measurement Method', value: 'criticalTemperatureMeasurementMethod', hidden: false, filter: this.measurementMethodFilter, filterKeyword: '', shouldHideEmpty: false },
                         // { text: 'Measurement MethodId', value: 'measurementMethodId', hidden: true },
-                        {#{ text: 'Link Type', value: 'linkType', hidden: true, filter: this.linkTypeFilter, filterKeyword: '', shouldHideEmpty: false },#}
+                        //{#{ text: 'Link Type', value: 'linkType', hidden: true, filter: this.linkTypeFilter, filterKeyword: '', shouldHideEmpty: false },#}
                         { text: 'Section', value: 'section', hidden: true, filter: this.sectionFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'Subsection', value: 'subsection', hidden: true, filter: this.subsectionFilter, filterKeyword: '', shouldHideEmpty: false },
-                        {#{ text: 'Path', value: 'path', hidden: true, filter: this.pathFilter, filterKeyword: '', shouldHideEmpty: false },#}
-                        {#{ text: 'Filename', value: 'filename', hidden: true, filter: this.filenameFilter, filterKeyword: '', shouldHideEmpty: false },#}
+                        //{#{ text: 'Path', value: 'path', hidden: true, filter: this.pathFilter, filterKeyword: '', shouldHideEmpty: false },#}
+                        //{#{ text: 'Filename', value: 'filename', hidden: true, filter: this.filenameFilter, filterKeyword: '', shouldHideEmpty: false },#}
                         { text: 'Document', value: 'hash', hidden: false, filter: this.hashFilter, filterKeyword: "{{hash}}", width: 120, shouldHideEmpty: false },
                         { text: 'Entity ID', value: 'id', hidden: false, filter: this.idFilter, filterKeyword: '', shouldHideEmpty: false, width: 120, },
                         { text: 'Timestamp', value: 'timestamp', hidden: true, filter: this.timestampFilter, filterKeyword: '', shouldHideEmpty: false },
@@ -474,13 +511,14 @@
                 this.loadItems()
             },
             methods: {
-                goToPdf(spanId) {
+                scrollToPdf(spanId, item) {
+                    this.floatingItems.length = 0
+                    this.floatingItems.push(item)
                     const viewer = document.getElementById('pdfViewer')
                     this.selectedSpanId = spanId
                     const span = document.getElementById(spanId)
-                    console.log({span})
                     window.scrollTo({
-                        top: span.offsetTop + viewer.offsetTop,
+                        top: span.offsetTop + viewer.offsetTop - 100,
                         behavior: 'smooth'
                     })
                 },
