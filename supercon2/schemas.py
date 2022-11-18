@@ -85,8 +85,9 @@ class Years(Schema):
 #     error_types = Dict(keys=String(), values=String())
 
 class ProcessRecord(Schema):
-    status = String(allow_none=False)
+    status = String(allow_none=True)
     hash = String(allow_none=True)
+    path = String(allow_none=True)
     message = String(allow_none=True)
     service = String(allow_none=False)
     timestamp = DateTime(allow_none=False)

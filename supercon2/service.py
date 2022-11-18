@@ -405,11 +405,6 @@ def get_curation_records():
 @output(ProcessRecord(many=True))
 def get_process_records():
     db = connect_and_get_db()
-
-    pipeline = [
-        # {"$match": {"previous": {"$exists": 1}, "status": {"$not": {"$in": ["empty", "new", "obsolete"]}}}}
-        {"$match": {"status": {"$not": {"$in": ["empty", "new", "obsolete"]}}}}
-    ]
     logger_collection = db.get_collection("logger")
 
     cursor = logger_collection.find()
