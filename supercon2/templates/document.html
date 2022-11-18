@@ -230,6 +230,7 @@
     <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.0.279/build/pdf.worker.min.js"></script>
     <script type="module">
         import { colors } from "{{ url_for('static', filename='grobid/colors.js')}}"
+        import { shortcutKeys } from "{{ url_for('static', filename='grobid/shortcut-keys.js')}}"
 
         const scale = 1.5
         let itemClassStore = {
@@ -254,36 +255,7 @@
                         shouldShow: false,
                     },
                     shouldShowShortcutKeysDialog: false,
-                    shortcutKeys: [
-                        {
-                            name: 'n',
-                            text: 'Add new record (in the same document of the selected record)'
-                        }, {
-                            name: 'e',
-                            text: 'Edit the selected record'
-                        }, {
-                            name: '⌘ + Enter',
-                            text: 'Save the record on the edit dialog (Mac)'
-                        }, {
-                            name: 'Ctrl + Enter',
-                            text: 'Save the record on the edit dialog (Win)'
-                        }, {
-                            name: 'ArrowUp',
-                            text: 'Move selection up one record'
-                        }, {
-                            name: 'ArrowDown',
-                            text: 'Move selection down one record'
-                        }, {
-                            name: 'enter',
-                            text: 'Flag/unflag the selected record'
-                        }, {
-                            name: '?',
-                            text: 'Show the keyboard shortcuts dialog',
-                        }, {
-                            name: 'esc',
-                            text: 'Close this dialog',
-                        }
-                    ],
+                    shortcutKeys,
                     isLoading: true,
                     version: 'unknown version',
                     editedItem: {},
