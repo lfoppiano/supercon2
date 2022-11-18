@@ -54,10 +54,7 @@
                                 <v-text-field v-model="header.filterKeyword" type="text" placeholder="keyword"
                                     hide-details clearable>
                                 </v-text-field>
-{#                                <v-switch v-model="headerObject[header.value].shouldHideEmpty" title="Hide empty">#}
-{#                                </v-switch>#}
                             </template>
-
                         </td>
                     </tr>
                 </template>
@@ -76,61 +73,8 @@
                         </v-icon>
                     </v-row>
                 </template>
-                <template v-slot:item.id="{ item }">
-                    <span class="ma-1">
-                        <a v-on:click="openItemDialog(item, 'view')">[[ item.id ]]</a>
-                    </span>
-                </template>
-                <template v-slot:item.flag="{ item }">
-                    <v-checkbox :input-value="item.flag" @click="toggleFlag(item)" :disabled="flagIsNotWritable(item)">
-                    </v-checkbox>
-                </template>
             </v-data-table>
             <p><span style="color:#848484;">&copy; Contributors, 2022 |</span> <span id="version" style="color:#848484;" v-html="version"></span></p>
-            <v-dialog v-model="itemDialog.shouldShow">
-                <v-card>
-                    <v-card-title>[[ itemDialogTitle ]]</v-card-title>
-                    <v-card-text>
-                        <v-container fluid>
-                            <v-row v-for="row of rowsOnItemEditDialog">
-                                <v-col :cols="row.config.cols" v-for="col of row.cols">
-                                    <v-select
-                                        v-if="col.key === 'error_type'"
-                                        :rules="col.rules"
-                                        v-model="editedItem[col.key]"
-                                        :items="col.selectBoxItems"
-                                        :label="col.label"
-                                        :disabled=true>
-                                    </v-select>
-                                    <v-text-field
-                                        v-else
-                                        v-model="editedItem[col.key]"
-                                        :label="headerObject[col.key].text"
-                                        :disabled=true>
-                                    </v-text-field>
-                                </v-col>
-                            </v-row>
-                        </v-container>
-                    </v-card-text>
-
-                    <v-card-actions>
-                        <v-spacer></v-spacer>
-                        <v-btn color="blue darken-1" text @click="close">
-                            Close
-                        </v-btn>
-                        <v-btn
-                            v-if="itemDialog.mode === 'remove'"
-                            color="error" text
-                            @click="removeRecord"
-                            :disabled="!saveIsValidated">
-                            Remove
-                        </v-btn>
-                        <v-btn v-if="itemDialog.mode === 'edit'" color="blue darken-1" text @click="save" :disabled="!saveIsValidated">
-                            Save
-                        </v-btn>
-                    </v-card-actions>
-                </v-card>
-            </v-dialog>
         </v-container>
     </v-app>
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
@@ -169,167 +113,18 @@
                     headers: [
                         { text: 'Record id', value: 'id', hidden: true, filter: this.idFilter, filterKeyword: '', shouldHideEmpty: false, width: 120, },
                         { text: 'Update count', value: 'update_count', hidden: true, shouldHideEmpty: false, width: 10, },
-                        { text: 'Raw Material', value: 'rawMaterial', hidden: true, filter: this.rawMaterialFilter, filterKeyword: '', shouldHideEmpty: false, width: 150 },
-                        { text: 'Name', value: 'name', hidden: true, filter: this.nameFilter, filterKeyword: '', shouldHideEmpty: false },
-                        { text: 'Message', value: 'message', hidden: false, filter: this.nameFilter, filterKeyword: '', shouldHideEmpty: false },
-                        { text: 'Service', value: 'service', hidden: false, filter: this.nameFilter, filterKeyword: '', shouldHideEmpty: false },
-                        { text: 'Path', value: 'path', hidden: false, filter: this.nameFilter, filterKeyword: '', shouldHideEmpty: false },
-                        { text: 'Formula', value: 'formula', hidden: true, filter: this.formulaFilter, filterKeyword: '', shouldHideEmpty: false , width: 150 },
-                        { text: 'Space Group', value: 'spaceGroup', hidden: true, filter: this.spaceGroupFilter, filterKeyword: '', shouldHideEmpty: false },
-                        // { text: 'Space Group ID', value: 'spaceGroupId', hidden: true },
-                        { text: 'Crystal Structure', value: 'crystalStructure', hidden: true, filter: this.crystalStructureFilter, filterKeyword: '', shouldHideEmpty: false },
-                        // { text: 'Crystal Structure ID', value: 'crystalStructureId', hidden: true },
-                        { text: 'Unit Cell Type', value: 'unitCellType', hidden: true, filter: this.unitCellTypeFilter, filterKeyword: '', shouldHideEmpty: false },
-                        // { text: 'Unit Cell Type ID', value: 'unitCellTypeId', hidden: true },
-                        { text: 'Doping', value: 'doping', hidden: true, filter: this.dopingFilter, filterKeyword: '', shouldHideEmpty: false },
-                        { text: 'Shape', value: 'shape', hidden: true, filter: this.shapeFilter, filterKeyword: '', shouldHideEmpty: false },
-                        { text: 'Variables', value: 'variables', hidden: true, filter: this.variablesFilter, filterKeyword: '', shouldHideEmpty: false },
-                        { text: 'Material Class', value: 'materialClass', hidden: true, filter: this.materialClassFilter, filterKeyword: '', shouldHideEmpty: false },
-                        { text: 'Other Information', value: 'fabrication', hidden: true, filter: this.fabricationFilter, filterKeyword: '', shouldHideEmpty: false },
-                        { text: 'Substrate', value: 'substrate', hidden: true, filter: this.substrateFilter, filterKeyword: '', shouldHideEmpty: false },
-                        { text: 'Critical Temperature', value: 'criticalTemperature', hidden: true, filter: this.criticalTemperatureFilter, filterKeyword: '', shouldHideEmpty: false, sort: this.sortByPhysicalQuantity },
-                        // { text: 'Critical TemperatureId', value: 'criticalTemperatureId', hidden: true },
-                        { text: 'Applied Pressure', value: 'appliedPressure', hidden: true, filter: this.appliedPressureFilter, filterKeyword: '', shouldHideEmpty: false, sort: this.sortByPhysicalQuantity },
-                        // { text: 'Applied Pressure ID', value: 'appliedPressureId', hidden: true },
-                        { text: 'Measurement Method', value: 'criticalTemperatureMeasurementMethod', hidden: true, filter: this.measurementMethodFilter, filterKeyword: '', shouldHideEmpty: false },
-                        // { text: 'Measurement MethodId', value: 'measurementMethodId', hidden: true },
-                        {#{ text: 'Link Type', value: 'linkType', hidden: true, filter: this.linkTypeFilter, filterKeyword: '', shouldHideEmpty: false },#}
-                        { text: 'Section', value: 'section', hidden: true, filter: this.sectionFilter, filterKeyword: '', shouldHideEmpty: false },
-                        { text: 'Subsection', value: 'subsection', hidden: true, filter: this.subsectionFilter, filterKeyword: '', shouldHideEmpty: false },
-                        {#{ text: 'Path', value: 'path', hidden: true, filter: this.pathFilter, filterKeyword: '', shouldHideEmpty: false },#}
-                        {#{ text: 'Filename', value: 'filename', hidden: true, filter: this.filenameFilter, filterKeyword: '', shouldHideEmpty: false },#}
+                        { text: 'Message', value: 'message', hidden: false, filter: this.messageFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Service', value: 'service', hidden: false, filter: this.serviceFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Path', value: 'path', hidden: false, filter: this.pathFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'Document', value: 'hash', hidden: false, filter: this.hashFilter, filterKeyword: "{{hash}}", width: 120, shouldHideEmpty: false },
                         { text: 'Timestamp', value: 'timestamp', hidden: false, filter: this.timestampFilter, filterKeyword: '', shouldHideEmpty: false },
-                        { text: 'DOI', value: 'doi', hidden: true, filter: this.doiFilter, filterKeyword: '', shouldHideEmpty: false },
-                        { text: 'Authors', value: 'authors', width: 300, hidden: true, filter: this.authorsFilter, filterKeyword: '', shouldHideEmpty: false },
-                        { text: 'Title', value: 'title', width:  500, hidden: true, filter: this.titleFilter, filterKeyword: '', shouldHideEmpty: false },
-                        { text: 'Publisher', value: 'publisher', hidden: true, filter: this.publisherFilter, filterKeyword: '', shouldHideEmpty: false },
-                        { text: 'Journal', value: 'journal', hidden: true, filter: this.journalFilter, filterKeyword: '', shouldHideEmpty: false },
-                        { text: 'Year', value: 'year', hidden: true, filter: this.yearFilter, filterKeyword: '', shouldHideEmpty: false },
-                        { text: 'Sentence', value: 'sentence', width: 200, hidden: true, filter: this.sentenceFilter},
-                        {
-                            text: 'Type', value: 'type', hidden: true, filter: this.typeFilter, filterKeyword: 'all', width: 80,
-                            radioGroup: [{
-                                value: 'all',
-                                icon: 'mdi-filter-off'
-                           }, {
-                                value: 'manual',
-                                icon: 'mdi-human'
-                            }, {
-                                value: 'automatic',
-                                icon: 'mdi-robot'
-                            },]
-                        },
-                        { text: 'Latest error type', value: 'error_type', hidden: true, filter: this.hashFilter, shouldHideEmpty: false },
-                        {
-                            text: 'Status', value: 'status', sortable: false, hidden: true, filter: this.statusFilter, filterKeyword: 'all', width: 80,
-                            radioGroup: [{
-                                value: 'all',
-                                icon: 'mdi-filter-off'
-                            }, {
-                                value: 'valid',
-                                icon: 'mdi-thumb-up'
-                            }, {
-                                value: 'invalid',
-                                icon: 'mdi-thumb-down'
-                            },]
-                        },
                         {
                             text: 'Status', value: 'status', sortable: false, hidden: false, filter: this.statusFilter, filterKeyword: 'all', width: 80,
-                            // radioGroup is obsolete of the status header
-                            radioGroup: [
-                                { value: 'all',       icon: 'mdi-filter-off' },
-                                { value: 'new',       icon: 'mdi-new-box' },
-                                { value: 'curated',   icon: 'mdi-auto-fix' },
-                                { value: 'validated', icon: 'mdi-thumb-up' },
-                                { value: 'invalid',   icon: 'mdi-thumb-down' }
-                            ],
                             selectItems: [
                                 'all', 'any error'
                             ]
                         },
-                        { text: 'Actions', value: 'actions', sortable: false, hidden: true },
-                        // { text: 'Doc URL', value: 'doc_url', hidden: true},
-                        // { text: 'ID', value: 'id', hidden: true},
-                        // { text: 'Material ID', value: 'materialId', hidden: true},
                     ],
-                    rowsOnItemEditDialog: [{
-                        config: {
-                            cols: 4,
-                        },
-                        cols: [{
-                            key: 'rawMaterial',
-                        }, {
-                            key: 'id',
-                            disabled: true,
-                        }, {
-                            key: 'error_type',
-                            label: '*Error type',
-                            rules: [(value) => !!value || 'This field is required'],
-                            errorMessages: [],
-                            selectBoxItems: ['From table', 'Extraction', 'Linking', 'Tc classification', 'Composition resolution' ]
-                        }]
-                    }, {
-                        config: {
-                            cols: null,
-                        },
-                        cols: [{
-                            key: 'formula',
-                        },{
-                            key: 'variables',
-                        },{
-                            key: 'criticalTemperature',
-                        },{
-                            key: 'appliedPressure',
-                        },{
-                            key: 'criticalTemperatureMeasurementMethod',
-                        },]
-                    }, {
-                        config: {
-                            cols: null,
-                        },
-                        cols: [{
-                            key: 'spaceGroup',
-                        },{
-                            key: 'crystalStructure',
-                        },{
-                            key: 'unitCellType',
-                        },{
-                            key: 'doping',
-                        },{
-                            key: 'shape',
-                        },{
-                            key: 'fabrication',
-                        },{
-                            key: 'substrate',
-                        },]
-                    }, {
-                        config: {
-                            cols: null,
-                        },
-                        cols: [{
-                            key: 'hash',
-                            disabled: true,
-                        },{
-                            key: 'doi',
-                            disabled: true,
-                        },{
-                            key: 'authors',
-                            disabled: true,
-                        },{
-                            key: 'title',
-                            disabled: true,
-                        },{
-                            key: 'publisher',
-                            disabled: true,
-                        },{
-                            key: 'journal',
-                            disabled: true,
-                        },{
-                            key: 'year',
-                            disabled: true,
-                        },]
-                    }],
                     items: [],
                     rules: {
                         required: value => !!value || 'Required.',
@@ -369,18 +164,6 @@
                         })
                     ))
                 },
-                itemDialogTitle() {
-                    switch (this.itemDialog.mode) {
-                        case 'edit':
-                            return 'Edit record'
-                        case 'new':
-                            return 'Add new record'
-                        case 'remove':
-                            return 'Remove record'
-                        case 'view':
-                            return 'View record'
-                    }
-                }
             },
             mounted() {
                 this.loadItems()
@@ -428,68 +211,11 @@
                 hasChangedCurrentItems(items) {
                     this.filteredItems = items
                 },
-                rawMaterialFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.rawMaterial, item.rawMaterial)
-                },
                 nameFilter(_, __, item) {
                     return this.keywordFilter(this.headerObject.name, item.name)
                 },
-                formulaFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.formula, item.formula)
-                },
-                spaceGroupFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.spaceGroup, item.spaceGroup)
-                },
-                crystalStructureFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.crystalStructure, item.crystalStructure)
-                },
-                unitCellTypeFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.unitCellType, item.unitCellType)
-                },
-                dopingFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.doping, item.doping)
-                },
-                shapeFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.shape, item.shape)
-                },
-                variablesFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.variables, item.variables)
-                },
-                materialClassFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.materialClass, item.materialClass)
-                },
-                fabricationFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.fabrication, item.fabrication)
-                },
-                substrateFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.substrate, item.substrate)
-                },
-                criticalTemperatureFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.criticalTemperature, item.criticalTemperature)
-                },
-                appliedPressureFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.appliedPressure, item.appliedPressure)
-                },
-                criticalTemperatureMeasurementMethodFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.criticalTemperatureMeasurementMethod, item.criticalTemperatureMeasurementMethod)
-                },
-                linkTypeFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.linkType, item.linkType)
-                },
-                sectionFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.section, item.section)
-                },
-                subsectionFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.subsection, item.subsection)
-                },
-                sentenceFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.sentence, item.sentence)
-                },
                 pathFilter(_, __, item) {
                     return this.keywordFilter(this.headerObject.path, item.path)
-                },
-                filenameFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.filename, item.filename)
                 },
                 hashFilter(_, __, item) {
                     return this.keywordFilter(this.headerObject.hash, item.hash)
@@ -500,23 +226,8 @@
                 timestampFilter(_, __, item) {
                     return this.keywordFilter(this.headerObject.timestamp, item.timestamp)
                 },
-                doiFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.doi, item.doi)
-                },
-                authorsFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.authors, item.authors)
-                },
-                titleFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.title, item.title)
-                },
-                publisherFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.publisher, item.publisher)
-                },
-                journalFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.journal, item.journal)
-                },
-                yearFilter(_, __, item) {
-                    return this.keywordFilter(this.headerObject.year, item.year)
+                messageFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.message, item.message)
                 },
                 keywordFilter(header, target) {
                     const keyword = this.sanitizeString(header.filterKeyword)
@@ -559,123 +270,8 @@
                             return item.status === keyword
                     }
                 },
-                flagFilter(value, search, item) {
-                    const keyword = this.headerObject.flag.filterKeyword
-                    switch (keyword) {
-                        case 'all':
-                            return true
-                        case 'flag':
-                            return item.flag
-                        case 'unflag':
-                            return !item.flag
-                    }
-                },
-                sortByPhysicalQuantity(a, b) {
-                    try {
-                        a = math.unit(a)
-                    } catch {
-                        return -1
-                    }
-                    try {
-                        b = math.unit(b)
-                    } catch {
-                        return 1
-                    }
-                    return math.compare(a, b)
-                },
-                openItemDialog(item, mode) {
-                    // make a deep copy so that the record is not updated in the table
-                    this.editedItem = JSON.parse(JSON.stringify(item))
-                    this.itemDialog = {
-                        shouldShow: true,
-                        mode: mode
-                    }
-                },
-                openCreateItemDialog(item) {
-                    let newItem = {}
-                    let fields = ['hash', 'doi', "authors", "title", "publisher", "journal", "year"]
-
-                    fields.forEach(function (field) {
-                        newItem[field] = item[field]
-                    })
-                    this.editedItem = newItem
-                    this.itemDialog = {
-                        shouldShow: true,
-                        mode: 'new'
-                    }
-                },
-                openItemDialogToRemove(item) {
-                    this.editedItem = JSON.parse(JSON.stringify(item))
-                    this.itemDialog = {
-                        shouldShow: true,
-                        mode: 'remove'
-                    }
-                },
-                close() {
-                    this.itemDialog.shouldShow = false
-                },
-                async save() {
-                    if (this.editedItem.id) {
-                        await this.updateItem()
-                    } else {
-                        await this.createItem()
-                    }
-                    this.loadItems()
-                },
-                async createItem() {
-                    const url = '{{ url_for("supercon.create_record") }}'
-                    try {
-                        await axios.post(url, this.editedItem)
-                        this.close()
-                    } catch (e) {
-                        console.error(e)
-                        window.alert(JSON.stringify(e.response.data))
-                    } finally {
-                        //
-                    }
-                },
-                async updateItem() {
-                    let url = '{{ url_for("supercon.update_record", id = "id") }}'
-                    url = url.replace(
-                        "id",
-                        this.editedItem.id
-                    )
-                    // delete as non-editable item
-                    delete this.editedItem.flag
-                    delete this.editedItem.status
-                    delete this.editedItem.type
-                    // Deletes sentenceIsExpanded field because this field is for only frontend. The backend doesn't allow an unknown field.
-                    delete this.editedItem.sentenceIsExpanded
-                    try {
-                        await axios.put(url, this.editedItem)
-                        this.close()
-                    } catch (e) {
-                        console.error(e)
-                        window.alert(JSON.stringify(e.response.data))
-                    } finally {
-                        //
-                    }
-                },
                 flagIsNotWritable(record) {
                     return record.type === 'manual' && record.status === 'validated'
-                },
-                async removeRecord() {
-                    let url = '{{ url_for("supercon.delete_record", id="record_id") }}'
-                    url = url.replace(
-                        "record_id",
-                        this.editedItem.id
-                    )
-
-                    try {
-                        await axios.delete(url, {})
-                        this.loadItems()
-                        this.itemDialog.shouldShow = false
-                    } catch (e) {
-                        console.error(e)
-                        window.alert(JSON.stringify(e.response.data))
-                    } finally {
-                        //
-                    }
                 },
                 getItemClass(item) {
                     const store = itemClassStore
