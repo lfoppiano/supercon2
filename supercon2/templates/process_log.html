@@ -63,12 +63,12 @@
                 </template>
                 <template v-slot:item.hash="{ item }">
                     <v-row>
-{#                        <a :href="base_url + 'document/' + item.hash"#}
-{#                            target="_blank"#}
-{#                            :style="{'text-decoration': 'none'}"#}
-{#                            class="ma-1" title="View document">#}
+                        <a :href="base_url + 'pdf/' + item.hash"
+                            target="_blank"
+                            :style="{'text-decoration': 'none'}"
+                            class="ma-1" title="View document">
                             [[ item.hash ]]
-{#                        </a>#}
+                        </a>
                         <v-icon
                             @click="headerObject.hash.filterKeyword = item.hash"
                             :title="'Filter by this documenft ID: ' + item.hash">
