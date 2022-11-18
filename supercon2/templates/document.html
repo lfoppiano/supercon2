@@ -40,7 +40,8 @@
                 <template v-slot:body.prepend>
                     <tr>
                         <td v-for="header in showHeaders" :key="header.value">
-                            <v-radio-group v-model="header.filterKeyword" v-if="header.value === 'type'" dense
+                            <div v-if="header.value === 'go_to_pdf'"></div>
+                            <v-radio-group v-model="header.filterKeyword" v-else-if="header.value === 'type'" dense
                                 hide-details>
                                 <v-row class="pb-1" v-for="radio in headerObject.type.radioGroup">
                                     <v-radio dense :value="radio.value" class="ma-0">
@@ -74,10 +75,8 @@
                         </td>
                     </tr>
                 </template>
-                <template v-slot:item.name="{ item }">
-                    <a :href="'#' + item.materialId">
-                        ↓
-                    </a>
+                <template v-slot:item.go_to_pdf="{ item }">
+                    <v-icon @click="goToPdf(item.materialId)">mdi-arrow-down</v-icon>
                 </template>
                 <template v-slot:item.hash="{ item }">
                     <v-row>
@@ -214,6 +213,16 @@
                                     'border': '2px solid',
                                     'border-color': colors[getPlainType(span.type)]
                                 }" :id="span.id"></div>
+                                <v-icon :style="{
+                                    'scroll-behavior': 'smooth',
+                                    'position': 'absolute',
+                                    'left': box.x2 * scale,
+                                    'top': (Math.floor(pages[0].height) * (box.page-1) + box.y - 5) * scale,
+                                    'opacity': '0.8',
+                                    'z-index': 1,
+                                }" color="red" v-if="span.id === selectedSpanId" @click="selectedSpanId = ''" title="hide this icon">
+                                    mdi-lightbulb-on
+                                </v-icon>
                             </div>
                         </div>
                     </div>
@@ -265,9 +274,12 @@
                     itemsPerPageOptions: [25, 50, 100],
                     sortBy: ['hash'],
                     selectedItems: [],
+                    selectedSpanId: "",
                     filteredItems: [],
                     selectedHeaders: [],
                     headers: [
+                        // why go_to_pdf is snakecase is that v-data-table's v-slot can not handle camel-case: https://github.com/vuetifyjs/vuetify/issues/11599
+                        { text: '#', value: 'go_to_pdf', hidden: false, sortable: false, shouldHideEmpty: false },
                         { text: 'Raw Material', value: 'rawMaterial', hidden: false, filter: this.rawMaterialFilter, filterKeyword: '', shouldHideEmpty: false, width: 150 },
                         { text: 'Name', value: 'name', hidden: false, filter: this.nameFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'Formula', value: 'formula', hidden: false, filter: this.formulaFilter, filterKeyword: '', shouldHideEmpty: false , width: 150 },
@@ -456,6 +468,16 @@
                 this.loadItems()
             },
             methods: {
+                goToPdf(spanId) {
+                    const viewer = document.getElementById('pdfViewer')
+                    this.selectedSpanId = spanId
+                    const span = document.getElementById(spanId)
+                    console.log({span})
+                    window.scrollTo({
+                        top: span.offsetTop + viewer.offsetTop,
+                        behavior: 'smooth'
+                    })
+                },
                 copyTextToClipboard(text) {
                     navigator.clipboard.writeText(text)
                 },
