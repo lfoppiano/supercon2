@@ -318,83 +318,51 @@
                         // { text: 'ID', value: 'id', hidden: true},
                         // { text: 'Material ID', value: 'materialId', hidden: true},
                     ],
-                    rowsOnItemEditDialog: [{
-                        config: {
-                            cols: 4,
-                        },
-                        cols: [{
-                            key: 'rawMaterial',
+                    rowsOnItemEditDialog: [
+                        {
+                            config: { cols: 4 },
+                            cols: [
+                                { key: 'rawMaterial'},
+                                { key: 'id', disabled: true },
+                                {
+                                    key: 'error_type', label: '*Error type', rules: [(value) => !!value || 'This field is required'],
+                                    errorMessages: [],
+                                    selectBoxItems: ['From table', 'Extraction', 'Linking', 'Tc classification', 'Composition resolution', 'Value resolution']
+                                }
+                            ]
                         }, {
-                            key: 'id',
-                            disabled: true,
+                            config: { cols: null },
+                            cols: [
+                                { key: 'formula' },
+                                { key: 'variables' },
+                                { key: 'criticalTemperature' },
+                                { key: 'appliedPressure' },
+                                { key: 'criticalTemperatureMeasurementMethod' }
+                            ]
                         }, {
-                            key: 'error_type',
-                            label: '*Error type',
-                            rules: [(value) => !!value || 'This field is required'],
-                            errorMessages: [],
-                            selectBoxItems: ['From table', 'Extraction', 'Linking', 'Tc classification', 'Composition resolution', 'Value resolution']
-                        }]
-                    }, {
-                        config: {
-                            cols: null,
-                        },
-                        cols: [{
-                            key: 'formula',
-                        },{
-                            key: 'variables',
-                        },{
-                            key: 'criticalTemperature',
-                        },{
-                            key: 'appliedPressure',
-                        },{
-                            key: 'criticalTemperatureMeasurementMethod',
-                        },]
-                    }, {
-                        config: {
-                            cols: null,
-                        },
-                        cols: [{
-                            key: 'spaceGroup',
-                        },{
-                            key: 'crystalStructure',
-                        },{
-                            key: 'unitCellType',
-                        },{
-                            key: 'doping',
-                        },{
-                            key: 'shape',
-                        },{
-                            key: 'fabrication',
-                        },{
-                            key: 'substrate',
-                        },]
-                    }, {
-                        config: {
-                            cols: null,
-                        },
-                        cols: [{
-                            key: 'hash',
-                            disabled: true,
-                        },{
-                            key: 'doi',
-                            disabled: true,
-                        },{
-                            key: 'authors',
-                            disabled: true,
-                        },{
-                            key: 'title',
-                            disabled: true,
-                        },{
-                            key: 'publisher',
-                            disabled: true,
-                        },{
-                            key: 'journal',
-                            disabled: true,
-                        },{
-                            key: 'year',
-                            disabled: true,
-                        },]
-                    }],
+                            config: { cols: null },
+                            cols: [
+                                { key: 'spaceGroup' },
+                                { key: 'crystalStructure' },
+                                { key: 'unitCellType' },
+                                { key: 'doping' },
+                                { key: 'shape' },
+                                { key: 'fabrication' },
+                                { key: 'substrate' },
+                            ]
+                        }, {
+                            config: { cols: null },
+                            cols: [
+                                { key: 'hash', disabled: true },
+                                { key: 'doi', disabled: true },
+                                { key: 'authors', disabled: true },
+                                { key: 'title', disabled: true },
+                                { key: 'publisher', disabled: true },
+                                { key: 'journal', disabled: true },
+                                { key: 'year', disabled: true },
+                            ]
+                        }
+                    ],
                     items: [],
                     rules: {
                         required: value => !!value || 'Required.',
