@@ -54,6 +54,10 @@
                                     </v-icon>
                                 </v-row>
                             </v-radio-group>
+                            <v-radio-group v-model="header.filterKeyword" v-else-if="header.value === 'error_type'" dense
+                                           hide-details>
+                                <v-select :items="headerObject.error_type.selectItems" v-model="header.filterKeyword"></v-select>
+                            </v-radio-group>
                             <v-radio-group v-model="header.filterKeyword" v-else-if="header.value === 'status'" dense
                                 hide-details>
                                 <v-select :items="headerObject.status.selectItems" v-model="header.filterKeyword"></v-select>
@@ -313,7 +317,10 @@
                                 icon: 'mdi-robot'
                             },]
                         },
-                        { text: 'Latest error type', value: 'error_type', hidden: false, filter: this.hashFilter, shouldHideEmpty: false },
+                        {
+                            text: 'Latest error type', value: 'error_type', hidden: false, filter: this.errorTypeFilter, filterKeyword: 'all', shouldHideEmpty: false,
+                            selectItems: [], // filled by loadErrorTypes method
+                        },
                         {
                             text: 'Status', value: 'status', sortable: false, hidden: true, filter: this.statusFilter, filterKeyword: 'all', width: 80,
                             radioGroup: [{
@@ -524,6 +531,7 @@
                             return col.key === "error_type"
                         });
                         dialog.selectBoxItems= errorTypes;
+                        this.headerObject.error_type.selectItems = new Array("all", ...Object.values(data.data))
                         return
                     }).finally(() => {
                         //
@@ -731,6 +739,15 @@
                             return true
                         default:
                             return item.type === keyword
+                    }
+                },
+                errorTypeFilter(value, search, item) {
+                    const keyword = this.headerObject.error_type.filterKeyword
+                    switch (keyword) {
+                        case 'all':
+                            return true
+                        default:
+                            return value === keyword
                     }
                 },
                 statusFilter(value, search, item) {
