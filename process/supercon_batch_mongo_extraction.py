@@ -92,11 +92,23 @@ class MongoSuperconProcessor:
             try:
                 document_id = db.document.insert_one(output_json).inserted_id
             except DocumentTooLarge as e:
-                status_info = {'status': None, 'message': str(e), 'timestamp': datetime.utcnow(), 'hash': hash}
+                status_info = {
+                    'status': None,
+                    'path': str(output_original_path),
+                    'message': str(e),
+                    'timestamp': datetime.utcnow(),
+                    'hash': hash
+                }
                 self.queue_logger.put(status_info, block=True)
                 continue
             except UnicodeEncodeError as ue:
-                status_info = {'status': None, 'message': str(ue), 'timestamp': datetime.utcnow(), 'hash': hash}
+                status_info = {
+                    'status': None,
+                    'path': str(output_original_path),
+                    'message': str(ue),
+                    'timestamp': datetime.utcnow(),
+                    'hash': hash
+                }
                 self.queue_logger.put(status_info, block=True)
                 continue
 
