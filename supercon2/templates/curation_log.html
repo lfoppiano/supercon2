@@ -45,6 +45,10 @@
                                     </v-icon>
                                 </v-row>
                             </v-radio-group>
+                            <v-radio-group v-model="header.filterKeyword" v-else-if="header.value === 'error_type'" dense
+                                           hide-details>
+                                <v-select :items="headerObject.error_type.selectItems" v-model="header.filterKeyword"></v-select>
+                            </v-radio-group>
                             <v-radio-group v-model="header.filterKeyword" v-else-if="header.value === 'status'" dense
                                 hide-details>
                                 <v-select :items="headerObject.status.selectItems" v-model="header.filterKeyword"></v-select>
@@ -217,38 +221,15 @@
                                 icon: 'mdi-robot'
                             },]
                         },
-                        { text: 'Latest error type', value: 'error_type', hidden: false, filter: this.hashFilter, shouldHideEmpty: false },
-                        {
-                            text: 'Status', value: 'status', sortable: false, hidden: true, filter: this.statusFilter, filterKeyword: 'all', width: 80,
-                            radioGroup: [{
-                                value: 'all',
-                                icon: 'mdi-filter-off'
-                            }, {
-                                value: 'valid',
-                                icon: 'mdi-thumb-up'
-                            }, {
-                                value: 'invalid',
-                                icon: 'mdi-thumb-down'
-                            },]
-                        },
+                        { text: 'Latest error type', value: 'error_type', hidden: false, filter: this.errorTypeFilter,
+                            filterKeyword: 'all',  shouldHideEmpty: false },
                         {
                             text: 'Status', value: 'status', sortable: false, hidden: false, filter: this.statusFilter, filterKeyword: 'all', width: 80,
-                            // radioGroup is obsolete of the status header
-                            radioGroup: [
-                                { value: 'all',       icon: 'mdi-filter-off' },
-                                { value: 'new',       icon: 'mdi-new-box' },
-                                { value: 'curated',   icon: 'mdi-auto-fix' },
-                                { value: 'validated', icon: 'mdi-thumb-up' },
-                                { value: 'invalid',   icon: 'mdi-thumb-down' }
-                            ],
                             selectItems: [
                                 'all', 'new', 'curated', 'validated', 'invalid', 'obsolete', 'removed'
                             ]
                         },
                         { text: 'Actions', value: 'actions', sortable: false, hidden: true },
-                        // { text: 'Doc URL', value: 'doc_url', hidden: true},
-                        // { text: 'ID', value: 'id', hidden: true},
-                        // { text: 'Material ID', value: 'materialId', hidden: true},
                     ],
                     rowsOnItemEditDialog: [{
                         config: {
@@ -381,10 +362,7 @@
             },
             mounted() {
                 this.loadItems()
-                {#document.addEventListener('keydown', this.onKeyDown)#}
-            },
-            beforeDestroy() {
-                {#document.removeEventListener('keydown', this.onKeyDown)#}
+                this.loadErrorTypes()
             },
             async beforeMount() {
                 let url = '{{ url_for("supercon.get_version") }}'
@@ -414,6 +392,23 @@
                         return
                     }).finally(() => {
                         this.isLoading = false
+                    })
+                },
+                loadErrorTypes() {
+                    const url = '{{ url_for("supercon.get_error_types") }}'
+                    axios.get(url).then((data) => {
+                        let errorTypes = [];
+                        for (var prop in data.data) {
+                            errorTypes.push ({'value': prop, 'text': data.data[prop]})
+                        }
+                        let dialog = this.rowsOnItemEditDialog[0].cols.find(col => {
+                            return col.key === "error_type"
+                        });
+                        dialog.selectBoxItems= errorTypes;
+                        this.headerObject.error_type.selectItems = new Array("all", ...Object.values(data.data))
+                        return
+                    }).finally(() => {
+                        //
                     })
                 },
                 hasChangedPageCount(pageCount) {
@@ -543,6 +538,15 @@
                             return true
                         default:
                             return item.type === keyword
+                    }
+                },
+                errorTypeFilter(value, search, item) {
+                    const keyword = this.headerObject.error_type.filterKeyword
+                    switch (keyword) {
+                        case 'all':
+                            return true
+                        default:
+                            return value === keyword
                     }
                 },
                 statusFilter(value, search, item) {

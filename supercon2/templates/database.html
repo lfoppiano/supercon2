@@ -530,7 +530,7 @@
                         let dialog = this.rowsOnItemEditDialog[0].cols.find(col => {
                             return col.key === "error_type"
                         });
-                        dialog.selectBoxItems= errorTypes;
+                        dialog.selectBoxItems = errorTypes;
                         this.headerObject.error_type.selectItems = new Array("all", ...Object.values(data.data))
                         return
                     }).finally(() => {
