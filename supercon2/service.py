@@ -171,7 +171,7 @@ def replace_empty_key(input):
 @input(Record)
 @output(UpdatedRecord)
 def update_record(id, record: Union[Record, dict]):
-    object_id = validateObjectId(id)
+    object_id = validate_objectId(id)
     validate_record(record)
     db = connect_and_get_db()
 
@@ -532,7 +532,7 @@ def get_binary(hash):
 @bp.route('/record/<id>', methods=['GET'])
 @output(Record)
 def get_record(id):
-    object_id = validateObjectId(id)
+    object_id = validate_objectId(id)
     db = connect_and_get_db()
     record = db.get_collection("tabular").find_one({"_id": object_id})
 
@@ -570,7 +570,7 @@ def _delete_record(id, error_type, db):
 @bp.route('/record/<id>', methods=['DELETE'])
 @output(UpdatedRecord)
 def delete_record(id):
-    object_id = validateObjectId(id)
+    object_id = validate_objectId(id)
     db = connect_and_get_db()
 
     error_type = request.args.get('error_type')
@@ -592,7 +592,7 @@ def delete_record(id):
 @bp.route('/record/<id>/status', methods=['GET'])
 @output(Flag)
 def get_record_status(id):
-    object_id = validateObjectId(id)
+    object_id = validate_objectId(id)
     db = connect_and_get_db()
     record = db.get_collection("tabular").find_one({"_id": object_id}, {'_id': 0, 'type': 1, 'status': 1})
 
@@ -603,7 +603,7 @@ def get_record_status(id):
 @output(Flag)
 def mark_record_invalid(id):
     """The record is marked as invalid"""
-    object_id = validateObjectId(id)
+    object_id = validate_objectId(id)
     db = connect_and_get_db()
     tabular_collection = db.get_collection("tabular")
     record = tabular_collection.find_one({"_id": object_id, "status": {"$in": VALID_STATUSES}})
@@ -623,7 +623,7 @@ def mark_record_invalid(id):
 @output(Flag)
 def mark_record_validated(id):
     """The record is marked as correct"""
-    object_id = validateObjectId(id)
+    object_id = validate_objectId(id)
     db = connect_and_get_db()
     return _mark_validated(db, object_id)
 
@@ -632,7 +632,7 @@ def _mark_validated(db, id: ObjectId):
     tabular_collection = db.get_collection("tabular")
     record = tabular_collection.find_one({"_id": id, "status": {"$in": VALID_STATUSES}})
     if record is None:
-        return "Record with id=" + id + " not found.", 404
+        return "Record with id=" + str(id) + " not found.", 404
 
     new_status = 'validated'
     new_type = 'manual'
@@ -643,7 +643,7 @@ def _mark_validated(db, id: ObjectId):
     return changes, 200
 
 
-def validateObjectId(id):
+def validate_objectId(id):
     try:
         return ObjectId(id)
     except InvalidId as e:
@@ -654,7 +654,7 @@ def validateObjectId(id):
 @output(Flag)
 def reset_record(id):
     """Reset the status of the record"""
-    object_id = validateObjectId(id)
+    object_id = validate_objectId(id)
     db = connect_and_get_db()
     return _reset_record(db, object_id)
 
@@ -694,7 +694,7 @@ def get_training_data():
 
 @bp.route('/training/data/<id>', methods=['GET'])
 def export_training_data(id):
-    object_id = validateObjectId(id)
+    object_id = validate_objectId(id)
     db = connect_and_get_db()
     training_data_collection = db.get_collection("training_data")
 
@@ -739,7 +739,7 @@ def get_training_data_by_status(status, db):
 
 
 def get_training_data_by_id_and_status(record_id, status, db):
-    id = validateObjectId(record_id)
+    id = validate_objectId(record_id)
     training_data_collection = db.get_collection("training_data")
     training_data = training_data_collection.find_one({'_id': id, 'status': status}, {'tokens': 0})
     if not training_data:
@@ -971,7 +971,7 @@ def delete_training_data_record(id):
     db = connect_and_get_db()
     training_data_collection = db.get_collection("training_data")
 
-    object_id = validateObjectId(id)
+    object_id = validate_objectId(id)
     result = training_data_collection.delete_one({"_id": object_id})
 
     return Response(json.dumps({"deleted": result.deleted_count}, default=json_serial), mimetype="application/json")
