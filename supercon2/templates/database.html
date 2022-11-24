@@ -319,7 +319,7 @@
                         },
                         {
                             text: 'Latest error type', value: 'error_type', hidden: false, filter: this.errorTypeFilter, filterKeyword: 'all', shouldHideEmpty: false,
-                            selectItems: [], // filled by loadErrorTypes method
+                            selectItems: [{"value": "extraction", "text": "Extraction"}], // filled by loadErrorTypes method
                         },
                         {
                             text: 'Status', value: 'status', sortable: false, hidden: true, filter: this.statusFilter, filterKeyword: 'all', width: 80,
@@ -524,14 +524,14 @@
                     const url = '{{ url_for("supercon.get_error_types") }}'
                     axios.get(url).then((data) => {
                         let errorTypes = [];
-                        for (var prop in data.data) {
+                        for (let prop in data.data) {
                             errorTypes.push ({'value': prop, 'text': data.data[prop]})
                         }
                         let dialog = this.rowsOnItemEditDialog[0].cols.find(col => {
                             return col.key === "error_type"
                         });
                         dialog.selectBoxItems = errorTypes;
-                        this.headerObject.error_type.selectItems = new Array("all", ...Object.values(data.data))
+                        this.headerObject.error_type.selectItems = new Array({"value":"all", text:"All"}).concat(errorTypes)
                         return
                     }).finally(() => {
                         //
