@@ -100,17 +100,39 @@ class MongoSuperconProcessor:
                     'hash': hash
                 }
                 self.queue_logger.put(status_info, block=True)
+                if self.verbose:
+                    print(e)
                 continue
             except UnicodeEncodeError as ue:
-                status_info = {
-                    'status': None,
-                    'path': str(output_original_path),
-                    'message': str(ue),
-                    'timestamp': datetime.utcnow(),
-                    'hash': hash
-                }
-                self.queue_logger.put(status_info, block=True)
-                continue
+
+                try:
+                    if self.verbose:
+                        print("Invalid unicode detected. Trying to remove surrogates. ")
+
+                    if 'passages' in output_json:
+                        for passage in output_json['passages']:
+                            passage['text'] = passage['text'].encode('utf-16', 'backslashreplace').decode('utf-16')
+                            if 'spans' in passage:
+                                for span in passage['spans']:
+                                    span['text'] = span['text'].encode('utf-16', 'backslashreplace').decode('utf-16')
+
+                            if 'tokens' in passage:
+                                for token in passage['tokens']:
+                                    token['text'] = token['text'].encode('utf-16', 'backslashreplace').decode('utf-16')
+
+                    document_id = db.document.insert_one(output_json).inserted_id
+                except UnicodeEncodeError as ue2:
+                    status_info = {
+                        'status': None,
+                        'path': str(output_original_path),
+                        'message': str(ue),
+                        'timestamp': datetime.utcnow(),
+                        'hash': hash
+                    }
+                    self.queue_logger.put(status_info, block=True)
+                    if self.verbose:
+                        print(ue)
+                    continue
 
             if self.verbose:
                 print("Storing binary ", hash)
