@@ -1,4 +1,6 @@
 import json
+import urllib
+from collections import OrderedDict
 from datetime import datetime
 from typing import Union
 
@@ -6,17 +8,18 @@ import gridfs
 from apiflask import APIBlueprint, abort, output, input
 from bson import ObjectId
 from bson.errors import InvalidId
-from flask import render_template, Response, url_for
+from flask import render_template, Response, url_for, request
+from pymongo import UpdateOne
 
 from commons.correction_utils import write_correction, write_raw_training_data
 from commons.label_studio_commons import to_label_studio_format_single
 from commons.mongo_utils import connect_mongo
 from process.utils import json_serial
-from supercon2.schemas import Publishers, Record, Years, Flag, RecordParamsIn, UpdatedRecord
-from supercon2.utils import load_config_yaml
+from supercon2.schemas import Record, Flag, RecordParamsIn, UpdatedRecord, Publishers, Years, ProcessRecord
 
 bp = APIBlueprint('supercon', __name__)
 config = []
+VALID_STATUSES = ["invalid", "new", "curated", "validated"]
 
 
 @bp.route('/version')
@@ -48,12 +51,12 @@ def read_info_from_file(file, default="unknown"):
 
 @bp.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', version=get_version()['version'])
 
 
-@bp.route('/<page>')
-def render_page(page):
-    return render_template(page)
+# @bp.route('/<page>')
+# def render_page(page):
+#     return render_template(page)
 
 
 # @bp.route('/annotation/feedback', methods=['POST'])
@@ -94,7 +97,7 @@ def get_stats():
     tabular_collection = db.get_collection("tabular")
 
     pipeline_group_by_publisher = [
-        {"$match": {"type": "automatic", "status": "valid"}},
+        {"$match": {"type": "automatic", "status": {"$in": VALID_STATUSES}}},
         {"$group": {"_id": "$publisher", "count_records": {"$sum": 1}, "hashes": {"$addToSet": "$hash"}}},
         {"$project": {"_id": 1, "hashes": 1, "count_records": 1, "count_docs": {"$size": "$hashes"}}},
         {"$project": {"hashes": 0}},
@@ -104,7 +107,7 @@ def get_stats():
     by_publisher_fixed = replace_empty_key(by_publisher)
 
     pipeline_group_by_year = [
-        {"$match": {"type": "automatic", "status": "valid"}},
+        {"$match": {"type": "automatic", "status": {"$in": VALID_STATUSES}}},
         {"$group": {"_id": "$year", "count_records": {"$sum": 1}, "hashes": {"$addToSet": "$hash"}}},
         {"$project": {"_id": 1, "hashes": 1, "count_records": 1, "count_docs": {"$size": "$hashes"}}},
         {"$project": {"hashes": 0}},
@@ -114,7 +117,7 @@ def get_stats():
     by_year_fixed = replace_empty_key(by_year)
 
     pipeline_group_by_journal = [
-        {"$match": {"type": "automatic", "status": "valid"}},
+        {"$match": {"type": "automatic", "status": {"$in": VALID_STATUSES}}},
         {"$group": {"_id": "$journal", "count_records": {"$sum": 1}, "hashes": {"$addToSet": "$hash"}}},
         {"$project": {"_id": 1, "hashes": 1, "count_records": 1, "count_docs": {"$size": "$hashes"}}},
         {"$project": {"hashes": 0}},
@@ -124,7 +127,35 @@ def get_stats():
     by_journal_fixed = replace_empty_key(by_journal)
 
     return render_template("stats.html", by_publisher=by_publisher_fixed, by_year=by_year_fixed,
-                           by_journal=by_journal_fixed)
+                           by_journal=by_journal_fixed, version=get_version()['version'])
+
+
+@bp.route("/curation_log", methods=["GET"])
+def get_curation_log():
+    base_url = get_base_url(config)
+    return render_template("curation_log.html", version=get_version()['version'], base_url=base_url)
+
+
+@bp.route("/curation_log/document/<hash>", methods=["GET"])
+def get_curation_log_filter_by_document(hash):
+    base_url = get_base_url(config)
+    return render_template("curation_log.html", hash=hash, version=get_version()['version'], base_url=base_url)
+
+
+@bp.route("/process_log", methods=["GET"])
+def get_process_log():
+    base_url = get_base_url(config)
+    return render_template("process_log.html", version=get_version()['version'], base_url=base_url)
+
+
+@bp.route("/process_log/document/<hash>", methods=["GET"])
+def get_process_log_filter_by_document(hash):
+    base_url = get_base_url(config)
+    return render_template("process_log.html", hash=hash, version=get_version()['version'], base_url=base_url)
+
+
+def get_base_url(config):
+    return urllib.parse.urljoin(request.host_url, config['root-path'])
 
 
 def replace_empty_key(input):
@@ -140,7 +171,7 @@ def replace_empty_key(input):
 @input(Record)
 @output(UpdatedRecord)
 def update_record(id, record: Union[Record, dict]):
-    object_id = validateObjectId(id)
+    object_id = validate_objectId(id)
     validate_record(record)
     db = connect_and_get_db()
 
@@ -166,47 +197,82 @@ def find_latest(current_record, collection):
         return find_latest(next_record, collection)
 
 
-def _update_record(object_id: ObjectId, record: Union[Record, dict], db):
+def _update_record(object_id: ObjectId, new_doc: Union[Record, dict], db):
     tabular_collection = db.get_collection("tabular")
     document_collection = db.get_collection("document")
     training_data_collection = db.get_collection("training_data")
 
-    if 'id' in record:
-        del record['id']
+    if 'id' in new_doc:
+        del new_doc['id']
+    if 'sentence_decorated' in new_doc:
+        del new_doc['sentence_decorated']
 
-    old_record = tabular_collection.find_one({"_id": object_id})
-    if old_record['status'] == "obsolete":
-        latest_record = find_latest(old_record, tabular_collection)
+    old_doc = tabular_collection.find_one({"_id": object_id})
+    if old_doc['status'] == "obsolete":
+        latest_record = find_latest(old_doc, tabular_collection)
         message = "The record with id " + str(
             object_id) + " is obsolete. The latest updated record of the chain is" + str(
             latest_record['_id'])
         raise Exception(message)
 
-    new_id = None
+    new_doc_id = None
     training_data_id = None
     try:
-        new_id = write_correction(old_record, record, tabular_collection)
-        training_data_id = write_raw_training_data(old_record, new_id, document_collection, training_data_collection)
-        return new_id
+        # If there is an error type, we fetch it and add it to the record that will be marked obsolete
+        error_type = None
+        if 'error_type' in new_doc:
+            error_type = new_doc['error_type']
+            # del record['error_type']
+
+        new_doc_id = write_correction(old_doc, new_doc, tabular_collection, error_type=error_type)
+        training_data_id = write_raw_training_data(old_doc, new_doc_id, document_collection, training_data_collection,
+                                                   action="update")
+        return new_doc_id
     except Exception as e:
         # Roll back!
         print("Exception:", e, "Rolling back.")
-        rolling_back(new_id, old_record['_id'], training_data_id, tabular_collection, training_data_collection)
+        rollback(new_doc_id, old_doc, training_data_id, tabular_collection, training_data_collection)
         raise e
 
 
-def rolling_back(new_id, old_id, training_data_id, tabular_collection, training_data_collection):
+def rollback(new_id, old_doc, training_data_id, tabular_collection, training_data_collection):
     if training_data_id is not None:
         training_data_collection.delete_one({"_id": training_data_id})
 
     if new_id is not None:
         tabular_collection.delete_one({"_id": new_id})
+        query_set = {"status": old_doc['status']}
+        query_unset = {"previous": ""}
+
+        # When rolling back I might have the error type or not, in the previous record
+        if 'error_type' in old_doc:
+            query_set['error_type'] = old_doc['error_type']
+        else:
+            query_unset['error_type'] = ""
+
         tabular_collection.update_one(
-            {'_id': old_id},
+            {'_id': old_doc['_id']},
             {
-                "$set": {"status": "valid"},
-                "$unset": {"previous": ""}
+                "$set": query_set,
+                "$unset": query_unset
             }
+        )
+
+
+def rollback_delete(previous_record, training_data_id, tabular_collection, training_data_collection):
+    if training_data_id is not None:
+        training_data_collection.delete_one({"_id": training_data_id})
+
+    if previous_record is not None:
+        query_update = {"$set": {"status": previous_record['status']}}
+        if 'error_type' in previous_record:
+            query_update["$set"]["error_type"] = previous_record['error_type']
+
+        query_update['$set']['timestamp'] = previous_record['timestamp']
+
+        tabular_collection.update_one(
+            {'_id': previous_record['_id']},
+            query_update
         )
 
 
@@ -215,12 +281,29 @@ def rolling_back(new_id, old_id, training_data_id, tabular_collection, training_
 @output(Record)
 def create_record(record: Record):
     validate_record(record)
+    if 'timestamp' not in record:
+        record['timestamp'] = datetime.utcnow()
+
     new_id = add_record(record)
 
     return_info = UpdatedRecord()
     return_info.id = new_id
 
     return return_info
+
+
+@bp.route("/error_types", methods=["GET"])
+def get_error_types():
+    error_types = OrderedDict()
+
+    error_types['from_table'] = "From table"
+    error_types['extraction'] = "Extraction"
+    error_types['tc_classification'] = "Tc classification"
+    error_types['linking'] = "Linking"
+    error_types['composition_resolution'] = "Composition resolution"
+    error_types['value_resolution'] = "Value resolution"
+
+    return error_types
 
 
 def validate_record(record):
@@ -276,6 +359,64 @@ def get_tabular_from_path_by_type_year(type, year):
     return get_records(type, publisher=None, year=year)
 
 
+@bp.route("/records/document/<hash>", methods=["GET"])
+@output(Record(many=True))
+def get_records_by_document(hash):
+    return get_records(document=hash)
+
+
+@bp.route("/curation/records", methods=["GET"])
+@output(Record(many=True))
+def get_curation_records():
+    db = connect_and_get_db()
+
+    pipeline = [
+        # {"$match": {"previous": {"$exists": 1}, "status": {"$not": {"$in": ["empty", "new", "obsolete"]}}}}
+        {"$match": {"status": {"$not": {"$in": ["empty", "new", "obsolete"]}}}}
+    ]
+    entries = []
+    tabular_collection = db.get_collection("tabular")
+
+    cursor_aggregation = tabular_collection.aggregate(pipeline)
+
+    entities = []
+    for entry in cursor_aggregation:
+        entry['id'] = str(entry['_id'])
+
+        previous_id = None
+        if 'previous' in entry:
+            previous_id = entry['previous']
+            entry['previous'] = str(entry['previous'])
+
+        entities.append(entry)
+
+        count = 0
+        while previous_id is not None:
+            previous_record = tabular_collection.find_one({"_id": previous_id})
+            previous_id = previous_record['previous'] if 'previous' in previous_record else None
+            count += 1
+
+        entry['update_count'] = count
+
+    return entities
+
+
+@bp.route("/process/records", methods=["GET"])
+@output(ProcessRecord(many=True))
+def get_process_records():
+    db = connect_and_get_db()
+    logger_collection = db.get_collection("logger")
+
+    cursor = logger_collection.find()
+
+    entities = []
+    for entry in cursor:
+        entry['id'] = str(entry['_id'])
+        entities.append(entry)
+
+    return entities
+
+
 def get_records(type=None, status=None, document=None, publisher=None, year=None, start=-1, limit=-1):
     db = connect_and_get_db()
 
@@ -292,7 +433,7 @@ def get_records(type=None, status=None, document=None, publisher=None, year=None
         query['type'] = type
 
     if status is None:
-        query['status'] = {"$in": ['valid', 'invalid']}
+        query['status'] = {"$in": VALID_STATUSES}
     else:
         query['status'] = status
 
@@ -324,6 +465,14 @@ def get_records(type=None, status=None, document=None, publisher=None, year=None
         entry['title'] = entry['title'] if 'title' in entry and entry[
             'title'] is not None else ''
 
+        if 'sentence' in entry:
+            if 'spans' in entry:
+                entry['sentence_decorated'] = decorate_text_with_annotations(entry['sentence'], entry['spans'])
+            else:
+                entry['sentence_decorated'] = entry['sentence']
+        else:
+            entry['sentence'] = ""
+
         entries.append(entry)
 
         if type == "manual":
@@ -342,7 +491,14 @@ def get_records(type=None, status=None, document=None, publisher=None, year=None
 
 @bp.route("/database", methods=["GET"])
 def get_automatic_database():
-    return render_template("database.html")
+    base_url = get_base_url(config)
+    return render_template("database.html", base_url=base_url)
+
+
+@bp.route("/database/document/<hash>", methods=["GET"])
+def get_automatic_database_filter_by_document(hash):
+    base_url = get_base_url(config)
+    return render_template("database.html", hash=hash, base_url=base_url)
 
 
 @bp.route('/document/<hash>', methods=['GET'])
@@ -362,7 +518,7 @@ def get_annotations(hash):
 
 @bp.route('/pdf/<hash>', methods=['GET'])
 def get_binary(hash):
-    '''GET PDF / binary file '''
+    """GET PDF / binary file """
     db = connect_and_get_db()
     fs_binary = gridfs.GridFS(db, collection='binary')
 
@@ -376,7 +532,7 @@ def get_binary(hash):
 @bp.route('/record/<id>', methods=['GET'])
 @output(Record)
 def get_record(id):
-    object_id = validateObjectId(id)
+    object_id = validate_objectId(id)
     db = connect_and_get_db()
     record = db.get_collection("tabular").find_one({"_id": object_id})
 
@@ -384,23 +540,73 @@ def get_record(id):
     return record
 
 
-@bp.route('/record/<id>/flags', methods=['GET'])
+def _delete_record(id, error_type, db):
+    tabular_collection = db.get_collection("tabular")
+    document_collection = db.get_collection("document")
+    training_data_collection = db.get_collection("training_data")
+    old_doc = None
+    training_data_id = None
+    try:
+        old_doc = tabular_collection.find_one({"_id": id})
+        update_query = {"$set": {
+            "status": "removed",
+            "error_type": error_type,
+            "timestamp": datetime.utcnow()
+        }
+        }
+        record_information = tabular_collection.update_one({"_id": id}, update_query)
+        training_data_id = write_raw_training_data(old_doc, old_doc['_id'], document_collection,
+                                                   training_data_collection, action="delete")
+
+    except Exception as e:
+        # Rollback!
+        print("Exception:", e, "Rolling back.")
+        rollback_delete(old_doc, training_data_id, tabular_collection, training_data_collection)
+        raise e
+
+    return record_information
+
+
+@bp.route('/record/<id>', methods=['DELETE'])
+@output(UpdatedRecord)
+def delete_record(id):
+    object_id = validate_objectId(id)
+    db = connect_and_get_db()
+
+    error_type = request.args.get('error_type')
+
+    if error_type is None or error_type not in get_error_types().keys():
+        abort(400, "The specified error type: " + str(error_type) + " is invalid or missing.")
+
+    try:
+        _delete_record(object_id, error_type, db=db)
+    except Exception as e:
+        abort(400, str(e))
+
+    return_info = UpdatedRecord()
+    return_info.id = object_id
+
+    return return_info
+
+
+@bp.route('/record/<id>/status', methods=['GET'])
 @output(Flag)
-def get_flag(id):
-    object_id = validateObjectId(id)
+def get_record_status(id):
+    object_id = validate_objectId(id)
     db = connect_and_get_db()
     record = db.get_collection("tabular").find_one({"_id": object_id}, {'_id': 0, 'type': 1, 'status': 1})
 
     return record
 
 
-@bp.route('/record/<id>/flag', methods=['PUT', 'PATCH'])
+@bp.route('/record/<id>/mark_invalid', methods=['PUT', 'PATCH'])
 @output(Flag)
-def flag_record(id):
-    object_id = validateObjectId(id)
+def mark_record_invalid(id):
+    """The record is marked as invalid"""
+    object_id = validate_objectId(id)
     db = connect_and_get_db()
     tabular_collection = db.get_collection("tabular")
-    record = tabular_collection.find_one({"_id": object_id})
+    record = tabular_collection.find_one({"_id": object_id, "status": {"$in": VALID_STATUSES}})
     if record is None:
         return 404
     else:
@@ -413,35 +619,72 @@ def flag_record(id):
         return changes, 200
 
 
-def validateObjectId(id):
+@bp.route('/record/<id>/mark_validated', methods=['PUT', 'PATCH'])
+@output(Flag)
+def mark_record_validated(id):
+    """The record is marked as correct"""
+    object_id = validate_objectId(id)
+    db = connect_and_get_db()
+    return _mark_validated(db, object_id)
+
+
+def _mark_validated(db, id: ObjectId):
+    tabular_collection = db.get_collection("tabular")
+    record = tabular_collection.find_one({"_id": id, "status": {"$in": VALID_STATUSES}})
+    if record is None:
+        return "Record with id=" + str(id) + " not found.", 404
+
+    new_status = 'validated'
+    new_type = 'manual'
+
+    changes = {'status': new_status, 'type': new_type}
+
+    tabular_collection.update_one({'_id': record['_id']}, {'$set': changes})
+    return changes, 200
+
+
+def validate_objectId(id):
     try:
         return ObjectId(id)
     except InvalidId as e:
         abort(400, "Invalid identifier (objectId)")
 
 
-@bp.route('/record/<id>/unflag', methods=['PUT', 'PATCH'])
+@bp.route('/record/<id>/reset', methods=['PUT', 'PATCH'])
 @output(Flag)
-def unflag_record(id):
-    object_id = validateObjectId(id)
+def reset_record(id):
+    """Reset the status of the record"""
+    object_id = validate_objectId(id)
     db = connect_and_get_db()
-    tabular_collection = db.get_collection("tabular")
+    return _reset_record(db, object_id)
 
-    record = tabular_collection.find_one({"_id": object_id})
+
+def _reset_record(db, id: ObjectId):
+    tabular_collection = db.get_collection("tabular")
+    record = tabular_collection.find_one({"_id": id, "status": {"$in": VALID_STATUSES}})
     if record is None:
-        return "Record with id=" + id + " not found.", 404
+        return "Valid record with id=" + str(id) + " not found.", 404
+
+    if 'previous' in record:
+        status = 'curated'
+        type = 'manual'
     else:
-        status = 'valid'
+        status = 'new'
         type = 'automatic'
 
-        changes = {'status': status, 'type': type}
-        tabular_collection.update_one({'_id': record['_id']}, {'$set': changes})
-        return changes, 200
+    changes = {'status': status, 'type': type}
+    tabular_collection.update_one({'_id': record['_id']}, {'$set': changes})
+
+    return changes, 200
 
 
 @bp.route('/config', methods=['GET'])
-def get_config(config_file='config.yaml'):
-    return load_config_yaml(config_file)
+def get_config():
+    return config
+
+
+# def get_config(config_file='config.yaml'):
+#     return load_config_yaml(config_file)
 
 
 @bp.route('/training_data', methods=['GET'])
@@ -451,7 +694,7 @@ def get_training_data():
 
 @bp.route('/training/data/<id>', methods=['GET'])
 def export_training_data(id):
-    object_id = validateObjectId(id)
+    object_id = validate_objectId(id)
     db = connect_and_get_db()
     training_data_collection = db.get_collection("training_data")
 
@@ -467,19 +710,42 @@ def export_training_data(id):
     return single_training_data
 
 
-@bp.route('/training/data/status/<status>')
-def export_training_data_by_type(status):
+@bp.route('/biblio/<hash>')
+def get_biblio_by_hash(hash):
     db = connect_and_get_db()
+    last_documents = db.get_collection("document").find({"hash": hash}).sort("timestamp", -1)
+    last_document = last_documents[0]
+    return last_document['biblio']
+
+
+@bp.route('/training/data/status/<status>')
+def export_training_data_by_status(status):
+    db = connect_and_get_db()
+    new_format, _ = get_training_data_by_status(status, db)
+
+    return Response(json.dumps(new_format, default=json_serial), mimetype="application/json")
+
+
+def get_training_data_by_status(status, db):
     training_data_collection = db.get_collection("training_data")
-
     training_data_list = list(training_data_collection.find({'status': status}, {'tokens': 0}))
-
     new_format = []
+    ids = []
     for training_data in training_data_list:
         new_structure = to_label_studio_format_single(training_data['text'], training_data['spans'])
         new_format.append(new_structure)
+        ids.append(training_data['_id'])
+    return new_format, ids
 
-    return Response(json.dumps(new_format, default=json_serial), mimetype="application/json")
+
+def get_training_data_by_id_and_status(record_id, status, db):
+    id = validate_objectId(record_id)
+    training_data_collection = db.get_collection("training_data")
+    training_data = training_data_collection.find_one({'_id': id, 'status': status}, {'tokens': 0})
+    if not training_data:
+        return None, None
+    new_structure = to_label_studio_format_single(training_data['text'], training_data['spans'])
+    return new_structure, training_data['_id']
 
 
 def get_span_start(type):
@@ -502,28 +768,213 @@ def get_training_data_list():
     for training_data_item in training_data_list:
         text = training_data_item['text']
         spans = training_data_item['spans']
+        task_id = training_data_item['task_id'] if 'task_id' in training_data_item else None
 
-        sorted_spans = list(sorted(spans, key=lambda item: item['offset_start']))
-        annotated_text = ""
-        start = 0
-        for span in sorted_spans:
-            type = span['type'].replace("<", "").replace(">", "")
-            annotated_text += text[start: span['offset_start']] + get_span_start(type) + text[
-                                                                                         span['offset_start']: span[
-                                                                                             'offset_end']] + get_span_end()
-            start = span['offset_end']
-
-        annotated_text += text[start: len(text)]
+        annotated_text = decorate_text_with_annotations(text, spans)
         training_output.append({
             "id": str(training_data_item['_id']),
             "text": text,
+            "status": training_data_item['status'],
+            "timestamp": training_data_item['timestamp'].replace(
+                microsecond=0).isoformat() if "timestamp" in training_data_item else "",
             "annotated_text": annotated_text,
+            "task_id": task_id,
             "hash": training_data_item['hash'],
             "corrected_record_id": training_data_item['corrected_record_id']
         })
 
     return Response(json.dumps(training_output, default=json_serial), mimetype="application/json")
 
+
+def decorate_text_with_annotations(text, spans):
+    sorted_spans = list(sorted(spans, key=lambda item: item['offset_start']))
+    annotated_text = ""
+    start = 0
+    for span in sorted_spans:
+        type = span['type'].replace("<", "").replace(">", "")
+        annotated_text += text[start: span['offset_start']] + get_span_start(type) + text[
+                                                                                     span['offset_start']: span[
+                                                                                         'offset_end']] + get_span_end()
+        start = span['offset_end']
+    annotated_text += text[start: len(text)]
+    return annotated_text
+
+
+@bp.route("/label/studio/projects", methods=['GET'])
+def get_projects_label_studio():
+    authentication_token = get_label_studio_token()
+
+    from label_studio_sdk import Client
+    ls = Client(url=config['label-studio']['url'], api_key=authentication_token)
+
+    ls.check_connection()
+    projects = None
+    try:
+        projects = ls.get_projects()
+    except Exception as e:
+        abort(e.response.status_code, message="Error when fetching data from label studio",
+              detail=json.loads(e.response.text)['detail'])
+
+    if projects is None or len(projects) == 0:
+        abort(404, "No project were found.")
+
+    result_projects = []
+
+    for project in projects:
+        params = project.params
+        result_projects.append({
+            'id': params['id'],
+            'title': params['title'],
+            'description': params['description']
+        })
+
+    return Response(json.dumps(result_projects, default=json_serial), mimetype="application/json")
+
+
+def get_label_studio_token():
+    if 'Authentication' not in request.headers:
+        abort(400, "The authentication token should be provided in the headers. ")
+    elif not request.headers['Authentication'].startswith("Token "):
+        abort(400, "The authentication token must start with 'Token'")
+    authentication_token = request.headers['Authentication'].replace("Token ", "")
+    return authentication_token
+
+
+@bp.route("/label/studio/project/<project_id>", methods=['GET'])
+def get_project_label_studio(project_id):
+    authentication_token = get_label_studio_token()
+
+    from label_studio_sdk import Client
+    ls = Client(url=config['label-studio']['url'], api_key=authentication_token)
+
+    ls.check_connection()
+    try:
+        project = ls.get_project(project_id)
+    except Exception as e:
+        abort(e.response.status_code, message="Error when fetching data from label studio",
+              detail=json.loads(e.response.text)['detail'])
+
+    if project is None:
+        abort(404, "No project were found.")
+
+    output_project_format = {
+        'params': project.params,
+        'parsed_label_config': project.parsed_label_config,
+        'tasks': project.tasks,
+        'tasks_ids': project.tasks_ids
+    }
+
+    return Response(json.dumps(output_project_format, default=json_serial), mimetype="application/json")
+
+
+@bp.route("/label/studio/project/<project_id>/records", methods=['POST', 'PUT'])
+def post_tasks_to_label_studio_project(project_id):
+    db = connect_and_get_db()
+    tasks_to_send, ids = get_training_data_by_status('new', db)
+
+    if len(tasks_to_send) == 0:
+        abort(404, "No training data to send. All data has been already transferred. ")
+
+    authentication_token = get_label_studio_token()
+
+    from label_studio_sdk import Client
+    ls = Client(url=config['label-studio']['url'], api_key=authentication_token)
+
+    ls.check_connection()
+    try:
+        project = ls.get_project(project_id)
+    except Exception as e:
+        abort(e.response.status_code, message="Error when fetching data from label studio",
+              detail=json.loads(e.response.text)['detail'])
+
+    if project is None:
+        abort(404, "No project were found.")
+
+    try:
+        result = project.import_tasks(tasks_to_send)
+    except Exception as e:
+        abort(e.response.status_code, message="Error when sending data to label studio",
+              detail=json.loads(e.response.text)['detail'])
+
+    if len(ids) != len(result):
+        abort(500, "The training_data ids length did not match the identifier length. Something was lost on the way. ")
+
+    training_data_collection = db.get_collection("training_data")
+    updates = []
+    ids_mapping = []
+    for idx, identifier in enumerate(ids):
+        updates.append(UpdateOne({'_id': identifier}, {'$set': {'status': 'in_progress', 'task_id': result[idx]}}))
+        ids_mapping.append({
+            'record_id': str(identifier),
+            'task_id': result[idx]
+        })
+
+    op_result = training_data_collection.bulk_write(updates)
+
+    result_response = {
+        'ids_mapping': ids_mapping,
+        'modified': op_result.modified_count
+    }
+
+    return Response(json.dumps(result_response, default=json_serial), mimetype="application/json")
+
+
+@bp.route("/label/studio/project/<project_id>/record/<record_id>", methods=['POST', 'PUT'])
+def post_task_to_label_studio_project(project_id, record_id):
+    db = connect_and_get_db()
+    task_to_send, task_id = get_training_data_by_id_and_status(record_id, 'new', db)
+
+    if not task_to_send:
+        abort(404, "No available training data to send. The requested record is not available"
+                   " or it had been sent already. ")
+
+    authentication_token = get_label_studio_token()
+
+    from label_studio_sdk import Client
+    ls = Client(url=config['label-studio']['url'], api_key=authentication_token)
+
+    ls.check_connection()
+    try:
+        project = ls.get_project(project_id)
+    except Exception as e:
+        abort(e.response.status_code, message="Error when fetching data from label studio",
+              detail=json.loads(e.response.text)['detail'])
+
+    if project is None:
+        abort(404, "No project were found.")
+
+    try:
+        result = project.import_tasks(task_to_send)
+    except Exception as e:
+        abort(e.response.status_code, message="Error when sending data to label studio",
+              detail=json.loads(e.response.text)['detail'])
+
+    if len(result) != 1:
+        abort(500, "One result is expected but not obtained. Something was lost on the way. ")
+
+    training_data_collection = db.get_collection("training_data")
+    op_result = training_data_collection.update_one({'_id': task_id},
+                                                    {'$set': {'status': 'in_progress', 'task_id': result[0]}})
+
+    result_response = {
+        'ids_mapping': [
+            {str(task_id): result[0]}
+        ],
+        'modified': op_result.modified_count
+    }
+
+    return Response(json.dumps(result_response, default=json_serial), mimetype="application/json")
+
+
+@bp.route("/training/data/<id>", methods=['DELETE'])
+def delete_training_data_record(id):
+    db = connect_and_get_db()
+    training_data_collection = db.get_collection("training_data")
+
+    object_id = validate_objectId(id)
+    result = training_data_collection.delete_one({"_id": object_id})
+
+    return Response(json.dumps({"deleted": result.deleted_count}, default=json_serial), mimetype="application/json")
 
 # @bp.after_request
 # def add_header(r):

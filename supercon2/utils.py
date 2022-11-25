@@ -13,6 +13,7 @@ def load_config_json(config_file):
         exit(1)
     return config
 
+
 def load_config_yaml(config_file):
     config = []
     try:
@@ -23,5 +24,5 @@ def load_config_yaml(config_file):
     except Exception as e:
         print("Configuration could not be loaded: ", str(e))
         exit(1)
-        
+
     return config

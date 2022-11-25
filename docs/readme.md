@@ -1,9 +1,21 @@
 # Technical documentation
 
-## Introduction
+## Error types
 
-## Overview 
+The error types or causes for which the material-properties record is incorrect.
 
+They answer to the question: "What was the cause?"
+
+| Name                   | Description                                                                                                                                                                                           |
+|------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| From table             | The entities Material -> Tc -> Pressure is identified in a table. At the moment table extraction is not performed.                                                                                    |
+| Extraction             | The material, temperature, pressure is not extracted (no box) or extracted incorrectly.                                                                                                               |                                                      
+| Linking                | The material is incorrectly linked to the Tc given that the entities are correctly recognised                                                                                                         |                                                   
+| Tc classification      | The temperature is not correctly classified as "superconductors critical temperature" (e.g. Curie temperature, Magnetic temperature…)                                                                 | 
+| Composition resolution | The exact composition cannot be resolved (e.g. the stochiometric values cannot be resolved)                                                                                                           |
+| Value resolution       | The extracted formula contains variables that cannot be resolved, even after having read the paper. This includes when data is from tables. [#125](https://github.com/lfoppiano/supercon2/issues/125) | 
+
+![](images/error_types.png)
 
 ## Workflow status flags
 

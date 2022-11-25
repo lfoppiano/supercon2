@@ -68,7 +68,7 @@ class MongoTabularProcessor(MongoSuperconProcessor):
                         continue
 
                     for ag_e in json_aggregated_entries:
-                        ag_e['status'] = "valid"
+                        ag_e['status'] = "new"
                         ag_e['hash'] = hash
                         ag_e['timestamp'] = timestamp
                         ag_e['type'] = 'automatic'
@@ -123,7 +123,10 @@ class MongoTabularProcessor(MongoSuperconProcessor):
 
         # cursor = db_supercon_dev.find({}, {"hash": 1}).distinct()
         cursor_aggregation = document_collection.aggregate(
-            [{"$sort": {"hash": 1, "timestamp": 1}}, {"$group": {"_id": "$hash", "lastDate": {"$last": "$timestamp"}}}])
+            [
+                {"$sort": {"hash": 1, "timestamp": 1}},
+                {"$group": {"_id": "$hash", "lastDate": {"$last": "$timestamp"}}}
+             ])
 
         with tqdm(total=documents_to_process, unit='document') as tq:
             for item in cursor_aggregation:

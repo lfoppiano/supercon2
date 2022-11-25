@@ -11,7 +11,7 @@ def to_label_studio_format_single(text: str, spans: list) -> list:
         {
             'model_version': '1',
             'result': [
-                {'id': id_,
+                {'id': str(id_),
                  'from_name': 'label',
                  'to_name': 'text',
                  'type': 'labels',

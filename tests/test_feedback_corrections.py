@@ -12,10 +12,10 @@ def test_process_excel_check_obsolete_links(mongodb):
 
     tabular_collection = mongodb.get_collection("tabular")
     records_all = tabular_collection.find({"hash": "48ba234393"})
-    assert len(list(records_all)) == 6
+    assert len(list(records_all)) == 5
 
     records_manually_corrected = list(
-        tabular_collection.find({"hash": "48ba234393", "status": "valid", "type": "manual"}))
+        tabular_collection.find({"hash": "48ba234393", "status": "curated", "type": "manual"}))
     assert len(records_manually_corrected) == 2
 
     for record_manually_corrected in records_manually_corrected:
@@ -29,7 +29,7 @@ def test_process_excel_verify_training_data(mongodb):
     process('tests/resources/supercon_corrected.xlsx', mongodb)
     tabular_collection = mongodb.get_collection("tabular")
     corrected_identifiers = [str(record['_id']) for record in
-                             tabular_collection.find({"status": "valid", "type": "manual"}, {'_id': 1})]
+                             tabular_collection.find({"status": "curated", "type": "manual"}, {'_id': 1})]
 
     training_data_collection = mongodb.get_collection("training_data")
     training_data_records = list(training_data_collection.find())

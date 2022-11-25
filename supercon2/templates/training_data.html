@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
-    <title>SuperCon<sup>2</sup> | Training data viewer</title>
+    <title>SuperCon2 | Training data viewer</title>
     <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
@@ -17,8 +17,12 @@
 <v-app id="app">
     <v-container fluid>
         <h2>SuperCon<sup>2</sup> | Training data viewer</h2>
-        <v-select v-model="selectedHeaders" :items="headers" label="Select Columns" multiple outlined return-object>
-        </v-select>
+        <v-row justify="space-between" class="ma-0">
+            <v-select v-model="selectedHeaders" :items="headers" label="Select Columns" multiple outlined
+                      return-object></v-select>
+            <v-btn @click="sendAllNewRecordsToLabelStudio" Depressed class="ma-1">Send all</v-btn>
+            <v-btn @click="openDialogToken" Depressed class="ma-1">Token</v-btn>
+        </v-row>
         <!-- TODO: height 800px should be dynamic? up to a user screen size?  -->
         <v-data-table
                 :headers="showHeaders"
@@ -32,8 +36,49 @@
             <template v-slot:item.annotated_text="{ item }">
                 <span v-html="item.annotated_text"></span>
             </template>
+            <template v-slot:item.actions="{ item }">
+                <v-row>
+                    <v-icon small class="mr-2" @click="sendRecordToLabelStudio(item)" title="Send to label-studio">
+                        mdi-send-outline
+                    </v-icon>
+                    <v-icon small class="mr-2" @click="removeTrainingDataRecord(item)" title="Remove record">
+                        mdi-delete-outline
+                    </v-icon>
+                </v-row>
+            </template>
         </v-data-table>
-        <p><span style="color:#848484;">&copy; Contributors, 2022 |</span> <span id="version" style="color:#848484;">0.2</span></p>
+
+        <p><span style="color:#848484;">&copy; Contributors, 2022 |</span> <span id="version" style="color:#848484;" v-html="version"></span></p>
+        </p>
+        <v-dialog v-model="tokenDialog" max-width="500">
+            <v-card>
+                <v-card-text>
+                    <v-container>
+                        <v-row>The Token is required for authenticating correctly with Label-studio. It can be copied
+                            from the user account page.
+                            The information is stored in the local session storage which will be cleaned up when the tab will
+                                be closed.
+                        </v-row>
+                        <v-row>
+                            <v-text-field v-model="token" label="Token"></v-text-field>
+                        </v-row>
+                        <v-row>
+                            <v-text-field v-model="project_id" label="Project Id"></v-text-field>
+                        </v-row>
+                    </v-container>
+                </v-card-text>
+
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn color="blue darken-1" text @click="closeDialogToken">
+                        Cancel
+                    </v-btn>
+                    <v-btn color="blue darken-1" text @click="saveToken">
+                        Save
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
     </v-container>
 </v-app>
 <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
@@ -45,11 +90,20 @@
         vuetify: new Vuetify(),
         data() {
             return {
+                tokenDialog: false,
+                config: {},
+                token: null,
+                project_id: null,
+                version: "unknown version",
                 selectedHeaders: [],
                 headers: [
-                    {text: 'id', value: 'id', hidden: true},
-                    {text: 'text', value: 'annotated_text', hidden: false},
-                    {text: 'hash', value: 'hash', hidden: false}
+                    {text: 'Id', value: 'id', sortable: false, hidden: true},
+                    {text: 'Text', value: 'annotated_text', sortable: false, hidden: false},
+                    {text: 'Status', value: 'status', sortable: true, hidden: false},
+                    {text: 'Timestamp', value: 'timestamp', sortable: true, hidden: false},
+                    {text: 'Task Id', value: 'task_id', sortable: true, hidden: false},
+                    {text: 'Document', value: 'hash', sortable: true, hidden: false},
+                    {text: 'Actions', value: 'actions', sortable: false, hidden: false},
                 ],
                 items: []
             }
@@ -59,16 +113,169 @@
                 return this.headers.filter(s => this.selectedHeaders.includes(s));
             }
         },
-        mounted() {
-            const url = '{{ url_for("supercon.get_training_data_list") }}'
-            axios.get(url).then((data) => {
-                this.items = data.data
-            })
+        async beforeMount() {
+           await this.loadConfig();
+           await this.loadVersion();
         },
-        methods: {},
+        mounted() {
+            this.loadItems();
+        },
+        methods: {
+            async loadConfig() {
+                 let url = '{{ url_for("supercon.get_config") }}'
+                try {
+                    const result = await axios.get(url, {})
+                    this.config = result.data
+
+                    let project_id = this.config['label-studio']['project_id']
+                    if (project_id !== null && project_id !== undefined) {
+                        this.project_id = project_id
+                        sessionStorage.setItem('ProjectId', this.project_id);
+                    }
+
+                } catch (e) {
+                    console.error(e)
+                    window.alert(JSON.stringify(e.response.data))
+                } finally {
+                }
+            },
+            async loadVersion() {
+                let url = '{{ url_for("supercon.get_version") }}'
+                try {
+                    const result = await axios.get(url, {})
+                    this.version = result.data['version']
+
+                } catch (e) {
+                    console.error(e)
+                    window.alert(JSON.stringify(e.response.data))
+                } finally {
+
+                }
+            },
+            loadItems() {
+                const url = '{{ url_for("supercon.get_training_data_list") }}'
+                axios.get(url)
+                    .then((data) => {
+                            this.items = data.data
+                        }
+                    )
+            },
+            openDialogToken() {
+                let token = sessionStorage.getItem('Token');
+                if (token !== null && token !== undefined) {
+                    this.token = token;
+                }
+
+                let project_id = sessionStorage.getItem('ProjectId');
+                if (project_id !== null && project_id !== undefined) {
+                    this.project_id = project_id;
+                }
+
+                this.tokenDialog = true
+            },
+            closeDialogToken() {
+                this.tokenDialog = false
+            },
+            saveToken() {
+                console.log(this.token)
+                sessionStorage.setItem('Token', this.token);
+                sessionStorage.setItem('ProjectId', this.project_id);
+                this.closeDialogToken()
+            },
+            retrieveToken() {
+                let token = sessionStorage.getItem('Token');
+
+                {#if (token === null || token === undefined) {#}
+                {#this.open_dialog_token()#}
+                {#token = sessionStorage.getItem('Token');#}
+                {#if (token === null || token === undefined) {#}
+                {#window.alert("There is a problem with the token, either it's incorrect or it was not correctly stored retrieved from the local session storage. ")#}
+
+                return token;
+            },
+            async sendRecordToLabelStudio(item) {
+                let url = '{{ url_for("supercon.post_task_to_label_studio_project", project_id="project_id", record_id="record_id") }}'
+                url = url.replace(
+                    "record_id",
+                    item.id
+                )
+
+                let project_id = sessionStorage.getItem("ProjectId")
+                if (project_id === null || project_id === undefined) {
+                    window.alert("Invalid or unspecified project Id, please set it up in the local page.")
+                }
+
+                url = url.replace(
+                    "project_id",
+                    project_id
+                )
+
+
+                let token = this.retrieveToken(item)
+
+                const headers = {
+                    "Authentication": "Token " + token
+                };
+
+                try {
+                    await axios.post(url, {}, {headers})
+                    this.loadItems()
+                } catch (e) {
+                    console.error(e)
+                    window.alert(JSON.stringify(e.response.data))
+                } finally {
+                    //
+                }
+            },
+            async sendAllNewRecordsToLabelStudio() {
+                let url = '{{ url_for("supercon.post_tasks_to_label_studio_project", project_id="project_id") }}'
+                let project_id = sessionStorage.getItem("ProjectId")
+                if (project_id === null || project_id === undefined) {
+                    window.alert("Invalid or unspecified project Id, please set it up in the local page.")
+                }
+
+                url = url.replace(
+                    "project_id",
+                    project_id
+                )
+
+                let token = this.retrieveToken()
+
+                const headers = {
+                    "Authentication": "Token " + token
+                };
+
+                try {
+                    await axios.post(url, {}, {headers})
+                    this.loadItems()
+                } catch (e) {
+                    console.error(e)
+                    window.alert(JSON.stringify(e.response.data))
+                } finally {
+                    //
+                }
+            },
+            async removeTrainingDataRecord(item) {
+                let url = '{{ url_for("supercon.delete_training_data_record", id="record_id") }}'
+                url = url.replace(
+                    "record_id",
+                    item.id
+                )
+
+                try {
+                    await axios.delete(url, {})
+                    this.loadItems()
+                } catch (e) {
+                    console.error(e)
+                    window.alert(JSON.stringify(e.response.data))
+                } finally {
+                    //
+                }
+            }
+        },
         created() {
             this.selectedHeaders = this.headers.filter(h => !h.hidden)
-        },
+        }
     })
 </script>
 

@@ -10,7 +10,7 @@ class Flag(Schema):
 
 class RecordParamsIn(Schema):
     type = String(default="automatic", validate=OneOf(['manual', 'automatic']))
-    status = String(default=None, validate=OneOf(['valid', 'invalid']))
+    status = String(default=None, validate=OneOf(['valid', 'invalid', 'curated', 'obsolete', 'new']))
     document = String(default=None)
     publisher = String(default=None)
     year = Integer(default=None)
@@ -52,6 +52,7 @@ class Record(Schema):
     section = String(allow_none=True)
     subsection = String(allow_none=True)
     sentence = String(allow_none=True)
+    sentence_decorated = String(allow_none=True)
     path = String(allow_none=True)
     filename = String(allow_none=True)
     hash = String()
@@ -64,6 +65,8 @@ class Record(Schema):
     publisher = String(allow_none=True)
     journal = String(allow_none=True)
     year = String(allow_none=True)
+    error_type = String(allow_none=True)
+    update_count = Integer(allow_none=True)
 
 
 class Publishers(Schema):
@@ -74,5 +77,17 @@ class Years(Schema):
     years = List(Field)
 
 
-class Journals(Schema):
-    journals = List(Field)
+# class Journals(Schema):
+#     journals = List(Field)
+
+
+# class ErrorTypes(Dict):
+#     error_types = Dict(keys=String(), values=String())
+
+class ProcessRecord(Schema):
+    status = String(allow_none=True)
+    hash = String(allow_none=True)
+    path = String(allow_none=True)
+    message = String(allow_none=True)
+    service = String(allow_none=False)
+    timestamp = DateTime(allow_none=False)

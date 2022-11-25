@@ -1,29 +1,30 @@
 import argparse
 import sys
+import urllib.parse
 from pathlib import Path
 
 import waitress
 from apiflask import APIFlask
 
+from commons.mongo_utils import ensure_indexes
 from supercon2 import service
 from supercon2.service import bp
 from supercon2.utils import load_config_yaml
 
 
 def create_app(root_path):
-    final_root_path = root_path
-    if root_path == "/" and ('root-path' in service.config and service.config['root-path'] is not None):
-        final_root_path = service.config['root-path']
+    ensure_indexes(service.config)
+    print("Ensuring indexes completed..")
 
     print("root_path:", root_path)
 
-    app = APIFlask(__name__, static_url_path=final_root_path + '/static', spec_path=final_root_path + '/spec',
-                   docs_path=final_root_path + '/docs', redoc_path=final_root_path + '/redoc')
+    app = APIFlask(__name__, static_url_path=root_path + '/static', spec_path=root_path + '/spec',
+                   docs_path=root_path + '/docs', redoc_path=root_path + '/redoc')
     app.config['OPENAPI_VERSION'] = '3.0.2'
     app.config['SPEC_FORMAT'] = 'json'
     app.tags = ['supercon']
 
-    app.register_blueprint(bp, url_prefix=final_root_path)
+    app.register_blueprint(bp, url_prefix=root_path)
 
     return app
 
@@ -42,24 +43,37 @@ if __name__ == '__main__':
     parser.add_argument("--debug", action="store_true", required=False, default=False,
                         help="Activate the debug mode for the service")
     parser.add_argument("--env", type=str, choices=["development", "production"], required=False,
-                        default="development")
+                        default="production", help="Select whether to run the service in production")
+
+    parser.add_argument("--db-name", type=str, required=False, help="Force the database name.")
 
     args = parser.parse_args()
 
     service.config = load_config_yaml(args.config_file)
+    if args.db_name:
+        service.config['mongo']['db'] = args.db_name
+        print("Override manually the database name:", args.db_name)
 
-    root_path = args.root_path
+    if args.root_path != '/':
+        service.config['root-path'] = args.root_path
+        print("Override manually the root path: ", args.root_path)
 
-    app = create_app(root_path)
+    if not service.config['root-path'].endswith("/"):
+        service.config['root-path'] += "/"
+
+    app = create_app(service.config['root-path'])
 
     env = args.env
-    if env == "development":
-        app.run(host=args.host, port=args.port, debug=args.debug, threaded=True)
+    if env == "development" or args.debug:
+        # force development env
+        print("Running in development mode. For serious installation, use --env production")
+        app.env = 'development'
+        app.run(host=args.host, port=args.port, debug=args.debug)
     elif env == "production":
-        listening_address = args.host + ":" + str(args.port)
-        waitress.serve(app, listen=listening_address)
+        print("Running in production mode. Faster and less verbose. "
+              "Use either --env development or --debug for development.")
+        waitress.serve(app, host=args.host, port=args.port)
     else:
         print("Wrong environment value. ")
         parser.print_help()
         sys.exit(-1)
-
