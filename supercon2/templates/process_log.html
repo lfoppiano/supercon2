@@ -45,17 +45,14 @@
                                     </v-icon>
                                 </v-row>
                             </v-radio-group>
-                            <v-radio-group v-model="header.filterKeyword" v-else-if="header.value === 'status'" dense
-                                hide-details>
-                                <v-select :items="headerObject.status.selectItems" v-model="header.filterKeyword"></v-select>
+                            <v-radio-group v-model="header.filterKeyword" v-else-if="header.value === 'status'" dense hide-details>
+                                <v-select :items="headerObject.status.selectItems" v-model="header.filterKeyword"/>
                             </v-radio-group>
                             <template v-else-if="header.value === 'service'" dense hide-details>
-                                <v-select :items="headerObject.service.selectItems" v-model="header.filterKeyword"></v-select>
+                                <v-select :items="headerObject.service.selectItems" v-model="header.filterKeyword"/>
                             </template>
                             <template v-else>
-                                <v-text-field v-model="header.filterKeyword" type="text" placeholder="keyword"
-                                    hide-details clearable>
-                                </v-text-field>
+                                <v-text-field v-model="header.filterKeyword" type="text" placeholder="keyword" hide-details clearable/>
                             </template>
                         </td>
                     </tr>
@@ -119,7 +116,8 @@
                         { text: 'Service', value: 'service', hidden: false, filter: this.serviceFilter, filterKeyword: 'all', shouldHideEmpty: false,
                             selectItems: [
                                 'all', 'extraction', 'table_processing'
-                            ]},
+                            ]
+                        },
                         { text: 'Path', value: 'path', hidden: false, filter: this.pathFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'Document', value: 'hash', hidden: false, filter: this.hashFilter, filterKeyword: "{{hash}}", width: 120, shouldHideEmpty: false },
                         { text: 'Timestamp', value: 'timestamp', hidden: false, filter: this.timestampFilter, filterKeyword: '', shouldHideEmpty: false },
@@ -172,10 +170,8 @@
             },
             mounted() {
                 this.loadItems()
-                {#document.addEventListener('keydown', this.onKeyDown)#}
             },
             beforeDestroy() {
-                {#document.removeEventListener('keydown', this.onKeyDown)#}
             },
             async beforeMount() {
                 let url = '{{ url_for("supercon.get_version") }}'
@@ -261,7 +257,7 @@
                         case 'all':
                             return true
                         default:
-                            return item.type === keyword
+                            return item.service === keyword
                     }
                 },
                 statusFilter(value, search, item) {
