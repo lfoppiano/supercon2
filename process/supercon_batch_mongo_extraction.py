@@ -54,7 +54,7 @@ class MongoSuperconProcessor:
         while True:
             status_info = self.queue_logger.get(block=True)
             if status_info is None:
-                print("Got termination. Shutdown processor.")
+                print("Got termination. Shutdown 'logger' processor.")
                 self.queue_logger.put(None)
                 break
 
@@ -77,7 +77,7 @@ class MongoSuperconProcessor:
             output = self.queue_output.get(block=True)
             if output is None:
                 if self.verbose:
-                    print("Got termination. Shutdown processor.")
+                    print("Got termination. Shutdown 'writer' processor.")
                 self.queue_output.put(None)
                 break
 
@@ -115,6 +115,11 @@ class MongoSuperconProcessor:
                             if 'spans' in passage:
                                 for span in passage['spans']:
                                     span['text'] = span['text'].encode('utf-16', 'backslashreplace').decode('utf-16')
+                                    if 'formattedText' in span:
+                                        span['formattedText'] = span['formattedText'].encode('utf-16', 'backslashreplace').decode('utf-16')
+                                    if 'attributes' in span:
+                                        for attribute_key in span['attributes'].keys():
+                                            span['attributes'][attribute_key] = span['attributes'][attribute_key].encode('utf-16', 'backslashreplace').decode('utf-16')
 
                             if 'tokens' in passage:
                                 for token in passage['tokens']:
@@ -152,7 +157,7 @@ class MongoSuperconProcessor:
             source_path = self.queue_input.get(block=True)
             if source_path is None:
                 if self.verbose:
-                    print("Got termination. Shutdown processor.")
+                    print("Got termination. Shutdown 'process' processor.")
                 self.queue_input.put(source_path)
                 break
 
@@ -211,7 +216,7 @@ class MongoSuperconProcessor:
         ensure_indexes(self.config)
 
         num_threads_process = num_threads
-        num_threads_store = math.ceil(num_threads / 2) if num_threads > 1 else 1
+        num_threads_store = num_threads if num_threads > 1 else 1
 
         self.queue_input = self.m.Queue(maxsize=num_threads_process)
         self.queue_output = self.m.Queue(maxsize=num_threads_store)
