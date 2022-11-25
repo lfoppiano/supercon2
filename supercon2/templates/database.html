@@ -145,7 +145,8 @@
                     </v-row>
                 </template>
                 <template v-slot:item.timestamp="{ item }">
-                    <v-row>[[ new Date(item.timestamp + "Z").toString().split("GMT", 1)[0] ]]</v-row>
+                    <v-row>[[ new Date(item.timestamp + "Z").toString() ]]</v-row>
+{#                    <v-row>[[ new Date(item.timestamp + "Z").toString().split("GMT", 1)[0] ]]</v-row>#}
                 </template>
             </v-data-table>
             <p><span style="color:#848484;">&copy; Contributors, 2022 |</span> <span id="version" style="color:#848484;" v-html="version"></span></p>
