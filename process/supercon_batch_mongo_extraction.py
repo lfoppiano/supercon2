@@ -109,21 +109,7 @@ class MongoSuperconProcessor:
                     if self.verbose:
                         print("Invalid unicode detected. Trying to remove surrogates. ")
 
-                    if 'passages' in output_json:
-                        for passage in output_json['passages']:
-                            passage['text'] = passage['text'].encode('utf-16', 'backslashreplace').decode('utf-16')
-                            if 'spans' in passage:
-                                for span in passage['spans']:
-                                    span['text'] = span['text'].encode('utf-16', 'backslashreplace').decode('utf-16')
-                                    if 'formattedText' in span:
-                                        span['formattedText'] = span['formattedText'].encode('utf-16', 'backslashreplace').decode('utf-16')
-                                    if 'attributes' in span:
-                                        for attribute_key in span['attributes'].keys():
-                                            span['attributes'][attribute_key] = span['attributes'][attribute_key].encode('utf-16', 'backslashreplace').decode('utf-16')
-
-                            if 'tokens' in passage:
-                                for token in passage['tokens']:
-                                    token['text'] = token['text'].encode('utf-16', 'backslashreplace').decode('utf-16')
+                    self.escape_surrogates(output_json)
 
                     document_id = db.document.insert_one(output_json).inserted_id
                 except UnicodeEncodeError as ue2:
@@ -151,6 +137,36 @@ class MongoSuperconProcessor:
 
             if self.verbose:
                 print("Inserted document ", document_id)
+
+    def escape_surrogates(self, output_json):
+        if 'passages' in output_json:
+            for passage in output_json['passages']:
+                passage['text'] = passage['text'].encode('utf-16', 'backslashreplace').decode('utf-16')
+                if 'spans' in passage:
+                    for span in passage['spans']:
+                        span['text'] = span['text'].encode('utf-16', 'backslashreplace').decode('utf-16')
+                        if 'formattedText' in span:
+                            span['formattedText'] = span['formattedText'].encode('utf-16', 'backslashreplace').decode(
+                                'utf-16')
+                        if 'attributes' in span:
+                            processed_attributes = {}
+
+                            span_attributes = span['attributes']
+                            for attribute_key in span_attributes.keys():
+                                attribute_value = span_attributes[attribute_key]
+                                new_attribute_value = attribute_value.encode('utf-16', 'backslashreplace').decode('utf-16')
+                                new_attribute_key = attribute_key.encode('utf-16', 'backslashreplace').decode('utf-16')
+                                if attribute_key != new_attribute_key:
+                                    processed_attributes[new_attribute_key] = new_attribute_value
+                                    # del span_attributes[attribute_key]
+                                else:
+                                    processed_attributes[attribute_key] = new_attribute_value
+
+                            span['attributes'] = processed_attributes
+
+                if 'tokens' in passage:
+                    for token in passage['tokens']:
+                        token['text'] = token['text'].encode('utf-16', 'backslashreplace').decode('utf-16')
 
     def process_batch_single(self):
         while True:
