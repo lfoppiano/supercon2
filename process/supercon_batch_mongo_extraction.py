@@ -136,7 +136,7 @@ class MongoSuperconProcessor:
                     }
                     self.queue_logger.put(status_info, block=True)
                     if self.verbose:
-                        print(ue)
+                        print(ue2)
                     continue
 
             if self.verbose:
