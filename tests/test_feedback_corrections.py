@@ -12,7 +12,7 @@ def test_process_excel_check_obsolete_links(mongodb):
 
     tabular_collection = mongodb.get_collection("tabular")
     records_all = tabular_collection.find({"hash": "48ba234393"})
-    assert len(list(records_all)) == 6
+    assert len(list(records_all)) == 5
 
     records_manually_corrected = list(
         tabular_collection.find({"hash": "48ba234393", "status": "curated", "type": "manual"}))

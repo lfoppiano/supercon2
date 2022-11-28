@@ -59,7 +59,8 @@ The `supercon2` service provides the following features:
 
 **Future plans**
  - Undo/redo functionality: possibility to revert incorrect edits and modification of the database 
- - Versioning of documents
+ - Document versioning
+ - ...
 
 ### Keystrokes
 
@@ -150,7 +151,7 @@ The correction workflow is summarised in the following schema:
 Records have several statuses: 
  - **new**: the record has been added by the automatic process
  - **invalid**: the record is probably wrong and it was marked manually by a curator 
- - **curated**: the record has been edited (a curated record will also contain the [error type](doc/readme.md#error-types))
+ - **curated**: the record has been edited (a curated record will also contain the [error type](docs/readme.md#error-types))
  - **validated**: the record was validated by a curator as correct (this could have been done from a new or a curated record)
 
 Additional statuses which are irrelevant for users: 

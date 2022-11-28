@@ -15,7 +15,7 @@ from commons.correction_utils import write_correction, write_raw_training_data
 from commons.label_studio_commons import to_label_studio_format_single
 from commons.mongo_utils import connect_mongo
 from process.utils import json_serial
-from supercon2.schemas import Record, Flag, RecordParamsIn, UpdatedRecord, Publishers, Years
+from supercon2.schemas import Record, Flag, RecordParamsIn, UpdatedRecord, Publishers, Years, ProcessRecord
 
 bp = APIBlueprint('supercon', __name__)
 config = []
@@ -130,16 +130,28 @@ def get_stats():
                            by_journal=by_journal_fixed, version=get_version()['version'])
 
 
-@bp.route("/correction_logger", methods=["GET"])
-def get_correction_log():
+@bp.route("/curation_log", methods=["GET"])
+def get_curation_log():
     base_url = get_base_url(config)
-    return render_template("correction_log.html", version=get_version()['version'], base_url=base_url)
+    return render_template("curation_log.html", version=get_version()['version'], base_url=base_url)
 
 
-@bp.route("/correction_logger/document/<hash>", methods=["GET"])
-def get_correction_log_filter_by_document(hash):
+@bp.route("/curation_log/document/<hash>", methods=["GET"])
+def get_curation_log_filter_by_document(hash):
     base_url = get_base_url(config)
-    return render_template("correction_log.html", hash=hash, version=get_version()['version'], base_url=base_url)
+    return render_template("curation_log.html", hash=hash, version=get_version()['version'], base_url=base_url)
+
+
+@bp.route("/process_log", methods=["GET"])
+def get_process_log():
+    base_url = get_base_url(config)
+    return render_template("process_log.html", version=get_version()['version'], base_url=base_url)
+
+
+@bp.route("/process_log/document/<hash>", methods=["GET"])
+def get_process_log_filter_by_document(hash):
+    base_url = get_base_url(config)
+    return render_template("process_log.html", hash=hash, version=get_version()['version'], base_url=base_url)
 
 
 def get_base_url(config):
@@ -159,7 +171,7 @@ def replace_empty_key(input):
 @input(Record)
 @output(UpdatedRecord)
 def update_record(id, record: Union[Record, dict]):
-    object_id = validateObjectId(id)
+    object_id = validate_objectId(id)
     validate_record(record)
     db = connect_and_get_db()
 
@@ -213,16 +225,17 @@ def _update_record(object_id: ObjectId, new_doc: Union[Record, dict], db):
             # del record['error_type']
 
         new_doc_id = write_correction(old_doc, new_doc, tabular_collection, error_type=error_type)
-        training_data_id = write_raw_training_data(old_doc, new_doc_id, document_collection, training_data_collection)
+        training_data_id = write_raw_training_data(old_doc, new_doc_id, document_collection, training_data_collection,
+                                                   action="update")
         return new_doc_id
     except Exception as e:
         # Roll back!
         print("Exception:", e, "Rolling back.")
-        roll_back(new_doc_id, old_doc, training_data_id, tabular_collection, training_data_collection)
+        rollback(new_doc_id, old_doc, training_data_id, tabular_collection, training_data_collection)
         raise e
 
 
-def roll_back(new_id, old_doc, training_data_id, tabular_collection, training_data_collection):
+def rollback(new_id, old_doc, training_data_id, tabular_collection, training_data_collection):
     if training_data_id is not None:
         training_data_collection.delete_one({"_id": training_data_id})
 
@@ -243,6 +256,23 @@ def roll_back(new_id, old_doc, training_data_id, tabular_collection, training_da
                 "$set": query_set,
                 "$unset": query_unset
             }
+        )
+
+
+def rollback_delete(previous_record, training_data_id, tabular_collection, training_data_collection):
+    if training_data_id is not None:
+        training_data_collection.delete_one({"_id": training_data_id})
+
+    if previous_record is not None:
+        query_update = {"$set": {"status": previous_record['status']}}
+        if 'error_type' in previous_record:
+            query_update["$set"]["error_type"] = previous_record['error_type']
+
+        query_update['$set']['timestamp'] = previous_record['timestamp']
+
+        tabular_collection.update_one(
+            {'_id': previous_record['_id']},
+            query_update
         )
 
 
@@ -335,13 +365,14 @@ def get_records_by_document(hash):
     return get_records(document=hash)
 
 
-@bp.route("/records_curated", methods=["GET"])
+@bp.route("/curation/records", methods=["GET"])
 @output(Record(many=True))
-def get_curation_log():
+def get_curation_records():
     db = connect_and_get_db()
 
     pipeline = [
-        {"$match": {"previous": {"$exists": 1}, "status": {"$not": {"$in": ["empty", "new", "obsolete"]}}}}
+        # {"$match": {"previous": {"$exists": 1}, "status": {"$not": {"$in": ["empty", "new", "obsolete"]}}}}
+        {"$match": {"status": {"$not": {"$in": ["empty", "new", "obsolete"]}}}}
     ]
     entries = []
     tabular_collection = db.get_collection("tabular")
@@ -351,8 +382,12 @@ def get_curation_log():
     entities = []
     for entry in cursor_aggregation:
         entry['id'] = str(entry['_id'])
-        previous_id = entry['previous']
-        entry['previous'] = str(entry['previous'])
+
+        previous_id = None
+        if 'previous' in entry:
+            previous_id = entry['previous']
+            entry['previous'] = str(entry['previous'])
+
         entities.append(entry)
 
         count = 0
@@ -362,6 +397,22 @@ def get_curation_log():
             count += 1
 
         entry['update_count'] = count
+
+    return entities
+
+
+@bp.route("/process/records", methods=["GET"])
+@output(ProcessRecord(many=True))
+def get_process_records():
+    db = connect_and_get_db()
+    logger_collection = db.get_collection("logger")
+
+    cursor = logger_collection.find()
+
+    entities = []
+    for entry in cursor:
+        entry['id'] = str(entry['_id'])
+        entities.append(entry)
 
     return entities
 
@@ -433,7 +484,7 @@ def get_records(type=None, status=None, document=None, publisher=None, year=None
             # aggregation_query = [{"$sort": {"hash": 1, "timestamp": 1}}, {"$group": {"_id": "$hash", "lastDate": {"$last": "$timestamp"}}}]
             # aggregation_query = [{"$match": {"type": type}}] + aggregation_query
             # cursor_aggregation = document_collection.aggregate(aggregation_query)
-            entry['doc_url'] = url_for('supercon.get_document_old', hash=entry['hash'])
+            entry['doc_url'] = url_for('supercon.get_document', hash=entry['hash'])
 
     return entries
 
@@ -486,7 +537,7 @@ def get_binary(hash):
 @bp.route('/record/<id>', methods=['GET'])
 @output(Record)
 def get_record(id):
-    object_id = validateObjectId(id)
+    object_id = validate_objectId(id)
     db = connect_and_get_db()
     record = db.get_collection("tabular").find_one({"_id": object_id})
 
@@ -494,20 +545,59 @@ def get_record(id):
     return record
 
 
-@bp.route('/record/<id>', methods=['DELETE'])
-@output(Record)
-def delete_record(id):
-    object_id = validateObjectId(id)
-    db = connect_and_get_db()
-    record = db.get_collection("tabular").update_one({"_id": object_id}, {"$set": {"status": "removed"}})
+def _delete_record(id, error_type, db):
+    tabular_collection = db.get_collection("tabular")
+    document_collection = db.get_collection("document")
+    training_data_collection = db.get_collection("training_data")
+    old_doc = None
+    training_data_id = None
+    try:
+        old_doc = tabular_collection.find_one({"_id": id})
+        update_query = {"$set": {
+            "status": "removed",
+            "error_type": error_type,
+            "timestamp": datetime.utcnow()
+        }
+        }
+        record_information = tabular_collection.update_one({"_id": id}, update_query)
+        training_data_id = write_raw_training_data(old_doc, old_doc['_id'], document_collection,
+                                                   training_data_collection, action="delete")
 
-    return record
+    except Exception as e:
+        # Rollback!
+        print("Exception:", e, "Rolling back.")
+        rollback_delete(old_doc, training_data_id, tabular_collection, training_data_collection)
+        raise e
+
+    return record_information
+
+
+@bp.route('/record/<id>', methods=['DELETE'])
+@output(UpdatedRecord)
+def delete_record(id):
+    object_id = validate_objectId(id)
+    db = connect_and_get_db()
+
+    error_type = request.args.get('error_type')
+
+    if error_type is None or error_type not in get_error_types().keys():
+        abort(400, "The specified error type: " + str(error_type) + " is invalid or missing.")
+
+    try:
+        _delete_record(object_id, error_type, db=db)
+    except Exception as e:
+        abort(400, str(e))
+
+    return_info = UpdatedRecord()
+    return_info.id = object_id
+
+    return return_info
 
 
 @bp.route('/record/<id>/status', methods=['GET'])
 @output(Flag)
 def get_record_status(id):
-    object_id = validateObjectId(id)
+    object_id = validate_objectId(id)
     db = connect_and_get_db()
     record = db.get_collection("tabular").find_one({"_id": object_id}, {'_id': 0, 'type': 1, 'status': 1})
 
@@ -518,7 +608,7 @@ def get_record_status(id):
 @output(Flag)
 def mark_record_invalid(id):
     """The record is marked as invalid"""
-    object_id = validateObjectId(id)
+    object_id = validate_objectId(id)
     db = connect_and_get_db()
     tabular_collection = db.get_collection("tabular")
     record = tabular_collection.find_one({"_id": object_id, "status": {"$in": VALID_STATUSES}})
@@ -538,7 +628,7 @@ def mark_record_invalid(id):
 @output(Flag)
 def mark_record_validated(id):
     """The record is marked as correct"""
-    object_id = validateObjectId(id)
+    object_id = validate_objectId(id)
     db = connect_and_get_db()
     return _mark_validated(db, object_id)
 
@@ -547,7 +637,7 @@ def _mark_validated(db, id: ObjectId):
     tabular_collection = db.get_collection("tabular")
     record = tabular_collection.find_one({"_id": id, "status": {"$in": VALID_STATUSES}})
     if record is None:
-        return "Record with id=" + id + " not found.", 404
+        return "Record with id=" + str(id) + " not found.", 404
 
     new_status = 'validated'
     new_type = 'manual'
@@ -558,7 +648,7 @@ def _mark_validated(db, id: ObjectId):
     return changes, 200
 
 
-def validateObjectId(id):
+def validate_objectId(id):
     try:
         return ObjectId(id)
     except InvalidId as e:
@@ -569,7 +659,7 @@ def validateObjectId(id):
 @output(Flag)
 def reset_record(id):
     """Reset the status of the record"""
-    object_id = validateObjectId(id)
+    object_id = validate_objectId(id)
     db = connect_and_get_db()
     return _reset_record(db, object_id)
 
@@ -609,7 +699,7 @@ def get_training_data():
 
 @bp.route('/training/data/<id>', methods=['GET'])
 def export_training_data(id):
-    object_id = validateObjectId(id)
+    object_id = validate_objectId(id)
     db = connect_and_get_db()
     training_data_collection = db.get_collection("training_data")
 
@@ -654,7 +744,7 @@ def get_training_data_by_status(status, db):
 
 
 def get_training_data_by_id_and_status(record_id, status, db):
-    id = validateObjectId(record_id)
+    id = validate_objectId(record_id)
     training_data_collection = db.get_collection("training_data")
     training_data = training_data_collection.find_one({'_id': id, 'status': status}, {'tokens': 0})
     if not training_data:
@@ -886,7 +976,7 @@ def delete_training_data_record(id):
     db = connect_and_get_db()
     training_data_collection = db.get_collection("training_data")
 
-    object_id = validateObjectId(id)
+    object_id = validate_objectId(id)
     result = training_data_collection.delete_one({"_id": object_id})
 
     return Response(json.dumps({"deleted": result.deleted_count}, default=json_serial), mimetype="application/json")

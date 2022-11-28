@@ -54,7 +54,7 @@ class MongoSuperconProcessor:
         while True:
             status_info = self.queue_logger.get(block=True)
             if status_info is None:
-                print("Got termination. Shutdown processor.")
+                print("Got termination. Shutdown 'logger' processor.")
                 self.queue_logger.put(None)
                 break
 
@@ -77,7 +77,7 @@ class MongoSuperconProcessor:
             output = self.queue_output.get(block=True)
             if output is None:
                 if self.verbose:
-                    print("Got termination. Shutdown processor.")
+                    print("Got termination. Shutdown 'writer' processor.")
                 self.queue_output.put(None)
                 break
 
@@ -92,13 +92,38 @@ class MongoSuperconProcessor:
             try:
                 document_id = db.document.insert_one(output_json).inserted_id
             except DocumentTooLarge as e:
-                status_info = {'status': None, 'message': str(e), 'timestamp': datetime.utcnow(), 'hash': hash}
+                status_info = {
+                    'status': None,
+                    'path': str(output_original_path),
+                    'message': str(e),
+                    'timestamp': datetime.utcnow(),
+                    'hash': hash
+                }
                 self.queue_logger.put(status_info, block=True)
+                if self.verbose:
+                    print(e)
                 continue
             except UnicodeEncodeError as ue:
-                status_info = {'status': None, 'message': str(ue), 'timestamp': datetime.utcnow(), 'hash': hash}
-                self.queue_logger.put(status_info, block=True)
-                continue
+
+                try:
+                    if self.verbose:
+                        print("Invalid unicode detected. Trying to remove surrogates. ")
+
+                    self.escape_surrogates(output_json)
+
+                    document_id = db.document.insert_one(output_json).inserted_id
+                except UnicodeEncodeError as ue2:
+                    status_info = {
+                        'status': None,
+                        'path': str(output_original_path),
+                        'message': str(ue),
+                        'timestamp': datetime.utcnow(),
+                        'hash': hash
+                    }
+                    self.queue_logger.put(status_info, block=True)
+                    if self.verbose:
+                        print(ue2)
+                    continue
 
             if self.verbose:
                 print("Storing binary ", hash)
@@ -113,12 +138,42 @@ class MongoSuperconProcessor:
             if self.verbose:
                 print("Inserted document ", document_id)
 
+    def escape_surrogates(self, output_json):
+        if 'passages' in output_json:
+            for passage in output_json['passages']:
+                passage['text'] = passage['text'].encode('utf-16', 'backslashreplace').decode('utf-16')
+                if 'spans' in passage:
+                    for span in passage['spans']:
+                        span['text'] = span['text'].encode('utf-16', 'backslashreplace').decode('utf-16')
+                        if 'formattedText' in span:
+                            span['formattedText'] = span['formattedText'].encode('utf-16', 'backslashreplace').decode(
+                                'utf-16')
+                        if 'attributes' in span:
+                            processed_attributes = {}
+
+                            span_attributes = span['attributes']
+                            for attribute_key in span_attributes.keys():
+                                attribute_value = span_attributes[attribute_key]
+                                new_attribute_value = attribute_value.encode('utf-16', 'backslashreplace').decode('utf-16')
+                                new_attribute_key = attribute_key.encode('utf-16', 'backslashreplace').decode('utf-16')
+                                if attribute_key != new_attribute_key:
+                                    processed_attributes[new_attribute_key] = new_attribute_value
+                                    # del span_attributes[attribute_key]
+                                else:
+                                    processed_attributes[attribute_key] = new_attribute_value
+
+                            span['attributes'] = processed_attributes
+
+                if 'tokens' in passage:
+                    for token in passage['tokens']:
+                        token['text'] = token['text'].encode('utf-16', 'backslashreplace').decode('utf-16')
+
     def process_batch_single(self):
         while True:
             source_path = self.queue_input.get(block=True)
             if source_path is None:
                 if self.verbose:
-                    print("Got termination. Shutdown processor.")
+                    print("Got termination. Shutdown 'process' processor.")
                 self.queue_input.put(source_path)
                 break
 
@@ -177,7 +232,7 @@ class MongoSuperconProcessor:
         ensure_indexes(self.config)
 
         num_threads_process = num_threads
-        num_threads_store = math.ceil(num_threads / 2) if num_threads > 1 else 1
+        num_threads_store = num_threads if num_threads > 1 else 1
 
         self.queue_input = self.m.Queue(maxsize=num_threads_process)
         self.queue_output = self.m.Queue(maxsize=num_threads_store)
