@@ -83,7 +83,7 @@
                 </template>
                 <template v-slot:item.hash="{ item }">
                     <v-row>
-                        <a :href="base_url + 'document_old/' + item.hash"
+                        <a :href="base_url + 'document/' + item.hash"
                             target="_blank"
                             :style="{'text-decoration': 'none'}"
                             class="ma-1" title="View document">
@@ -329,8 +329,7 @@
                         // { text: 'ID', value: 'id', hidden: true},
                         // { text: 'Material ID', value: 'materialId', hidden: true},
                     ],
-                    rowsOnItemEditDialog: [
-                        {
+                    rowsOnItemEditDialog: [{
                             config: { cols: 4 },
                             cols: [
                                 { key: 'rawMaterial'},
@@ -338,55 +337,9 @@
                                 {
                                     key: 'error_type', label: '*Error type', rules: [(value) => !!value || 'This field is required'],
                                     errorMessages: [],
-                            selectBoxItems: [] // set by the loadErrorTypes method
-                        }]
-                    }, {
-                        config: {
-                            cols: null,
-                        },
-                        cols: [{
-                            key: 'formula',
-                        },{
-                            key: 'variables',
-                        },{
-                            key: 'criticalTemperature',
-                        },{
-                            key: 'appliedPressure',
-                        },{
-                            key: 'criticalTemperatureMeasurementMethod',
-                        },]
-                    }, {
-                        config: {
-                            cols: null,
-                        },
-                        cols: [{
-                            key: 'spaceGroup',
-                        },{
-                            key: 'crystalStructure',
-                        },{
-                            key: 'unitCellType',
-                        },{
-                            key: 'doping',
-                        },{
-                            key: 'shape',
-                        },{
-                            key: 'fabrication',
-                        },{
-                            key: 'substrate',
-                        },]
-                    }, {
-                        config: {
-                            cols: null,
-                        },
-                        cols: [{
-                            key: 'hash',
-                            disabled: true,
-                        },{
-                            key: 'doi',
-                            disabled: true,
-                        },{
-                            key: 'authors',
-                            disabled: true,
+                                    selectBoxItems: [] // set by the loadErrorTypes method
+                                }
+                            ]
                         }, {
                             config: { cols: null },
                             cols: [
