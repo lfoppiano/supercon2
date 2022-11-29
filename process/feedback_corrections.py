@@ -59,7 +59,7 @@ def create_as_correct(document, collection, dry_run=False):
         print("Creating document as corrected. ")
         return
 
-    document['status'] = 'valid'
+    document['status'] = 'curated'
     document['type'] = 'manual'
     return collection.insert_one(document)
 
@@ -69,7 +69,7 @@ def flag_as_correct(doc_id, collection, dry_run=False):
         print("Flagging document with id ", doc_id, "as corrected. ")
         return
 
-    status = 'valid'
+    status = 'validated'
     type = 'manual'
 
     changes = {'status': status, 'type': type}
