@@ -256,8 +256,9 @@
                                         'width': box.width * scale,
                                         'height': box.height * scale,
                                         'border': '2px solid',
-                                        'border-color': colors[getPlainType(span.type)]
-                                    }" :id="span.id"></div>
+                                        'border-color': colors[getPlainType(span.type)],
+                                        'cursor': 'pointer'
+                                    }" :id="span.id" @click="showSpanDetail(span)"></div>
                                     <v-icon :style="{
                                         'position': 'absolute',
                                         'left': box.x2 * scale,
@@ -271,6 +272,51 @@
                             </div>
                         </div>
                     </div>
+                    <v-card id="spanDetail" v-if="clickedSpan" :style="{
+                        'position': 'absolute',
+                        'top': (Math.floor(pages[0].height) * (clickedSpan.boundingBoxes[0].page-1) + clickedSpan.boundingBoxes[0].y) * scale,
+                        'left': Math.floor(pages[0].width) * scale,
+                    }">
+                        <v-card-title>
+                            <span class="font-weight-bold" v-html="clickedSpan.formattedText || clickedSpan.text"/>
+                            <v-chip
+                                class="ml-2"
+                                small
+                                :color="colors[getPlainType(clickedSpan.type)]"
+                                :text-color="getProperTextColorByBackgroundColor(colors[getPlainType(clickedSpan.type)])">
+                                [[getPlainType(clickedSpan.type)]]
+                            </v-chip>
+                        </v-card-title>
+                        <template v-if="clickedSpan?.links?.length > 0">
+                            <hr>
+                            <v-card-subtitle>
+                                <h3>Links</h3>
+                            </v-card-subtitle>
+                            <v-card-text>
+                                <p v-for="link in clickedSpan.links">
+                                    <span class="font-weight-bold">[[link.targetText]]</span>
+                                    <span>[["(" + getPlainType(link.targetType) + ") [" + link.type + "]"]]</span>
+                                </p>
+                            </v-card-text>
+                        </template>
+                        <!-- TODO: confirm which keys are supposed to be used -->
+                        <template v-if="
+                            !!clickedSpan?.attributes?.material0_formula_rawValue ||
+                            !!clickedSpan?.attributes?.material0_class">
+                            <hr>
+                            <v-card-subtitle>
+                                <h3>Attributes</h3>
+                            </v-card-subtitle>
+                            <v-card-text>
+                                <p v-if="clickedSpan.attributes?.material0_formula_rawValue">
+                                    formula: [[clickedSpan.attributes?.material0_formula_rawValue]]
+                                </p>
+                                <p v-if="clickedSpan.attributes?.material0_class">
+                                    class: [[clickedSpan.attributes?.material0_class]]
+                                </p>
+                            </v-card-text>
+                        </template>
+                    </v-card>
                 </div>
                 <p><span style="color:#848484;">&copy; Contributors, 2022 |</span> <span id="version" style="color:#848484;" v-html="version"></span></p>
             </v-container>
@@ -319,7 +365,8 @@
                     sortBy: ['hash'],
                     selectedItems: [],
                     floatingItems: [],
-                    selectedSpanId: "",
+                    selectedSpanId: "", // selected on the table
+                    clickedSpan: undefined, // clicked on the pdf
                     filteredItems: [],
                     selectedHeaders: [],
                     headers: [
@@ -511,6 +558,16 @@
                 this.loadItems()
             },
             methods: {
+                getProperTextColorByBackgroundColor(hexColor) {
+                    const r = parseInt( hexColor.substr( 1, 2 ), 16 ) ;
+                    const g = parseInt( hexColor.substr( 3, 2 ), 16 ) ;
+                    const b = parseInt( hexColor.substr( 5, 2 ), 16 ) ;
+                    // https://www.w3.org/TR/AERT/#color-contrast
+                    return ( ( ( (r * 299) + (g * 587) + (b * 114) ) / 1000 ) < 128 ) ? "white" : "black" ;
+                },
+                showSpanDetail(span) {
+                    this.clickedSpan = span
+                },
                 scrollToPdf(spanId, item) {
                     this.floatingItems.length = 0
                     this.floatingItems.push(item)
