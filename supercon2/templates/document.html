@@ -255,8 +255,8 @@
                                         'top': (Math.floor(pages[0].height) * (box.page-1) + box.y) * scale,
                                         'width': box.width * scale,
                                         'height': box.height * scale,
-                                        'border': '2px solid',
-                                        'border-color': colors[getPlainType(span.type)],
+                                        'outline': '2px solid',
+                                        'outline-color': colors[getPlainType(span.type)],
                                         'cursor': 'pointer'
                                     }" :id="span.id" @click="showSpanDetail(span)"></div>
                                     <v-icon :style="{
