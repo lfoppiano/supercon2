@@ -223,8 +223,10 @@
                                 icon: 'mdi-robot'
                             },]
                         },
-                        { text: 'Latest error type', value: 'error_type', hidden: false, filter: this.errorTypeFilter,
-                            filterKeyword: 'all',  shouldHideEmpty: false },
+                        {
+                            text: 'Latest error type', value: 'error_type', hidden: false, filter: this.errorTypeFilter, filterKeyword: 'all', shouldHideEmpty: false,
+                            selectItems: [], // filled by loadErrorTypes method
+                        },
                         {
                             text: 'Status', value: 'status', sortable: false, hidden: false, filter: this.statusFilter, filterKeyword: 'all', width: 80,
                             selectItems: [
@@ -407,7 +409,7 @@
                             return col.key === "error_type"
                         });
                         dialog.selectBoxItems= errorTypes;
-                        this.headerObject.error_type.selectItems = new Array("all", ...Object.values(data.data))
+                        this.headerObject.error_type.selectItems = new Array({"value":"all", text:"All"}).concat(errorTypes)
                         return
                     }).finally(() => {
                         //
