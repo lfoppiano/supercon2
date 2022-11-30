@@ -347,7 +347,7 @@
                     pageCount: 0,
                     itemsPerPage: 10,
                     itemsPerPageOptions: [25, 50, 100],
-                    sortBy: ['hash'],
+                    sortBy: [],
                     selectedItems: [],
                     floatingItems: [],
                     selectedSpanId: "", // selected on the table
@@ -381,7 +381,7 @@
                         { text: 'Subsection', value: 'subsection', hidden: true, filter: this.subsectionFilter, filterKeyword: '', shouldHideEmpty: false },
                         //{#{ text: 'Path', value: 'path', hidden: true, filter: this.pathFilter, filterKeyword: '', shouldHideEmpty: false },#}
                         //{#{ text: 'Filename', value: 'filename', hidden: true, filter: this.filenameFilter, filterKeyword: '', shouldHideEmpty: false },#}
-                        { text: 'Document', value: 'hash', hidden: false, filter: this.hashFilter, filterKeyword: "{{hash}}", width: 120, shouldHideEmpty: false },
+                        { text: 'Document', value: 'hash', hidden: true, filter: this.hashFilter, filterKeyword: '', width: 120, shouldHideEmpty: false },
                         { text: 'Entity ID', value: 'id', hidden: true, filter: this.idFilter, filterKeyword: '', shouldHideEmpty: false, width: 120, },
                         { text: 'Timestamp', value: 'timestamp', hidden: true, filter: this.timestampFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'DOI', value: 'doi', hidden: true, filter: this.doiFilter, filterKeyword: '', shouldHideEmpty: false },
