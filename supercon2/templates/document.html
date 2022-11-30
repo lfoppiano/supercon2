@@ -80,11 +80,11 @@
                     </template>
                     <template v-slot:item.rawMaterial="{ item }">
                         [[ item.rawMaterial ]]
-                        <v-icon @click="scrollToPdf(item.materialId, item)">mdi-arrow-down-thick</v-icon>
+                        <v-icon @click="scrollToPdf(item.materialId, item.id)">mdi-arrow-down-thick</v-icon>
                     </template>
                     <template v-slot:item.criticalTemperature="{ item }">
                         [[ item.criticalTemperature ]]
-                        <v-icon @click="scrollToPdf(item.criticalTemperatureId, item)">mdi-arrow-down-thick</v-icon>
+                        <v-icon @click="scrollToPdf(item.criticalTemperatureId, item.id)">mdi-arrow-down-thick</v-icon>
                     </template>
                     <template v-slot:item.hash="{ item }">
                         <v-row>
@@ -645,10 +645,8 @@
                 showSpanDetail(span) {
                     this.clickedSpan = span
                 },
-                scrollToPdf(spanId, item) {
-                    this.floatingItems.length = 0
-                    this.floatingItems.push(item)
-                    const viewer = document.getElementById('pdfViewer')
+                scrollToPdf(spanId, itemId) {
+                    this.floatingItems = this.items.filter(item => item.id === itemId)
                     this.selectedSpanId = spanId
                     const span = document.getElementById(spanId)
                     this.smoothScroll(span, -100).then(() => {
