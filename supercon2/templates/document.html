@@ -687,10 +687,11 @@
                 loadItems() {
                     this.isLoading = true
                     const url =
-                        '{{ url_for("supercon.get_records_from_form_data") }}'
+                        '{{ url_for("supercon.get_records_by_document", hash = hash) }}'
                     axios.get(url).then((data) => {
                         this.items = data.data
-                        return
+                    }).catch((e) => {
+                        console.error("failed to load documents", e)
                     }).finally(() => {
                         this.isLoading = false
                     })
@@ -1100,22 +1101,18 @@
                     return type.replace("<","").replace(">","")
                 },
                 async loadAnnotations() {
-                    let url = "{{ url_for('supercon.get_annotations', hash='_HASH_') }}"
-                    url = url.replace("_HASH_", this.hash)
+                    let url = "{{ url_for('supercon.get_annotations', hash=hash) }}"
                     try {
                         const result = await axios.get(url, {})
-                        console.log(result)
                         this.passages = result.data.passages
                         this.pages = result.data.pages
                     } catch (e) {
-                        console.error(e)
-                        window.alert(JSON.stringify(e.response.data))
+                        console.error("failed to load annotations", e)
                     } finally {
                     }
                 },
                 async loadPdfs() {
-                    var url = "{{ url_for('supercon.get_binary', hash='_HASH_') }}"
-                    url = url.replace("_HASH_", this.hash)
+                    const url = "{{ url_for('supercon.get_binary', hash=hash) }}"
 
                     const loadingTask = await pdfjsLib.getDocument(url)
                     loadingTask.promise.then(async function(pdf) {
@@ -1141,6 +1138,9 @@
                                 console.log('Page rendered');
                             })
                         }
+                    }).catch(error => {
+                        window.alert(error.message)
+                        console.error(error)
                     })
                 }
             },
