@@ -537,12 +537,22 @@
             created() {
                 this.selectedHeaders = this.headers.filter(h => !h.hidden)
             },
+            destroyed () {
+                window.removeEventListener('scroll', this.onScroll)
+            },
             mounted() {
                 this.loadPdfs()
                 this.loadAnnotations()
                 this.loadItems()
             },
             methods: {
+                onScroll() {
+                    const viewer = document.getElementById('pdfViewer')
+                    if (window.scrollY < viewer.offsetTop) {
+                        this.selectedSpanId = ""
+                        window.removeEventListener('scroll', this.onScroll)
+                    }
+                },
                 generateAttributeHtml(attributes) {
                     let string = ""
                     let previousPrefix = "";
@@ -634,10 +644,38 @@
                     const viewer = document.getElementById('pdfViewer')
                     this.selectedSpanId = spanId
                     const span = document.getElementById(spanId)
-                    window.scrollTo({
-                        top: span.offsetTop + viewer.offsetTop - 100,
-                        behavior: 'smooth'
+                    this.smoothScroll(span, -100).then(() => {
+                        window.addEventListener('scroll', this.onScroll)
                     })
+                },
+                smoothScroll(elem, offset = 0) {
+                    const rect = elem.getBoundingClientRect();
+                    let targetPosition = Math.floor(rect.top + self.pageYOffset + offset);
+                    window.scrollTo({
+                        top: targetPosition,
+                        behavior: 'smooth'
+                    });
+
+                    return new Promise((resolve, reject) => {
+                        const failed = setTimeout(() => {
+                            reject();
+                        }, 2000);
+
+                        const scrollHandler = () => {
+                            if (self.pageYOffset === targetPosition) {
+                                window.removeEventListener("scroll", scrollHandler);
+                                clearTimeout(failed);
+                                resolve();
+                            }
+                        };
+                        if (self.pageYOffset === targetPosition) {
+                            clearTimeout(failed);
+                            resolve();
+                        } else {
+                            window.addEventListener("scroll", scrollHandler);
+                            elem.getBoundingClientRect();
+                        }
+                    });
                 },
                 copyTextToClipboard(text) {
                     navigator.clipboard.writeText(text)
