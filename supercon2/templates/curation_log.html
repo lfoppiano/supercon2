@@ -61,7 +61,6 @@
 {#                                <v-switch v-model="headerObject[header.value].shouldHideEmpty" title="Hide empty">#}
 {#                                </v-switch>#}
                             </template>
-
                         </td>
                     </tr>
                 </template>
@@ -88,6 +87,9 @@
                 <template v-slot:item.flag="{ item }">
                     <v-checkbox :input-value="item.flag" @click="toggleFlag(item)" :disabled="flagIsNotWritable(item)">
                     </v-checkbox>
+                </template>
+                <template v-slot:item.timestamp="{ item }">
+                    <v-row>[[ new Date(item.timestamp + "Z").toString() ]]</v-row>
                 </template>
             </v-data-table>
             <p><span style="color:#848484;">&copy; Contributors, 2022 |</span> <span id="version" style="color:#848484;" v-html="version"></span></p>
