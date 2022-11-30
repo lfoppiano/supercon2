@@ -61,7 +61,6 @@
 {#                                <v-switch v-model="headerObject[header.value].shouldHideEmpty" title="Hide empty">#}
 {#                                </v-switch>#}
                             </template>
-
                         </td>
                     </tr>
                 </template>
@@ -88,6 +87,9 @@
                 <template v-slot:item.flag="{ item }">
                     <v-checkbox :input-value="item.flag" @click="toggleFlag(item)" :disabled="flagIsNotWritable(item)">
                     </v-checkbox>
+                </template>
+                <template v-slot:item.timestamp="{ item }">
+                    <v-row>[[ new Date(item.timestamp + "Z").toString() ]]</v-row>
                 </template>
             </v-data-table>
             <p><span style="color:#848484;">&copy; Contributors, 2022 |</span> <span id="version" style="color:#848484;" v-html="version"></span></p>
@@ -221,8 +223,10 @@
                                 icon: 'mdi-robot'
                             },]
                         },
-                        { text: 'Latest error type', value: 'error_type', hidden: false, filter: this.errorTypeFilter,
-                            filterKeyword: 'all',  shouldHideEmpty: false },
+                        {
+                            text: 'Latest error type', value: 'error_type', hidden: false, filter: this.errorTypeFilter, filterKeyword: 'all', shouldHideEmpty: false,
+                            selectItems: [], // filled by loadErrorTypes method
+                        },
                         {
                             text: 'Status', value: 'status', sortable: false, hidden: false, filter: this.statusFilter, filterKeyword: 'all', width: 80,
                             selectItems: [
@@ -405,7 +409,7 @@
                             return col.key === "error_type"
                         });
                         dialog.selectBoxItems= errorTypes;
-                        this.headerObject.error_type.selectItems = new Array("all", ...Object.values(data.data))
+                        this.headerObject.error_type.selectItems = new Array({"value":"all", text:"All"}).concat(errorTypes)
                         return
                     }).finally(() => {
                         //
