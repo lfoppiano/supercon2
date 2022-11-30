@@ -976,6 +976,21 @@ def delete_training_data_record(id):
 
     return Response(json.dumps({"deleted": result.deleted_count}, default=json_serial), mimetype="application/json")
 
+
+def get_training_data_as_xml():
+    db = connect_and_get_db()
+
+    training_data_collection = db.get_collection("training_data")
+
+    cursor_data_not_exported = training_data_collection.find({"exported": False})
+
+    for training_data in cursor_data_not_exported:
+
+        pass
+
+    pass
+
+
 # @bp.after_request
 # def add_header(r):
 #     """
