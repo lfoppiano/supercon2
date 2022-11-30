@@ -381,8 +381,8 @@
                         // { text: 'Unit Cell Type ID', value: 'unitCellTypeId', hidden: true },
                         { text: 'Doping', value: 'doping', hidden: false, filter: this.dopingFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'Shape', value: 'shape', hidden: false, filter: this.shapeFilter, filterKeyword: '', shouldHideEmpty: false },
-                        { text: 'Variables', value: 'variables', hidden: true, filter: this.variablesFilter, filterKeyword: '', shouldHideEmpty: false },
-                        { text: 'Material Class', value: 'materialClass', hidden: false, filter: this.materialClassFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Variables', value: 'variables', hidden: false, filter: this.variablesFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Material Class', value: 'materialClass', hidden: true, filter: this.materialClassFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'Other Information', value: 'fabrication', hidden: true, filter: this.fabricationFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'Substrate', value: 'substrate', hidden: true, filter: this.substrateFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'Critical Temperature', value: 'criticalTemperature', hidden: false, filter: this.criticalTemperatureFilter, filterKeyword: '', shouldHideEmpty: false, sort: this.sortByPhysicalQuantity },
@@ -397,9 +397,9 @@
                         //{#{ text: 'Path', value: 'path', hidden: true, filter: this.pathFilter, filterKeyword: '', shouldHideEmpty: false },#}
                         //{#{ text: 'Filename', value: 'filename', hidden: true, filter: this.filenameFilter, filterKeyword: '', shouldHideEmpty: false },#}
                         { text: 'Document', value: 'hash', hidden: false, filter: this.hashFilter, filterKeyword: "{{hash}}", width: 120, shouldHideEmpty: false },
-                        { text: 'Entity ID', value: 'id', hidden: false, filter: this.idFilter, filterKeyword: '', shouldHideEmpty: false, width: 120, },
+                        { text: 'Entity ID', value: 'id', hidden: true, filter: this.idFilter, filterKeyword: '', shouldHideEmpty: false, width: 120, },
                         { text: 'Timestamp', value: 'timestamp', hidden: true, filter: this.timestampFilter, filterKeyword: '', shouldHideEmpty: false },
-                        { text: 'DOI', value: 'doi', hidden: false, filter: this.doiFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'DOI', value: 'doi', hidden: true, filter: this.doiFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'Authors', value: 'authors', width: 300, hidden: true, filter: this.authorsFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'Title', value: 'title', width: 500, hidden: true, filter: this.titleFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'Publisher', value: 'publisher', hidden: true, filter: this.publisherFilter, filterKeyword: '', shouldHideEmpty: false },
