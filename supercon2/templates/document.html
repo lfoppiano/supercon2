@@ -277,45 +277,30 @@
                         'top': (Math.floor(pages[0].height) * (clickedSpan.boundingBoxes[0].page-1) + clickedSpan.boundingBoxes[0].y) * scale,
                         'left': Math.floor(pages[0].width) * scale,
                     }">
-                        <v-card-title>
-                            <span class="font-weight-bold" v-html="clickedSpan.formattedText || clickedSpan.text"/>
-                            <v-chip
-                                class="ml-2"
-                                small
-                                :color="colors[getPlainType(clickedSpan.type)]"
-                                :text-color="getProperTextColorByBackgroundColor(colors[getPlainType(clickedSpan.type)])">
-                                [[getPlainType(clickedSpan.type)]]
-                            </v-chip>
+                        <v-card-title :style="{
+                            'background-color': colors[getPlainType(clickedSpan.type)],
+                            'color': getProperTextColorByBackgroundColor(colors[getPlainType(clickedSpan.type)]),
+                        }">
+                            [[getPlainType(clickedSpan.type)]]
                         </v-card-title>
-                        <template v-if="clickedSpan?.links?.length > 0">
-                            <hr>
-                            <v-card-subtitle>
-                                <h3>Links</h3>
-                            </v-card-subtitle>
-                            <v-card-text>
-                                <p v-for="link in clickedSpan.links">
+                        <v-card-text>
+                            <p class="mt-4">
+                                name:
+                                <span class="font-weight-bold" v-html="clickedSpan.formattedText || clickedSpan.text"/>
+                            </p>
+                            <p v-if="clickedSpan?.links?.length > 0">
+                                linked:
+                                <span v-for="(link, index) in clickedSpan.links">
                                     <span class="font-weight-bold">[[link.targetText]]</span>
-                                    <span>[["(" + getPlainType(link.targetType) + ") [" + link.type + "]"]]</span>
-                                </p>
-                            </v-card-text>
-                        </template>
-                        <!-- TODO: confirm which keys are supposed to be used -->
-                        <template v-if="
-                            !!clickedSpan?.attributes?.material0_formula_rawValue ||
-                            !!clickedSpan?.attributes?.material0_class">
-                            <hr>
-                            <v-card-subtitle>
-                                <h3>Attributes</h3>
-                            </v-card-subtitle>
-                            <v-card-text>
-                                <p v-if="clickedSpan.attributes?.material0_formula_rawValue">
-                                    formula: [[clickedSpan.attributes?.material0_formula_rawValue]]
-                                </p>
-                                <p v-if="clickedSpan.attributes?.material0_class">
-                                    class: [[clickedSpan.attributes?.material0_class]]
-                                </p>
-                            </v-card-text>
-                        </template>
+                                    <span>[["(" + getPlainType(link.targetType) + ") [" + link.type + "]"]]</span><span v-if="index < clickedSpan.links.length-1">, </span>
+                                </span>
+                            </p>
+                            <div
+                                v-if="clickedSpan?.attributes"
+                                :style="{border: '1px solid #dee2e6'}"
+                                v-html="generateAttributeHtml(clickedSpan.attributes)">
+                            </div>
+                        </v-card-text>
                     </v-card>
                 </div>
                 <p><span style="color:#848484;">&copy; Contributors, 2022 |</span> <span id="version" style="color:#848484;" v-html="version"></span></p>
@@ -558,6 +543,81 @@
                 this.loadItems()
             },
             methods: {
+                generateAttributeHtml(attributes) {
+                    let string = ""
+                    let previousPrefix = "";
+                    let attributeHtmlStringStart = "<div class='border col-12 p-0'>";
+                    let attributeHtmlString = ""
+                    let obj = {}
+
+                    Object.keys(attributes).sort().forEach((key) => {
+                        let splits = key.split("_");
+                        let value = attributes[key];
+                        this.createNestedObject(obj, splits, value);
+                    });
+
+                    Object.keys(obj).forEach(function (key) {
+                        attributeHtmlString += attributeHtmlStringStart;
+                        let resolvedFormulas = [];
+                        let formula = "";
+                        let variables = []
+
+                        Object.keys(obj[key]).forEach(function (sub_key) {
+                            let propertyName = sub_key
+
+                            if (propertyName === "formula") {
+                                formula = obj[key][sub_key]['rawValue'];
+                                attributeHtmlString += "<row><div>" + propertyName + ": <strong>" + formula + "</strong></div></row>";
+                            } else if (propertyName === 'rawTaggedValue') {
+                                // continue
+                            } else if (propertyName === 'clazz') {
+                                attributeHtmlString += "<row><div>Class: <strong>" + obj[key][sub_key] + "</strong></div></row>";
+                            } else if (propertyName === 'resolvedFormulas') {
+                                let resolvedFormulasList = obj[key][sub_key];
+                                Object.keys(resolvedFormulasList).forEach(function (k) {
+                                    resolvedFormulas.push(resolvedFormulasList[k]['rawValue'])
+                                });
+                            } else if (propertyName === 'variables') {
+                                let variableList = obj[key][sub_key]
+                                Object.keys(variableList).forEach(function (variable_name) {
+                                    let var_values = variableList[variable_name];
+                                    Object.keys(var_values).forEach(function (var_value_index) {
+                                        variables.push(var_values[var_value_index]);
+                                    })
+                                    attributeHtmlString += "<row><div>" + "variable " + variable_name + ": <strong>" + variables.join(", ") + "</strong></div></row>";
+                                });
+                            } else {
+                                attributeHtmlString += "<row><div>" + propertyName + ": <strong>" + obj[key][sub_key] + "</strong></div></row>";
+                            }
+                            previousPrefix = key;
+
+                        })
+
+                        if (resolvedFormulas.length > 0 && resolvedFormulas[0] !== formula) {
+                            attributeHtmlString += "<row><div>resolvedFormula: <strong>" + resolvedFormulas.join(", ") + "</strong></div></row>";
+                        }
+                        attributeHtmlString += "</div>";
+                    })
+
+                    string += attributeHtmlString;
+                    return string
+                },
+                createNestedObject (base, names, value) {
+                    // If a value is given, remove the last name and keep it for later:
+                    var lastName = arguments.length === 3 ? names.pop() : false;
+
+                    // Walk the hierarchy, creating new objects where needed.
+                    // If the lastName was removed, then the last object is not set yet:
+                    for (var i = 0; i < names.length; i++) {
+                        base = base[names[i]] = base[names[i]] || {};
+                    }
+
+                    // If a value was given, set it to the last name:
+                    if (lastName) base = base[lastName] = value;
+
+                    // Return the last object in the hierarchy:
+                    return base;
+                },
                 getProperTextColorByBackgroundColor(hexColor) {
                     const r = parseInt( hexColor.substr( 1, 2 ), 16 ) ;
                     const g = parseInt( hexColor.substr( 3, 2 ), 16 ) ;
