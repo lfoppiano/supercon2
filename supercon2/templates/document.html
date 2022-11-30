@@ -252,7 +252,7 @@
                                     <div :style="{
                                         'position': 'absolute',
                                         'left': box.x * scale,
-                                        'top': (Math.floor(pages[0].height) * (box.page-1) + box.y) * scale,
+                                        'top': getPdfsHeight(box.page, scale) + box.y * scale,
                                         'width': box.width * scale,
                                         'height': box.height * scale,
                                         'outline': '2px solid',
@@ -546,6 +546,13 @@
                 this.loadItems()
             },
             methods: {
+                getPdfsHeight(page, ratio) {
+                    let height = 0
+                    for (let i = 1; i < page; i++) {
+                        height += Math.floor(this.pages[i-1].height * ratio)
+                    }
+                    return height
+                },
                 onScroll() {
                     const viewer = document.getElementById('pdfViewer')
                     if (window.scrollY < viewer.offsetTop) {
