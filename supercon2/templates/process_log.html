@@ -73,8 +73,7 @@
                     </v-row>
                 </template>
                 <template v-slot:item.timestamp="{ item }">
-                    <v-row>[[ new Date(item.timestamp + "Z").toString() ]]</v-row>
-{#                    <v-row>[[ new Date(item.timestamp + "Z").toString().split("GMT", 1)[0] ]]</v-row>#}
+                    <v-row>[[ new Intl.DateTimeFormat(['en-US', 'ja'], { dateStyle: 'short', timeStyle: 'short'}).format(new Date(item.timestamp + "Z")) ]]   </v-row>
                 </template>
             </v-data-table>
             <p><span style="color:#848484;">&copy; Contributors, 2022 |</span> <span id="version" style="color:#848484;" v-html="version"></span></p>
@@ -124,7 +123,7 @@
                         },
                         { text: 'Path', value: 'path', hidden: false, filter: this.pathFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'Document', value: 'hash', hidden: false, filter: this.hashFilter, filterKeyword: "{{hash}}", width: 120, shouldHideEmpty: false },
-                        { text: 'Timestamp', value: 'timestamp', hidden: false, filter: this.timestampFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Timestamp', value: 'timestamp', hidden: false, filter: this.timestampFilter, filterKeyword: '', shouldHideEmpty: false, width: 120 },
                         {
                             text: 'Status', value: 'status', sortable: false, hidden: false, filter: this.statusFilter, filterKeyword: 'all', width: 80,
                             selectItems: [

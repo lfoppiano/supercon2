@@ -144,8 +144,7 @@
                     </v-row>
                 </template>
                 <template v-slot:item.timestamp="{ item }">
-                    <v-row>[[ new Date(item.timestamp + "Z").toString() ]]</v-row>
-{#                    <v-row>[[ new Date(item.timestamp + "Z").toString().split("GMT", 1)[0] ]]</v-row>#}
+                    <v-row>[[ new Intl.DateTimeFormat(['en-US', 'ja'], { dateStyle: 'short', timeStyle: 'short'}).format(new Date(item.timestamp + "Z")) ]]   </v-row>
                 </template>
             </v-data-table>
             <p><span style="color:#848484;">&copy; Contributors, 2022 |</span> <span id="version" style="color:#848484;" v-html="version"></span></p>
@@ -272,7 +271,7 @@
                         {#{ text: 'Filename', value: 'filename', hidden: true, filter: this.filenameFilter, filterKeyword: '', shouldHideEmpty: false },#}
                         { text: 'Document', value: 'hash', hidden: false, filter: this.hashFilter, filterKeyword: "{{hash}}", width: 120, shouldHideEmpty: false },
                         { text: 'Entity ID', value: 'id', hidden: true, filter: this.idFilter, filterKeyword: '', shouldHideEmpty: false, width: 120, },
-                        { text: 'Timestamp', value: 'timestamp', hidden: true, filter: this.timestampFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Timestamp', value: 'timestamp', hidden: true, filter: this.timestampFilter, filterKeyword: '', shouldHideEmpty: false, width: 120 },                        
                         { text: 'DOI', value: 'doi', hidden: false, filter: this.doiFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'Authors', value: 'authors', width: 300, hidden: true, filter: this.authorsFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'Title', value: 'title', width: 500, hidden: true, filter: this.titleFilter, filterKeyword: '', shouldHideEmpty: false },
