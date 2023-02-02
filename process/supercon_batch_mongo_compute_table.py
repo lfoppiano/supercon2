@@ -75,8 +75,8 @@ class MongoTabularProcessor(MongoSuperconProcessor):
                         for item in ['title', 'doi', 'authors', 'publisher', 'journal', 'year']:
                             ag_e[item] = biblio_data[item] if item in biblio_data else ""
 
-                    # We remove the previous version of the same data
-                    tabular_collection.delete_many({"hash": hash})
+                    # We remove the previous version of the same data (only when not curated)
+                    tabular_collection.delete_many({"hash": hash, "status": {"$in": ["new", "empty"]}})
                     tabular_collection.insert_many(json_aggregated_entries)
                     status_info = {'status': status, 'timestamp': datetime.utcnow(),
                                    'hash': hash}
@@ -126,7 +126,7 @@ class MongoTabularProcessor(MongoSuperconProcessor):
             [
                 {"$sort": {"hash": 1, "timestamp": 1}},
                 {"$group": {"_id": "$hash", "lastDate": {"$last": "$timestamp"}}}
-             ])
+            ])
 
         with tqdm(total=documents_to_process, unit='document') as tq:
             for item in cursor_aggregation:
@@ -186,15 +186,15 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description="Process extracted documents and compute the tabular format.")
     parser.add_argument("--config", help="Configuration file", type=Path, required=True)
-    parser.add_argument("--num-threads", "-n", help="Number of concurrent processes", type=int, default=2,
+    parser.add_argument("--num-threads", "-n", help="Number of concurrent processes", type=int, default=100,
                         required=False)
     parser.add_argument("--database", "-db",
                         help="Set the database name which is normally read from the configuration file", type=str,
                         required=False)
     parser.add_argument("--force", "-f", help="Re-process all the records and replace existing one. ",
                         action="store_true", default=False)
-    parser.add_argument("--verbose",
-                        help="Print all log information", action="store_true", required=False, default=False)
+    parser.add_argument("--verbose", help="Print all log information", action="store_true", required=False,
+                        default=False)
 
     args = parser.parse_args()
     config_path = args.config
