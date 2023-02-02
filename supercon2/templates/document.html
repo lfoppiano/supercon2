@@ -1101,6 +1101,8 @@
                         this.editedItem.id
                     )
 
+                    url = url + "?error_type=" + this.editedItem.error_type;
+
                     try {
                         await axios.delete(url, {})
                         this.loadItems()
