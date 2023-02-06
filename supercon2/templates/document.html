@@ -265,7 +265,10 @@
                                         'top': (Math.floor(pages[0].height) * (box.page-1) + box.y - 5) * scale,
                                         'opacity': '0.8',
                                         'z-index': 1,
-                                    }" color="red" v-if="span.id === selectedSpanId" @click="selectedSpanId = ''" title="hide this icon">
+                                    }"
+                                            color="red"
+                                            v-if="index === span.boundingBoxes.length -1 && span.id === selectedSpanId"
+                                            @click="selectedSpanId = ''" title="hide this icon">
                                         mdi-lightbulb-on
                                     </v-icon>
                                 </div>
