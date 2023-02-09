@@ -269,7 +269,7 @@
                         case 'all':
                             return true
                         case 'any error':
-                            return item.status !== '200'
+                            return item.status !== '200' && item.status !== '204'
                         default:
                             return item.status === keyword
                     }

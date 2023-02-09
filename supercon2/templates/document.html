@@ -421,7 +421,10 @@
                                 icon: 'mdi-robot'
                             },]
                         },
-                        { text: 'Latest error type', value: 'error_type', hidden: false, filter: this.hashFilter, shouldHideEmpty: false },
+                        {
+                            text: 'Latest error type', value: 'error_type', hidden: false, filter: this.errorTypeFilter, filterKeyword: 'all', shouldHideEmpty: false,
+                            selectItems: [], // filled by loadErrorTypes method
+                        },
                         {
                             text: 'Status', value: 'status', sortable: false, hidden: true, filter: this.statusFilter, filterKeyword: 'all', width: 80,
                             radioGroup: [{
@@ -463,7 +466,7 @@
                                 {
                                     key: 'error_type', label: '*Error type', rules: [(value) => !!value || 'This field is required'],
                                     errorMessages: [],
-                                    selectBoxItems: ['From table', 'Extraction', 'Linking', 'Tc classification', 'Composition resolution', 'Value resolution']
+                                    selectBoxItems: [] // set by the loadErrorTypes method
                                 }
                             ]
                         }, {
@@ -561,6 +564,7 @@
                 this.loadPdfs()
                 this.loadAnnotations()
                 this.loadItems()
+                this.loadErrorTypes()
             },
             methods: {
                 getPdfsHeight(page, ratio) {
@@ -728,6 +732,23 @@
                         console.error("failed to load documents", e)
                     }).finally(() => {
                         this.isLoading = false
+                    })
+                },
+                loadErrorTypes() {
+                    const url = '{{ url_for("supercon.get_error_types") }}'
+                    axios.get(url).then((data) => {
+                        let errorTypes = [];
+                        for (let prop in data.data) {
+                            errorTypes.push ({'value': prop, 'text': data.data[prop]})
+                        }
+                        let dialog = this.rowsOnItemEditDialog[0].cols.find(col => {
+                            return col.key === "error_type"
+                        });
+                        dialog.selectBoxItems = errorTypes;
+                        this.headerObject.error_type.selectItems = new Array({"value":"all", text:"All"}).concat(errorTypes)
+                        return
+                    }).finally(() => {
+                        //
                     })
                 },
                 hasChangedPageCount(pageCount) {
@@ -932,6 +953,15 @@
                             return true
                         default:
                             return item.type === keyword
+                    }
+                },
+                errorTypeFilter(value, search, item) {
+                    const keyword = this.headerObject.error_type.filterKeyword
+                    switch (keyword) {
+                        case 'all':
+                            return true
+                        default:
+                            return value === keyword
                     }
                 },
                 statusFilter(value, search, item) {
