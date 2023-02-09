@@ -306,7 +306,7 @@
                         </v-card-text>
                     </v-card>
                 </div>
-                <p><span style="color:#848484;">&copy; Contributors, 2022 |</span> <span id="version" style="color:#848484;" v-html="version"></span></p>
+                <p><span style="color:#848484;">&copy; Contributors, 2021-2023 |</span> <span id="version" style="color:#848484;" v-html="version"></span></p>
                 <v-snackbar v-model="snackbar.shouldShow" :color="snackbar.color">
                     [[ snackbar.text ]]
                     <template v-slot:action="{ attrs }">
@@ -565,6 +565,17 @@
                 this.loadAnnotations()
                 this.loadItems()
                 this.loadErrorTypes()
+            },
+            async beforeMount() {
+                let url = '{{ url_for("supercon.get_version") }}'
+                try {
+                    const result = await axios.get(url, {})
+                    this.version = result.data['version']
+                } catch (e) {
+                    console.error(e)
+                    window.alert(JSON.stringify(e.response.data))
+                } finally {
+                }
             },
             methods: {
                 getPdfsHeight(page, ratio) {
