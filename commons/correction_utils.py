@@ -40,7 +40,7 @@ def write_correction(old_doc, corrections, collection, dry_run: bool = False, sk
     correction_clean = post_process_fields(corrections, remove_trailing_space, skip_none)
 
     differences = find_differences(new_doc, correction_clean,
-                                   ignored_fields=['type', 'status', '_id', 'previous', 'error_type'])
+                                   ignored_fields=['type', 'status', '_id', 'previous'])
 
     if len(differences) == 0:
         raise Exception(

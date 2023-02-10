@@ -211,7 +211,7 @@ def _update_record(object_id: ObjectId, new_doc: Union[Record, dict], db):
     if old_doc['status'] == "obsolete":
         latest_record = find_latest(old_doc, tabular_collection)
         message = "The record with id " + str(
-            object_id) + " is obsolete. The latest updated record of the chain is" + str(
+            object_id) + " is obsolete. The latest updated record of the chain is " + str(
             latest_record['_id'])
         raise Exception(message)
 
