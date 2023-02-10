@@ -302,6 +302,7 @@ def get_error_types():
     error_types['linking'] = "Linking"
     error_types['composition_resolution'] = "Composition resolution"
     error_types['value_resolution'] = "Value resolution"
+    error_types['curation_amend'] = "Curation amend"
 
     return error_types
 
