@@ -326,7 +326,7 @@ def add_record(record: Record):
     tabular_collection = db.get_collection("tabular")
 
     record['timestamp'] = datetime.utcnow()
-    record['status'] = "valid"
+    record['status'] = "curated"
     record['type'] = "manual"
 
     new_record = tabular_collection.insert_one(record)
