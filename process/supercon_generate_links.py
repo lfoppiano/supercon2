@@ -22,7 +22,7 @@ if __name__ == '__main__':
     parser.add_argument("--verbose",
                         help="Print all log information", action="store_true", required=False, default=False)
     parser.add_argument("--prefix", help="URL prefix for the links", type=str, required=True)
-    parser.add_argument("--people", help="Number of people to which split the links assignement", type=int,
+    parser.add_argument("--people", help="Number of people to which split the links assignments", type=int,
                         required=False, default=1)
 
     args = parser.parse_args()
@@ -86,9 +86,9 @@ if __name__ == '__main__':
 
     for n, groups in enumerate(assignment):
         if n < people:
-            print("##### Person", n, "#####")
+            print("### Person", n)
         else:
-            print("##### Leftovers #####")
+            print("\n### Leftovers #####")
 
         for link in groups:
             print(link)
