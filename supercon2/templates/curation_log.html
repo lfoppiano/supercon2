@@ -390,7 +390,7 @@
                 loadItems() {
                     this.isLoading = true
                     const url =
-                        '{{ url_for("supercon.get_curation_records") }}'
+                        '{{ url_for("supercon.get_curation_records_response") }}'
                     axios.get(url).then((data) => {
                         this.items = data.data
                         return

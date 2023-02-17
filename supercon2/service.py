@@ -1,10 +1,12 @@
 import json
+import random
 import urllib
 from collections import OrderedDict
 from datetime import datetime
 from typing import Union
 
 import gridfs
+import numpy as np
 from apiflask import APIBlueprint, abort, output, input
 from bson import ObjectId
 from bson.errors import InvalidId
@@ -47,6 +49,47 @@ def read_info_from_file(file, default="unknown"):
         pass
 
     return version
+
+
+@bp.route('/stats/error_types')
+def get_template_stats_error_types():
+    return render_template('error_type_statistics.html', version=get_version()['version'])
+
+@bp.route("/stats/errors")
+def get_error_types_stats():
+    curated_records = get_curation_records()
+
+    error_type_distribution = OrderedDict()
+
+    for record in curated_records:
+        if 'error_type' in record:
+            if record['error_type'] not in error_type_distribution.keys():
+                error_type_distribution[record['error_type']] = 1
+            else:
+                error_type_distribution[record['error_type']] += 1
+
+    # sorted_keys = sorted(error_type_distribution, key=error_type_distribution.get)
+    sorted_keys = list(error_type_distribution.keys())
+    sorted_values = [error_type_distribution[k] for k in sorted_keys]
+    sorted_error_type_distribution = OrderedDict([(key, error_type_distribution[key]) for key in sorted_keys])
+
+    background_colors = ['rgba('+str(",".join([str(random.randint(0, 255)) for i in range(3)] + ["0.2"]))+')'for k in sorted_keys]
+    border_color = ['rgb('+str(",".join([str(random.randint(0, 255)) for i in range(3)]))+')'for k in sorted_keys]
+    output = {
+        "labels": sorted_keys,
+        "datasets": [{
+            "axis": 'y',
+            "label": 'Error types',
+            "data": sorted_values,
+            "backgroundColor": background_colors,
+            "borderColor": border_color,
+            "borderWidth": 1
+        }],
+
+    }
+
+
+    return output
 
 
 @bp.route('/')
@@ -368,6 +411,10 @@ def get_records_by_document(hash):
 
 @bp.route("/curation/records", methods=["GET"])
 @output(Record(many=True))
+def get_curation_records_response():
+    return get_curation_records()
+
+
 def get_curation_records():
     db = connect_and_get_db()
 
