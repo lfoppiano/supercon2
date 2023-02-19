@@ -74,7 +74,7 @@ def get_error_types_stats():
     sorted_error_type_distribution = OrderedDict([(key, error_type_distribution[key]) for key in sorted_keys])
 
     background_colors = ['rgba('+str(",".join([str(random.randint(0, 255)) for i in range(3)] + ["0.2"]))+')'for k in sorted_keys]
-    border_color = ['rgb('+str(",".join([str(random.randint(0, 255)) for i in range(3)]))+')'for k in sorted_keys]
+    border_color = [bc.replace("rba", "rgb").replace(")'", ",0.2)'") for bc in background_colors]
     output = {
         "labels": sorted_keys,
         "datasets": [{
