@@ -54,7 +54,7 @@
             <canvas id="myChart" width="900"></canvas>
             <script>
                 // retrieve data from Flask route
-                fetch('/stats/errors')
+                fetch('{{ url_for('supercon.get_error_types_stats') }}')
                     .then(response => response.json())
                     .then(data => {
                         var ctx = document.getElementById('myChart').getContext('2d');
