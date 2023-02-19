@@ -72,7 +72,8 @@ def get_error_types_stats():
     sorted_values = [error_type_distribution[k] for k in sorted_keys]
     sorted_error_type_distribution = OrderedDict([(key, error_type_distribution[key]) for key in sorted_keys])
 
-    sorted_keys_names = [get_error_types()[k] if k in sorted_keys else "N/A" for k in sorted_keys]
+    error_type = get_error_types()
+    sorted_keys_names = [error_type[k] if k in error_type else "N/A" for k in sorted_keys]
 
     background_colors = ['rgba('+str(",".join([str(random.randint(0, 255)) for i in range(3)] + ["0.2"]))+')' for k in sorted_keys]
     border_color = [bc.replace("rba", "rgb").replace(",0.2)'", ")'") for bc in background_colors]
