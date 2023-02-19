@@ -6,7 +6,6 @@ from datetime import datetime
 from typing import Union
 
 import gridfs
-import numpy as np
 from apiflask import APIBlueprint, abort, output, input
 from bson import ObjectId
 from bson.errors import InvalidId
@@ -73,10 +72,12 @@ def get_error_types_stats():
     sorted_values = [error_type_distribution[k] for k in sorted_keys]
     sorted_error_type_distribution = OrderedDict([(key, error_type_distribution[key]) for key in sorted_keys])
 
-    background_colors = ['rgba('+str(",".join([str(random.randint(0, 255)) for i in range(3)] + ["0.2"]))+')'for k in sorted_keys]
-    border_color = [bc.replace("rba", "rgb").replace(")'", ",0.2)'") for bc in background_colors]
+    sorted_keys_names = [get_error_types()[k] if k in sorted_keys else "N/A" for k in sorted_keys]
+
+    background_colors = ['rgba('+str(",".join([str(random.randint(0, 255)) for i in range(3)] + ["0.2"]))+')' for k in sorted_keys]
+    border_color = [bc.replace("rba", "rgb").replace(",0.2)'", ")'") for bc in background_colors]
     output = {
-        "labels": sorted_keys,
+        "labels": sorted_keys_names,
         "datasets": [{
             "axis": 'y',
             "label": 'Error types',
