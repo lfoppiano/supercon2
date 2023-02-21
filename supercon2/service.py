@@ -12,6 +12,7 @@ from bson.errors import InvalidId
 from flask import render_template, Response, url_for, request
 from pymongo import UpdateOne
 
+from commons.annotations_utils import decorate_text_with_annotations
 from commons.correction_utils import write_correction, write_raw_training_data
 from commons.label_studio_commons import to_label_studio_format_single
 from commons.mongo_utils import connect_mongo
@@ -54,6 +55,7 @@ def read_info_from_file(file, default="unknown"):
 def get_template_stats_error_types():
     return render_template('error_type_statistics.html', version=get_version()['version'])
 
+
 @bp.route("/stats/errors")
 def get_error_types_stats():
     curated_records = get_curation_records()
@@ -75,7 +77,7 @@ def get_error_types_stats():
     error_type = get_error_types()
     sorted_keys_names = [error_type[k] if k in error_type else "N/A (" + str(k) + ")" for k in sorted_keys]
 
-    background_colors = ['rgba('+str(",".join([str(random.randint(0, 255)) for i in range(3)] + ["0.2"]))+')' for k in sorted_keys]
+    background_colors = ['rgba(' + str(",".join([str(random.randint(0, 255)) for i in range(3)] + ["0.2"])) + ')' for k in sorted_keys]
     border_color = [bc.replace("rba", "rgb").replace(",0.2)'", ")'") for bc in background_colors]
     output = {
         "labels": sorted_keys_names,
@@ -89,7 +91,6 @@ def get_error_types_stats():
         }],
 
     }
-
 
     return output
 
@@ -803,14 +804,6 @@ def get_training_data_by_id_and_status(record_id, status, db):
     return new_structure, training_data['_id']
 
 
-def get_span_start(type):
-    return '<span class="label ' + type + '">'
-
-
-def get_span_end():
-    return '</span>'
-
-
 @bp.route('/training/data', methods=['GET'])
 def get_training_data_list():
     db = connect_and_get_db()
@@ -839,20 +832,6 @@ def get_training_data_list():
         })
 
     return Response(json.dumps(training_output, default=json_serial), mimetype="application/json")
-
-
-def decorate_text_with_annotations(text, spans):
-    sorted_spans = list(sorted(spans, key=lambda item: item['offset_start']))
-    annotated_text = ""
-    start = 0
-    for span in sorted_spans:
-        type = span['type'].replace("<", "").replace(">", "")
-        annotated_text += text[start: span['offset_start']] + get_span_start(type) + text[
-                                                                                     span['offset_start']: span[
-                                                                                         'offset_end']] + get_span_end()
-        start = span['offset_end']
-    annotated_text += text[start: len(text)]
-    return annotated_text
 
 
 @bp.route("/label/studio/projects", methods=['GET'])
