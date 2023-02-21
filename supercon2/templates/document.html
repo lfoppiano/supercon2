@@ -80,11 +80,17 @@
                     </template>
                     <template v-slot:item.rawMaterial="{ item }">
                         [[ item.rawMaterial ]]
-                        <v-icon @click="scrollToPdf(item.materialId, item.id)">mdi-arrow-down-thick</v-icon>
+                        <v-icon
+                            @click="scrollToPdf(item.materialId, item.id)"
+                            v-if="!!item.materialId">mdi-arrow-down-thick
+                        </v-icon>
                     </template>
                     <template v-slot:item.criticalTemperature="{ item }">
                         [[ item.criticalTemperature ]]
-                        <v-icon @click="scrollToPdf(item.criticalTemperatureId, item.id)">mdi-arrow-down-thick</v-icon>
+                        <v-icon
+                            @click="scrollToPdf(item.criticalTemperatureId, item.id)"
+                            v-if="!!item.criticalTemperatureId">mdi-arrow-down-thick
+                        </v-icon>
                     </template>
                     <template v-slot:item.hash="{ item }">
                         <v-row>
