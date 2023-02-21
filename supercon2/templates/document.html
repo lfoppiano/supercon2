@@ -248,7 +248,7 @@
                     <div id="pdfAnnotaions">
                         <div v-for="passage in passages">
                             <div v-for="span in passage.spans">
-                                <div v-for="box in span.boundingBoxes">
+                                <div v-for="(box, index) in span.boundingBoxes">
                                     <div :style="{
                                         'position': 'absolute',
                                         'left': box.x * scale,
