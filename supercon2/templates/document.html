@@ -739,17 +739,19 @@
                     item.sentenceIsExpanded = true
                     this.headerObject.sentence.width = 400
                 },
-                loadItems() {
+                async loadItems() {
                     this.isLoading = true
                     const url =
                         '{{ url_for("supercon.get_records_by_document", hash = hash) }}'
-                    axios.get(url).then((data) => {
-                        this.items = data.data
-                    }).catch((e) => {
+                    try {
+                        const response = await axios.get(url)
+                        this.items = response.data
+                        this.floatingItems = this.items.filter(item => item.hash === this.editedItem.hash)
+                    } catch(e) {
                         console.error("failed to load documents", e)
-                    }).finally(() => {
+                    } finally {
                         this.isLoading = false
-                    })
+                    }
                 },
                 loadErrorTypes() {
                     const url = '{{ url_for("supercon.get_error_types") }}'
@@ -1100,12 +1102,12 @@
                     this.itemDialog.shouldShow = false
                 },
                 async save() {
-                    if (this.editedItem.id) {
+                    if (this.editedItem.hash) {
                         await this.updateItem()
                     } else {
                         await this.createItem()
                     }
-                    this.loadItems()
+                    await this.loadItems()
                 },
                 async createItem() {
                     const url = '{{ url_for("supercon.create_record") }}'
