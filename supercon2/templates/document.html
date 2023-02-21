@@ -1103,7 +1103,7 @@
                     this.itemDialog.shouldShow = false
                 },
                 async save() {
-                    if (this.editedItem.hash) {
+                    if (this.editedItem.id) {
                         await this.updateItem()
                     } else {
                         await this.createItem()
