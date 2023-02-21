@@ -343,9 +343,10 @@
                         // { text: 'Material ID', value: 'materialId', hidden: true},
                     ],
                     rowsOnItemEditDialog: [{
-                            config: { cols: 4 },
+                            config: { cols: 3 },
                             cols: [
                                 { key: 'rawMaterial'},
+                                { key: 'name' },
                                 { key: 'id', disabled: true },
                                 {
                                     key: 'error_type', label: '*Error type', rules: [(value) => !!value || 'This field is required'],
