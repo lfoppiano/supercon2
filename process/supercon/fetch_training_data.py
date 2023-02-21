@@ -1,4 +1,5 @@
 import argparse
+import hashlib
 import os
 import re
 import sys
@@ -6,6 +7,7 @@ from pathlib import Path
 
 from bs4 import BeautifulSoup
 from bson import ObjectId
+from pymongo import UpdateOne
 
 from commons.annotations_utils import decorate_text_with_annotations
 from process.grobid_client_generic import GrobidClientGeneric
@@ -216,8 +218,8 @@ def get_text_under_body(soup):
 
 def write_output(output_data):
     for hash in output_data.keys():
-        output_xml_path = os.path.join(output, hash + ".xml")
-        output_features_path = os.path.join(output, hash + ".features")
+        output_xml_path = os.path.join(output, hash + ".tei.xml")
+        output_features_path = os.path.join(output, hash + ".features.txt")
 
         with open(output_xml_path, 'w') as fo:
             soup = BeautifulSoup(xmlTemplate, 'xml')
@@ -225,14 +227,21 @@ def write_output(output_data):
             header_pretty = header.prettify()
 
             with open(output_features_path, 'w') as fo_features:
+                processed = []
                 for example in output_data[hash]:
+                    text_hash = example['id']
+                    if text_hash in processed:
+                        continue
+                    else:
+                        processed.append(text_hash)
+
                     tag = BeautifulSoup(
-                        '<p><s error_type="' + example["error_type"] + '">' + example['xml'] + '</s></p>', 'xml')
+                        '<p>\n<s error_type="' + example["error_type"] + '">' + example['xml'] + '</s>\n</p>', 'xml')
                     text_tag = get_text_under_body(soup)
                     text_tag.body.append(tag)
 
                     for token_features in example['features']:
-                        fo_features.write("　".join([str(t) for t in token_features]) + "\n")
+                        fo_features.write(" ".join([str(t) for t in token_features]) + "\n")
 
                     fo_features.write("\n\n")
 
@@ -291,12 +300,16 @@ if __name__ == '__main__':
     tabular_collection = db.get_collection("tabular")
 
     output_data = {}
+    updates = []
     for hash in training_data_by_document.keys():
         output_data[hash] = []
         for td in training_data_by_document[hash]:
-
-            id = td['corrected_record_id']
-            document = tabular_collection.find_one({"_id": ObjectId(id)}, {"error_type": 1})
+            m = hashlib.sha256()
+            text_ = td['text'] + str(len(td['spans']))
+            text_hash = m.update(text_.encode("utf-8"))
+            id = m.hexdigest()
+            corrected_id = td['corrected_record_id']
+            document = tabular_collection.find_one({"_id": ObjectId(corrected_id)}, {"error_type": 1})
 
             if document is None:
                 error_type = "N/A (doc missing)"
@@ -333,6 +346,15 @@ if __name__ == '__main__':
                 # print(token)
                 previous_token = token
 
-            output_data[hash].append({"xml": annotated_text, "features": features, "error_type": error_type})
+            output_data[hash].append(
+                {"id": text_hash, "xml": annotated_text, "features": features, "error_type": error_type})
+
+            updates.append(UpdateOne({'_id': td['_id']}, {'$set': {'status': 'exported'}}))
 
     write_output(output_data)
+    if len(updates) > 0:
+        op_result = training_data_collection.bulk_write(updates)
+
+        print("Exported records:", op_result.modified_count)
+    else:
+        print("No records to export.")
