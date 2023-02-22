@@ -1,3 +1,6 @@
+from html import escape
+
+
 def get_span_start(type):
     return '<span class="label ' + type + '">'
 
@@ -25,11 +28,11 @@ def decorate_text_with_annotations(text, spans, tag="span"):
     start = 0
     for span in sorted_spans:
         type = span['type'].replace("<", "").replace(">", "")
-        annotated_text += text[start: span['offset_start']]
+        annotated_text += escape(text[start: span['offset_start']])
         annotated_text += get_span_start(type) if tag == "span" else get_rs_start(type)
-        annotated_text += text[span['offset_start']: span['offset_end']]
+        annotated_text += escape(text[span['offset_start']: span['offset_end']])
         annotated_text += get_span_end() if tag == "span" else get_rs_end()
 
         start = span['offset_end']
-    annotated_text += text[start: len(text)]
+    annotated_text += escape(text[start: len(text)])
     return annotated_text

@@ -3,6 +3,7 @@ import hashlib
 import os
 import re
 import sys
+from html import escape
 from pathlib import Path
 
 from bs4 import BeautifulSoup
@@ -306,8 +307,8 @@ if __name__ == '__main__':
         for td in training_data_by_document[hash]:
             m = hashlib.sha256()
             text_ = td['text'] + str(len(td['spans']))
-            text_hash = m.update(text_.encode("utf-8"))
-            id = m.hexdigest()
+            m.update(text_.encode("utf-8"))
+            text_hash = m.hexdigest()
             corrected_id = td['corrected_record_id']
             document = tabular_collection.find_one({"_id": ObjectId(corrected_id)}, {"error_type": 1})
 
