@@ -879,6 +879,9 @@ let grobid = (function ($) {
 
                         if (propertyName === "formula") {
                             formula = obj[key][sub_key]['rawValue'];
+                            if (formula === undefined) {
+                                formula = obj[key][sub_key]
+                            }
                             attributeHtmlString += "<row><div class='col-12'>" + propertyName + ": <strong>" + formula + "</strong></div></row>";
                         } else if (propertyName === 'rawTaggedValue') {
                             // continue
@@ -889,6 +892,10 @@ let grobid = (function ($) {
                             Object.keys(resolvedFormulasList).forEach(function (k) {
                                 resolvedFormulas.push(resolvedFormulasList[k]['rawValue'])
                             });
+                        } else if (propertyName === 'resolvedFormula') {
+                            Object.keys(obj[key][sub_key]).forEach(function (k) {
+                                resolvedFormulas.push(obj[key][sub_key][k])
+                            })
                         } else if (propertyName === 'variables') {
                             let variableList = obj[key][sub_key]
                             Object.keys(variableList).forEach(function (variable_name) {
