@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 import pymatgen.core as mg
 
+from commons.correction_utils import write_raw_training_data
 from process.grobid_client_generic import GrobidClientGeneric
 from supercon_batch_mongo_extraction import connect_mongo
 
@@ -43,9 +44,8 @@ if __name__ == '__main__':
 
     temp_regex = re.compile(r"^([0-9.]+) ?(m?K{1})$")
     # tabular_cursor = tabular_collection.find({"status": {"$not": {"$in": ["empty", "invalid", "removed", "obsolete"]}}})
-    tabular_cursor = tabular_collection.find({"status": {"$in": ["new", "curated", "validated"]}})
-    anomaly_tc_count = 0
-    anomaly_formula_count = 0
+    tabular_cursor = tabular_collection.find({"status": {"$in": ["new"]}})
+    anomalies = []
     for record in tabular_cursor:
         tc = record['criticalTemperature']
         if tc:
@@ -54,21 +54,73 @@ if __name__ == '__main__':
                 value = search.groups()[0]
                 unit = search.groups()[1]
                 if float(value) > 270:
-                    print("anomaly T", tc)
-                    anomaly_tc_count += 1
+                    anomaly = {
+                        "id": record['_id'],
+                        "type": "tc",
+                        "value": tc,
+                        "description": "Tc too high"
+                    }
+                    anomalies.append(anomaly)
+                    continue
+                elif value.startswith("-"):
+                    anomaly = {
+                        "id": record['_id'],
+                        "type": "tc",
+                        "value": tc,
+                        "description": "Tc negative"
+                    }
+                    anomalies.append(anomaly)
+                    continue
 
-            else:
-                pass
-                # print("not match", tc)
-
-        formula = record['formula']
+        formula = record['formula'] if 'formula' in record else None
         variables = record['variables'] if 'variables' in record else None
         if formula and not variables:
             try:
                 mg.Composition(formula, strict=False)
             except ValueError as ve:
-                anomaly_formula_count += 1
-                print("anomaly F", formula, ve)
+                anomalies.append(
+                    {
+                        "id": record['_id'],
+                        "type": "formula",
+                        "value": formula,
+                        "description": str(ve)
+                    }
+                )
 
-    print("Anomalies in Tc:", anomaly_tc_count)
-    print("Anomalies in Materials:", anomaly_formula_count)
+    if dry_run:
+        if verbose:
+            for anomaly in anomalies:
+                print(anomaly['type'], "-", anomaly['value'], "-", anomaly['description'])
+
+    else:
+        print("Writing on the database:", db_name, config['mongo']['server'])
+        input_value = input("Continue [y/N]")
+        if input_value == "y":
+            document_collection = db.get_collection("document")
+            training_data_collection = db.get_collection("training_data")
+            for anomaly in anomalies:
+                if verbose:
+                    print(anomaly['type'], "-", anomaly['value'], "-", anomaly['description'])
+
+                    old_doc = tabular_collection.find_one({'_id': anomaly['id'], "status": "new"})
+                    if old_doc:
+                        new_status = 'invalid'
+                        new_type = 'automatic'
+                        error_type = "anomaly_detection"
+
+                        changes = {'status': new_status, 'type': new_type, 'error_type': error_type}
+
+                        tabular_collection.update_one({'_id': anomaly['id']}, {'$set': changes})
+                        training_data_id = write_raw_training_data(old_doc, anomaly['id'], document_collection,
+                                                                   training_data_collection,
+                                                                   action="anomaly")
+
+                    else:
+                        print("Document", anomaly['id'], "not found, ignoring it.")
+
+
+        else:
+            print("Aborting")
+
+    print("Anomalies in Tc:", len(list(filter(lambda x: x['type'] == "tc", anomalies))))
+    print("Anomalies in Materials:", len(list(filter(lambda x: x['type'] == "formula", anomalies))))
