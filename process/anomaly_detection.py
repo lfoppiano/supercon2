@@ -4,10 +4,26 @@ import re
 import sys
 from pathlib import Path
 import pymatgen.core as mg
+from material2class import ClassResolver
 
 from commons.correction_utils import write_raw_training_data
 from process.grobid_client_generic import GrobidClientGeneric
 from supercon_batch_mongo_extraction import connect_mongo
+
+
+def validate_formula(formula):
+
+    try:
+        mg.Composition(formula, strict=False)
+    except:
+        material_formula_with_replacements = re.sub(r'[+-][ZXYzxy]', '', formula)
+        try:
+            mg.Composition(material_formula_with_replacements, strict=False)
+        except Exception as e2:
+            return False, str(e2)
+
+    return True, ""
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -53,37 +69,39 @@ if __name__ == '__main__':
             if search:
                 value = search.groups()[0]
                 unit = search.groups()[1]
-                if float(value) > 270:
-                    anomaly = {
-                        "id": record['_id'],
-                        "type": "tc",
-                        "value": tc,
-                        "description": "Tc too high"
-                    }
+                anomaly = {
+                    "id": record['_id'],
+                    "type": "tc",
+                    "value": tc
+                }
+
+                try:
+                    float_value = float(value)
+                except:
+                    anomaly['description'] = "Tc not parseable"
+                    anomalies.append(anomaly)
+                    continue
+
+                if float_value > 270:
+                    anomaly['description'] = "Tc too high"
                     anomalies.append(anomaly)
                     continue
                 elif value.startswith("-"):
-                    anomaly = {
-                        "id": record['_id'],
-                        "type": "tc",
-                        "value": tc,
-                        "description": "Tc negative"
-                    }
+                    anomaly['description'] = "Tc negative"
                     anomalies.append(anomaly)
                     continue
 
         formula = record['formula'] if 'formula' in record else None
         variables = record['variables'] if 'variables' in record else None
         if formula and not variables:
-            try:
-                mg.Composition(formula, strict=False)
-            except ValueError as ve:
+            valid, exception = validate_formula(formula)
+            if not valid:
                 anomalies.append(
                     {
                         "id": record['_id'],
                         "type": "formula",
                         "value": formula,
-                        "description": str(ve)
+                        "description": exception
                     }
                 )
 
