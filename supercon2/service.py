@@ -349,6 +349,7 @@ def get_error_types():
     error_types['composition_resolution'] = "Composition resolution"
     error_types['value_resolution'] = "Value resolution"
     error_types['curation_amend'] = "Curation amend"
+    error_types['anomaly_detection'] = "Anomaly detection"
 
     return error_types
 

@@ -237,7 +237,7 @@ def write_output(output_data):
                         processed.append(text_hash)
 
                     tag = BeautifulSoup(
-                        '<p>\n<s error_type="' + example["error_type"] + '">' + example['xml'] + '</s>\n</p>', 'xml')
+                        '\n\t<p><s error_type="' + example["error_type"] + '">' + example['xml'] + '</s></p>\n', 'xml')
                     text_tag = get_text_under_body(soup)
                     text_tag.body.append(tag)
 
