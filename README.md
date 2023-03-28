@@ -188,6 +188,24 @@ This is mandatory in order to be able to save the modifications.
 
 ![](docs/images/error-type-selection.png)
 
+#### Look for the extracted value on the paper
+
+You can go to the document page from the database page.
+
+![go-to-document-page.png](docs/images/go-to-document-page.png)
+
+Go to the position of the material on the paper.
+
+![go-to-the-material-position.png](docs/images/go-to-the-material-position.png)
+
+Find the extracted value from bulb icon.  
+
+![bulb-icon-as-a-guide.png](docs/images/bulb-icon-as-a-guide.png)
+
+Show the detail of the material.
+
+![show-the-detail-of-the-one](docs/images/show-the-detail-of-the-one.png)
+
 #### Training data management
 
 This section provides an overview of the collected training data. 
