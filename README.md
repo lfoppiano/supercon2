@@ -10,6 +10,7 @@
     + [Workflows](#workflows)
       + [Mark records as validated/invalid](#mark-records-as-validated--invalid)
       + [Record manipulation (add, remove, edit)](#record-manipulation-editremoveadd)
+      + [Look for the extracted value on the paper](#look-for-the-extracted-value-on-the-paper)
       + [Training data management](#training-data-management)
     + [Getting started](#getting-started)
     + [API documentation](#api-documentation)
