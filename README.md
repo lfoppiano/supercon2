@@ -10,6 +10,7 @@
     + [Workflows](#workflows)
       + [Mark records as validated/invalid](#mark-records-as-validated--invalid)
       + [Record manipulation (add, remove, edit)](#record-manipulation-editremoveadd)
+      + [Look for the extracted value on the paper](#look-for-the-extracted-value-on-the-paper)
       + [Training data management](#training-data-management)
     + [Getting started](#getting-started)
     + [API documentation](#api-documentation)
@@ -70,17 +71,17 @@ The table can be navigated using the arrows after having selected one row with t
 
 The shortcuts are: 
 
-| Key            | Description                                                  |
-|----------------|--------------------------------------------------------------|
-| n              | Add new record (in the same document of the selected record) |
-| e              | Edit the selected record                                     |
-| ⌘ + Enter      | Save the record in the edit dialog (Mac)                     |
-| Ctrl + Enter   | Save the record in the edit dialog (Win)                     |
-| arrow-up       | Selection up one record                                      |
-| arrow-down     | Selection down one record                                    |
-| enter          | Show the keyboard shortcuts dialog                           |
-| ?              | Flag/unflag the selected record                              |
-| esc            | Close the help dialog                                        |
+| Key          | Description                                                  |
+|--------------|--------------------------------------------------------------|
+| n            | Add new record (in the same document of the selected record) |
+| e            | Edit the selected record                                     |
+| ⌘ + Enter    | Save the record in the edit dialog (Mac)                     |
+| Ctrl + Enter | Save the record in the edit dialog (Win)                     |
+| arrow-up     | Selection up one record                                      |
+| arrow-down   | Selection down one record                                    |
+| enter        | Flag/unflag the selected record                              |
+| ?            | Show the keyboard shortcuts dialog                           |
+| esc          | Close the dialog you open                                    |
 
 ### Interface features
 
@@ -187,6 +188,24 @@ In any case, in the case of any modification (edit, add, or remove) the user hav
 This is mandatory in order to be able to save the modifications. 
 
 ![](docs/images/error-type-selection.png)
+
+#### Look for the extracted value on the paper
+
+You can go to the document page from the database page.
+
+![go-to-document-page.png](docs/images/go-to-document-page.png)
+
+Go to the position of the material on the paper.
+
+![go-to-the-material-position.png](docs/images/go-to-the-material-position.png)
+
+Find the extracted value from bulb icon.  
+
+![bulb-icon-as-a-guide.png](docs/images/bulb-icon-as-a-guide.png)
+
+Show the detail of the material.
+
+![show-the-detail-of-the-one](docs/images/show-the-detail-of-the-one.png)
 
 #### Training data management
 
