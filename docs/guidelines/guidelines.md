@@ -28,7 +28,7 @@ The guidelines assume that the user knows well the SuperCon 2 application. Super
 
 ## Data Model
 
-This section describes the different information that is stored in the database.
+This section describes the different information that are stored in the database.
 
 ### Data description
 
@@ -173,7 +173,7 @@ The (1) data reporting (or flagging) is the process in which a record is marked 
 
             <!-- [example1: formula is not complete](https://nimsgojp-my.sharepoint.com/:p:/r/personal/foppiano_luca_nims_go_jp/Documents/%E6%B7%BB%E4%BB%98%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB/Supercon2-curation-guidelines.pptx?d=wf1ec5f0bc719422591814d1be2795051&csf=1&web=1&e=mkpGZj&nav=eyJzSWQiOjI1NiwiY0lkIjoyNjAxMjI0MDU1fQ{:target="_blank"}) -->
 
-          example1: valiable in formula remained unsubstituted
+          example1: variable in formula remained unsubstituted
 
           ![](images/ex_W_compres_1.png)
 
@@ -219,7 +219,7 @@ The (1) data reporting (or flagging) is the process in which a record is marked 
 
       Identify the form of the material
 
-      For example: polycrystals, thin film, wire
+      For example: "poly crystals", thin film, wire
     - Curation rule:
 
       Try to fill when it is available
@@ -357,6 +357,7 @@ The (1) data reporting (or flagging) is the process in which a record is marked 
 
       For example: 10 GPa
     - Curation rule:
+  
     - Possible error and examples :
         - Extraction
 
