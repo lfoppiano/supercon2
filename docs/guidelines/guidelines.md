@@ -4,21 +4,16 @@
 
 * [Introduction](#introduction)
 * [Data model](#data-model)
-    + [Data description](#data-description)
-    + [List of items](#list-of-items)
-    + [Common rules to all items](#common-rules-to-all-items)
 * [General principles](#general-principles)
     + [Units](#units)
+    + [Correction workflow](#correction-workflow)
     + [Record status](#record-status)
     + [Error types](#error-types)
+    + [Priority between error types](#priority-between-error-types)
+    + [Annotated entities conventions](#annotated-entities-conventions)
 * [Rules](#rules)
     + [Detailed description and rules for individual items](#detailed-description-and-rules-for-individual-items)
-        + [Item related to materials](#items-related-to-material)
-        + [Item related to the target property](#items-related-to-the-target-property)
-        + [Item related to the paper](#items-related-to-the-paper)
-        + [Miscellaneous](#miscellaneous)
     + [Collection of Examples](#collection-of-examples)
-* [Glossary](#glossary)
 
 ## Introduction
 
@@ -30,9 +25,7 @@ The guidelines assume that the user knows well the SuperCon 2 application. Super
 
 This section describes the different information that are stored in the database.
 
-### Data description
-
-#### List of items
+### Record field description
 
 | Items related to material | Items related to target properties | Items Related to paper | Miscellanecus |
 |---------------------------|------------------------------------|------------------------|---------------|
@@ -107,7 +100,7 @@ From table > Extraction > Tc classification > Linking > Composition resolution
 
 For example, when a wrong formula (Extraction) is linked incorrectly (Linking) to Curie temperature (Tc classification), the error is "Extraction".
 
-### Tips for annotated entities
+### Annotated entities conventions
 
 ![](images/tips_1.png)
 
@@ -357,7 +350,7 @@ The (1) data reporting (or flagging) is the process in which a record is marked 
 
       For example: 10 GPa
     - Curation rule:
-  
+
     - Possible error and examples :
         - Extraction
 
@@ -382,7 +375,6 @@ The (1) data reporting (or flagging) is the process in which a record is marked 
 
 #### Items related to the paper
 
-
 - DOI
 
   Digital Object Identifier of the paper where the entity is extracted
@@ -401,14 +393,14 @@ The (1) data reporting (or flagging) is the process in which a record is marked 
 - Subsection
 
   Indicate the portion of the section from which the record has been extracted:
-  - header: title, abstract, keyword
-  - body: paragraph, figureCaption, tableCaption
-  - annex: paragraph
+    - header: title, abstract, keyword
+    - body: paragraph, figureCaption, tableCaption
+    - annex: paragraph
 
 
 - Timestamp
 
-  Latest timestamp on which the record was modified 
+  Latest timestamp on which the record was modified
 
 
 - Authors
@@ -432,8 +424,8 @@ The (1) data reporting (or flagging) is the process in which a record is marked 
 
 
 - Filename
-  
-- The original file name of the PDF document 
+
+- The original file name of the PDF document
 
 #### Miscellaneous
 
@@ -508,7 +500,6 @@ When it is not obvious which state-errortype is appropriate, examples below migh
 
 </details>
 
-<!--
 #### Missing entity
 
 In the following example the entity has been missed completely. In this case the cause is likely "Extraction" because the process failed to recognise `HCl`. 
@@ -529,4 +520,3 @@ In the following example the temperature of about 1234 K has been extracted. Thi
 ![](images/example-wrong-composition-recognition.jpg)
 <div style="text-align: center;">Figure 3: Example </div>
 
--->
