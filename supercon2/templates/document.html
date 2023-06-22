@@ -166,7 +166,13 @@
                             [[ "..." + item.id.substring(item.id.length - 8) ]]
                         </template>
                         <template v-slot:item.sentence="{ item }">
-                            [[ item.sentence.slice(0, 30) + ' ...' ]]
+                            <v-container>
+                                <div v-if="!!item.sentenceIsExpanded" v-html="item.sentence_decorated">
+                                </div>
+                                <div v-else :style="{cursor: 'ns-resize'}" @click="showWholeSentence(item)">
+                                    [[ item.sentence.slice(0, 30) + ' ...' ]]
+                                </div>
+                            </v-container>
                         </template>
                         <template v-slot:item.actions="{ item }">
                             <v-row>

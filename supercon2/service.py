@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Union
 
 import gridfs
-from apiflask import APIBlueprint, abort, output, input
+from apiflask import APIBlueprint, abort
 from bson import ObjectId
 from bson.errors import InvalidId
 from flask import render_template, Response, url_for, request
@@ -112,7 +112,7 @@ def index():
 
 
 @bp.route('/publishers')
-@output(Publishers)
+@bp.output(Publishers)
 def get_publishers():
     db = connect_and_get_db()
 
@@ -128,7 +128,7 @@ def connect_and_get_db():
 
 
 @bp.route('/years')
-@output(Years)
+@bp.output(Years)
 def get_years():
     db = connect_and_get_db()
 
@@ -214,8 +214,8 @@ def replace_empty_key(input):
 
 
 @bp.route("/record/<id>", methods=["PUT", "PATCH"])
-@input(Record)
-@output(UpdatedRecord)
+@bp.input(Record)
+@bp.output(UpdatedRecord)
 def update_record(id, record: Union[Record, dict]):
     object_id = validate_objectId(id)
     validate_record(record)
@@ -323,8 +323,8 @@ def rollback_delete(previous_record, training_data_id, tabular_collection, train
 
 
 @bp.route("/record", methods=["POST"])
-@input(Record)
-@output(Record)
+@bp.input(Record)
+@bp.output(Record)
 def create_record(record: Record):
     validate_record(record)
     if 'timestamp' not in record:
@@ -383,38 +383,38 @@ def add_record(record: Record):
 
 
 @bp.route("/records", methods=["GET"])
-@input(RecordParamsIn, location='query')
-@output(Record(many=True))
+@bp.input(RecordParamsIn, location='query')
+@bp.output(Record(many=True))
 def get_records_from_form_data(query_data):
     return get_records(**query_data)
 
 
 @bp.route("/records/<type>", methods=["GET"])
-@output(Record(many=True))
+@bp.output(Record(many=True))
 def get_tabular_from_path_by_type(type):
     return get_records(type)
 
 
 @bp.route("/records/<type>/<publisher>/<year>", methods=["GET"])
-@output(Record(many=True))
+@bp.output(Record(many=True))
 def get_tabular_from_path_by_type_publisher_year(type, publisher, year):
     return get_records(type, publisher, year)
 
 
 @bp.route("/records/<type>/<year>", methods=["GET"])
-@output(Record(many=True))
+@bp.output(Record(many=True))
 def get_tabular_from_path_by_type_year(type, year):
     return get_records(type, publisher=None, year=year)
 
 
 @bp.route("/records/document/<hash>", methods=["GET"])
-@output(Record(many=True))
+@bp.output(Record(many=True))
 def get_records_by_document(hash):
     return get_records(document=hash)
 
 
 @bp.route("/curation/records", methods=["GET"])
-@output(Record(many=True))
+@bp.output(Record(many=True))
 def get_curation_records_response():
     return get_curation_records()
 
@@ -454,7 +454,7 @@ def get_curation_records():
 
 
 @bp.route("/process/records", methods=["GET"])
-@output(ProcessRecord(many=True))
+@bp.output(ProcessRecord(many=True))
 def get_process_records():
     db = connect_and_get_db()
     logger_collection = db.get_collection("logger")
@@ -587,7 +587,7 @@ def get_binary(hash):
 
 
 @bp.route('/record/<id>', methods=['GET'])
-@output(Record)
+@bp.output(Record)
 def get_record(id):
     object_id = validate_objectId(id)
     db = connect_and_get_db()
@@ -625,7 +625,7 @@ def _delete_record(id, error_type, db):
 
 
 @bp.route('/record/<id>', methods=['DELETE'])
-@output(UpdatedRecord)
+@bp.output(UpdatedRecord)
 def delete_record(id):
     object_id = validate_objectId(id)
     db = connect_and_get_db()
@@ -647,7 +647,7 @@ def delete_record(id):
 
 
 @bp.route('/record/<id>/status', methods=['GET'])
-@output(Flag)
+@bp.output(Flag)
 def get_record_status(id):
     object_id = validate_objectId(id)
     db = connect_and_get_db()
@@ -657,7 +657,7 @@ def get_record_status(id):
 
 
 @bp.route('/record/<id>/mark_invalid', methods=['PUT', 'PATCH'])
-@output(Flag)
+@bp.output(Flag)
 def mark_record_invalid(id):
     """The record is marked as invalid"""
     object_id = validate_objectId(id)
@@ -677,7 +677,7 @@ def mark_record_invalid(id):
 
 
 @bp.route('/record/<id>/mark_validated', methods=['PUT', 'PATCH'])
-@output(Flag)
+@bp.output(Flag)
 def mark_record_validated(id):
     """The record is marked as correct"""
     object_id = validate_objectId(id)
@@ -708,7 +708,7 @@ def validate_objectId(id):
 
 
 @bp.route('/record/<id>/reset', methods=['PUT', 'PATCH'])
-@output(Flag)
+@bp.output(Flag)
 def reset_record(id):
     """Reset the status of the record"""
     object_id = validate_objectId(id)

@@ -1,7 +1,7 @@
-Flask==2.1.1
-pymongo==4.3.3
+Flask==2.3.2
+pymongo==4.4.0
 requests
-tqdm == 4.63.0
+tqdm == 4.65.0
 pyyaml
 pytest
 pytest-mongodb
@@ -9,9 +9,9 @@ pytest-mock
 numpy
 pandas
 openpyxl
-apiflask==0.12.0
+apiflask==1.3.1
 deepdiff
 xlrd
 waitress==2.1.1
 label-studio-sdk
-pymatgen
+pymatgen==2023.2.28
