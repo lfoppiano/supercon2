@@ -1,9 +1,9 @@
 mongo:
-  server: "localhost:27017"
-  #  server: "falcon.nims.go.jp:27017"
-  db: "supercon_tmp"
+#  server: "localhost:27017"
+  server: "falcon.nims.go.jp:27017"
+  db: "supercon_correction"
   #  db: "supercon_dev_4"
-  #  db: "supercon_sample"
+#  db: "supercon_develop"
 
 root-path: '/'
 

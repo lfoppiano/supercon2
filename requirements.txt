@@ -1,5 +1,5 @@
 Flask==2.1.1
-pymongo==4.0.2
+pymongo==4.3.3
 requests
 tqdm == 4.63.0
 pyyaml
@@ -14,3 +14,4 @@ deepdiff
 xlrd
 waitress==2.1.1
 label-studio-sdk
+pymatgen

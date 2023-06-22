@@ -4,11 +4,10 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
-    <title>SuperCon<sup>2</sup> | Database</title>
+    <title>SuperCon2 | Database</title>
     <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.5.95/css/materialdesignicons.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/vuetify@2.6.3/dist/vuetify.min.css" rel="stylesheet">
-    <link rel="icon" type="image/x-icon" href={{ url_for('static', filename='resources/img/favicon.ico' ) }} />
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@2.6.3/dist/vuetify.min.css" rel="stylesheet">    <link rel="icon" type="image/x-icon" href={{ url_for('static', filename='resources/img/favicon.ico' ) }} />
     <link rel="shortcut icon" type="image/x-icon" href={{ url_for('static', filename='resources/img/favicon.ico' ) }} />
     <link rel="stylesheet" href={{ url_for('static', filename='resources/css/style-superconductors.css') }}/>
     <style>
@@ -26,7 +25,7 @@
         <v-container fluid>
             <v-row class="justify-space-between ma-0">
                 <v-card flat>
-            <h2>SuperCon<sup>2</sup> | Database</h2>
+                    <h2>SuperCon<sup>2</sup> | Database</h2>
                 </v-card>
                 <v-card flat>
                     <v-icon @click="shouldShowShortcutKeysDialog = true">mdi-help-circle</v-icon>
@@ -36,7 +35,6 @@
                 <v-select v-model="selectedHeaders" :items="headers" label="Select Columns" multiple outlined
                     return-object>
                 </v-select>
-{#                <v-btn @click="openCreateItemDialog" Depressed class="ma-2">New Item</v-btn>#}
             </v-row>
             <v-data-table v-model="selectedItems" :headers="showHeaders" :items="items" :dense="true" single-select
                 loading-text="loading ..." :loading="isLoading" :multi-sort="true" class="elevation-1" :item-class="getItemClass"
@@ -55,25 +53,21 @@
                                     </v-icon>
                                 </v-row>
                             </v-radio-group>
+                            <v-radio-group v-model="header.filterKeyword" v-else-if="header.value === 'error_type'" dense
+                                           hide-details>
+                                <v-select :items="headerObject.error_type.selectItems" v-model="header.filterKeyword"></v-select>
+                            </v-radio-group>
                             <v-radio-group v-model="header.filterKeyword" v-else-if="header.value === 'status'" dense
                                 hide-details>
-                                <v-row class="pb-1" v-for="radio in headerObject.status.radioGroup">
+                                <v-select :items="headerObject.status.selectItems" v-model="header.filterKeyword"></v-select>
+                                {#<v-row class="pb-1" v-for="radio in headerObject.status.radioGroup">
                                     <v-radio dense :value="radio.value" class="ma-0">
                                     </v-radio>
                                     <v-icon small :title="radio.value" @click="header.filterKeyword = radio.value">
                                         [[ radio.icon ]]
                                     </v-icon>
-                                </v-row>
-                            </v-radio-group>
-                            <v-radio-group v-model="header.filterKeyword" v-else-if="header.value === 'flag'" dense
-                                hide-details>
-                                <v-row class="pb-1" v-for="radio in headerObject.flag.radioGroup">
-                                    <v-radio dense :value="radio.value" class="ma-0">
-                                    </v-radio>
-                                    <v-icon small :title="radio.value" @click="header.filterKeyword = radio.value">
-                                        [[ radio.icon ]]
-                                    </v-icon>
-                                </v-row>
+                                    <div @click="header.filterKeyword = radio.value">[[ radio.value ]]</div>
+                                </v-row>#}
                             </v-radio-group>
                             <template v-else-if="header.value === 'actions'"></template>
                             <template v-else>
@@ -89,11 +83,27 @@
                 </template>
                 <template v-slot:item.hash="{ item }">
                     <v-row>
-                        <a :href="base_url + 'document/' + item.hash" target="_blank" :style="{'text-decoration': 'none'}"
-                            class="ma-1">
+                        <a :href="base_url + 'document/' + item.hash"
+                            target="_blank"
+                            :style="{'text-decoration': 'none'}"
+                            class="ma-1" title="View document">
                             [[ item.hash ]]
                         </a>
-                        <v-icon @click="headerObject.hash.filterKeyword = item.hash">
+                        <v-icon
+                            @click="headerObject.hash.filterKeyword = item.hash"
+                            :title="'Filter by this documenft ID: ' + item.hash">
+                            mdi-filter
+                        </v-icon>
+                    </v-row>
+                </template>
+                <template v-slot:item.id="{ item }">
+                    <v-row>
+                        <span class="ma-1" :title="item.id">
+                        [[ "..." + item.id.substring(item.id.length - 8) ]]
+                        </span>
+                        <v-icon
+                            @click="copyTextToClipboard(item.id)"
+                            :title="'Copy this entity ID: ' + item.id">
                             mdi-content-paste
                         </v-icon>
                     </v-row>
@@ -113,10 +123,19 @@
                 </template>
                 <template v-slot:item.actions="{ item }">
                     <v-row>
+                        <v-icon small class="mr-1" @click="markRecordValidated(item)" title="Mark as validated">
+                            mdi-thumb-up
+                        </v-icon>
+                        <v-icon small class="mr-1" @click="markRecordInvalid(item)" title="Mark as invalid">
+                            mdi-thumb-down
+                        </v-icon>
+                        <v-icon small class="mr-1" @click="resetRecord(item)" title="Reset status">
+                            mdi-restart
+                        </v-icon>
                         <v-icon small class="mr-1" @click="openEditItemDialog(item)" title="Edit">
                         mdi-pencil
                         </v-icon>
-                        <v-icon small class="mr-1" @click="removeRecord(item)" title="Remove">
+                        <v-icon small class="mr-1" @click="openItemDialogToRemove(item)" title="Remove">
                         mdi-delete-outline
                         </v-icon>
                         <v-icon small class="mr-1" @click="openCreateItemDialog(item)" title="Add new">
@@ -124,8 +143,11 @@
                         </v-icon>
                     </v-row>
                 </template>
+                <template v-slot:item.timestamp="{ item }">
+                    <v-row>[[ new Intl.DateTimeFormat(['en-US', 'ja'], { dateStyle: 'short', timeStyle: 'short'}).format(new Date(item.timestamp + "Z")) ]]   </v-row>
+                </template>
             </v-data-table>
-            <p><span style="color:#848484;">&copy; Contributors, 2022 |</span> <span id="version" style="color:#848484;" v-html="version"></span></p>
+            <p><span style="color:#848484;">&copy; Contributors, 2021-2023 |</span> <span id="version" style="color:#848484;" v-html="version"></span></p>
             <v-dialog v-model="itemDialog.shouldShow">
                 <v-card>
                     <v-card-title>[[ itemDialogTitle ]]</v-card-title>
@@ -135,15 +157,16 @@
                                 <v-col :cols="row.config.cols" v-for="col of row.cols">
                                     <v-select
                                         v-if="col.key === 'error_type'"
+                                        :rules="col.rules"
                                         v-model="editedItem[col.key]"
                                         :items="col.selectBoxItems"
-                                        :label="headerObject[col.key].text">
+                                        :label="col.label">
                                     </v-select>
                                     <v-text-field
                                         v-else
                                         v-model="editedItem[col.key]"
                                         :label="headerObject[col.key].text"
-                                        :disabled="col.disabled">
+                                        :disabled="itemDialog.mode === 'remove' ? true : col.disabled">
                                     </v-text-field>
                                 </v-col>
                             </v-row>
@@ -155,7 +178,14 @@
                         <v-btn color="blue darken-1" text @click="close">
                             Cancel
                         </v-btn>
-                        <v-btn color="blue darken-1" text @click="save" :disabled="!saveIsValidated">
+                        <v-btn
+                            v-if="itemDialog.mode === 'remove'"
+                            color="error" text
+                            @click="removeRecord"
+                            :disabled="!saveIsValidated">
+                            Remove
+                        </v-btn>
+                        <v-btn v-else color="blue darken-1" text @click="save" :disabled="!saveIsValidated">
                             Save
                         </v-btn>
                     </v-card-actions>
@@ -175,12 +205,24 @@
                     </v-card-text>
                 </v-card>
             </v-dialog>
+            <v-snackbar v-model="snackbar.shouldShow" :color="snackbar.color">
+                [[ snackbar.text ]]
+                <template v-slot:action="{ attrs }">
+                    <v-btn text v-bind="attrs" @click="snackbar.shouldShow = false">
+                        Close
+                    </v-btn>
+                </template>
+            </v-snackbar>
         </v-container>
     </v-app>
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vuetify@2.6.3/dist/vuetify.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios@0.26.1/dist/axios.min.js"></script>
-    <script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjs@11.3.1/lib/browser/math.min.js"></script>
+    <script type="module">
+        import { shortcutKeys } from "{{ url_for('static', filename='grobid/shortcut-keys.js')}}"
+        import {copyTextToClipboard} from "{{ url_for('static', filename='grobid/lib.js')}}"
+
         let itemClassStore = {
             class: 'bg-white',
             hashes: [],
@@ -191,42 +233,18 @@
             vuetify: new Vuetify(),
             data() {
                 return {
+                    snackbar: {
+                      shouldShow: false,
+                      color: "",
+                      text: "",
+                    },
                     base_url: '{{ base_url }}',
                     itemDialog: {
-                        mode: '', // 'edit', 'new'
+                        mode: '', // 'edit', 'new', 'remove'
                         shouldShow: false,
                     },
                     shouldShowShortcutKeysDialog: false,
-                    shortcutKeys: [
-                        {
-                            name: 'n',
-                            text: 'Add new record (in the same document of the selected record)'
-                        }, {
-                            name: 'e',
-                            text: 'Edit the selected record'
-                        }, {
-                            name: '⌘ + Enter',
-                            text: 'Save the record on the edit dialog (Mac)'
-                        }, {
-                            name: 'Ctrl + Enter',
-                            text: 'Save the record on the edit dialog (Win)'
-                        }, {
-                            name: 'ArrowUp',
-                            text: 'Move selection up one record'
-                        }, {
-                            name: 'ArrowDown',
-                            text: 'Move selection down one record'
-                        }, {
-                            name: 'enter',
-                            text: 'Flag/unflag the selected record'
-                        }, {
-                            name: '?',
-                            text: 'Show the keyboard shortcuts dialog',
-                        }, {
-                            name: 'esc',
-                            text: 'Close this dialog',
-                        }
-                    ],
+                    shortcutKeys,
                     isLoading: true,
                     version: 'unknown version',
                     editedItem: {},
@@ -239,9 +257,9 @@
                     filteredItems: [],
                     selectedHeaders: [],
                     headers: [
-                        { text: 'Raw Material', value: 'rawMaterial', hidden: false, filter: this.rawMaterialFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Raw Material', value: 'rawMaterial', hidden: false, filter: this.rawMaterialFilter, filterKeyword: '', shouldHideEmpty: false, width: 150 },
                         { text: 'Name', value: 'name', hidden: false, filter: this.nameFilter, filterKeyword: '', shouldHideEmpty: false },
-                        { text: 'Formula', value: 'formula', hidden: false, filter: this.formulaFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Formula', value: 'formula', hidden: false, filter: this.formulaFilter, filterKeyword: '', shouldHideEmpty: false , width: 150 },
                         { text: 'Space Group', value: 'spaceGroup', hidden: true, filter: this.spaceGroupFilter, filterKeyword: '', shouldHideEmpty: false },
                         // { text: 'Space Group ID', value: 'spaceGroupId', hidden: true },
                         { text: 'Crystal Structure', value: 'crystalStructure', hidden: true, filter: this.crystalStructureFilter, filterKeyword: '', shouldHideEmpty: false },
@@ -254,9 +272,9 @@
                         { text: 'Material Class', value: 'materialClass', hidden: false, filter: this.materialClassFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'Other Information', value: 'fabrication', hidden: true, filter: this.fabricationFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'Substrate', value: 'substrate', hidden: true, filter: this.substrateFilter, filterKeyword: '', shouldHideEmpty: false },
-                        { text: 'Critical Temperature', value: 'criticalTemperature', hidden: false, filter: this.criticalTemperatureFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Critical Temperature', value: 'criticalTemperature', hidden: false, filter: this.criticalTemperatureFilter, filterKeyword: '', shouldHideEmpty: false, sort: this.sortByPhysicalQuantity },
                         // { text: 'Critical TemperatureId', value: 'criticalTemperatureId', hidden: true },
-                        { text: 'Applied Pressure', value: 'appliedPressure', hidden: false, filter: this.appliedPressureFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Applied Pressure', value: 'appliedPressure', hidden: false, filter: this.appliedPressureFilter, filterKeyword: '', shouldHideEmpty: false, sort: this.sortByPhysicalQuantity },
                         // { text: 'Applied Pressure ID', value: 'appliedPressureId', hidden: true },
                         { text: 'Measurement Method', value: 'criticalTemperatureMeasurementMethod', hidden: false, filter: this.measurementMethodFilter, filterKeyword: '', shouldHideEmpty: false },
                         // { text: 'Measurement MethodId', value: 'measurementMethodId', hidden: true },
@@ -266,8 +284,8 @@
                         {#{ text: 'Path', value: 'path', hidden: true, filter: this.pathFilter, filterKeyword: '', shouldHideEmpty: false },#}
                         {#{ text: 'Filename', value: 'filename', hidden: true, filter: this.filenameFilter, filterKeyword: '', shouldHideEmpty: false },#}
                         { text: 'Document', value: 'hash', hidden: false, filter: this.hashFilter, filterKeyword: "{{hash}}", width: 120, shouldHideEmpty: false },
-                        { text: 'Entity ID', value: 'id', hidden: true, filter: this.hashFilter, shouldHideEmpty: false },
-                        { text: 'Timestamp', value: 'timestamp', hidden: true, filter: this.timestampFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Entity ID', value: 'id', hidden: true, filter: this.idFilter, filterKeyword: '', shouldHideEmpty: false, width: 120, },
+                        { text: 'Timestamp', value: 'timestamp', hidden: true, filter: this.timestampFilter, filterKeyword: '', shouldHideEmpty: false, width: 120 },                        
                         { text: 'DOI', value: 'doi', hidden: false, filter: this.doiFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'Authors', value: 'authors', width: 300, hidden: true, filter: this.authorsFilter, filterKeyword: '', shouldHideEmpty: false },
                         { text: 'Title', value: 'title', width: 500, hidden: true, filter: this.titleFilter, filterKeyword: '', shouldHideEmpty: false },
@@ -280,7 +298,7 @@
                             radioGroup: [{
                                 value: 'all',
                                 icon: 'mdi-filter-off'
-                            }, {
+                           }, {
                                 value: 'manual',
                                 icon: 'mdi-human'
                             }, {
@@ -288,7 +306,10 @@
                                 icon: 'mdi-robot'
                             },]
                         },
-                        { text: 'Latest error type', value: 'error_type', hidden: false, filter: this.hashFilter, shouldHideEmpty: false },
+                        {
+                            text: 'Latest error type', value: 'error_type', hidden: false, filter: this.errorTypeFilter, filterKeyword: 'all', shouldHideEmpty: false,
+                            selectItems: [], // filled by loadErrorTypes method
+                        },
                         {
                             text: 'Status', value: 'status', sortable: false, hidden: true, filter: this.statusFilter, filterKeyword: 'all', width: 80,
                             radioGroup: [{
@@ -303,17 +324,18 @@
                             },]
                         },
                         {
-                            text: 'Flag', value: 'flag', sortable: false, hidden: false, filter: this.flagFilter, filterKeyword: 'all', width: 80,
-                            radioGroup: [{
-                                value: 'all',
-                                icon: 'mdi-filter-off'
-                            }, {
-                                value: 'flag',
-                                icon: 'mdi-flag'
-                            }, {
-                                value: 'unflag',
-                                icon: 'mdi-flag-off'
-                            },]
+                            text: 'Status', value: 'status', sortable: false, hidden: false, filter: this.statusFilter, filterKeyword: 'all', width: 80,
+                            // radioGroup is obsolete of the status header
+                            radioGroup: [
+                                { value: 'all',       icon: 'mdi-filter-off' },
+                                { value: 'new',       icon: 'mdi-new-box' },
+                                { value: 'curated',   icon: 'mdi-auto-fix' },
+                                { value: 'validated', icon: 'mdi-thumb-up' },
+                                { value: 'invalid',   icon: 'mdi-thumb-down' }
+                            ],
+                            selectItems: [
+                                'all', 'new', 'curated', 'validated', 'invalid'
+                            ]
                         },
                         { text: 'Actions', value: 'actions', sortable: false, hidden: false },
                         // { text: 'Doc URL', value: 'doc_url', hidden: true},
@@ -321,79 +343,50 @@
                         // { text: 'Material ID', value: 'materialId', hidden: true},
                     ],
                     rowsOnItemEditDialog: [{
-                        config: {
-                            cols: 4,
-                        },
-                        cols: [{
-                            key: 'rawMaterial',
+                            config: { cols: 3 },
+                            cols: [
+                                { key: 'rawMaterial'},
+                                { key: 'name' },
+                                { key: 'id', disabled: true },
+                                {
+                                    key: 'error_type', label: '*Error type', rules: [(value) => !!value || 'This field is required'],
+                                    errorMessages: [],
+                                    selectBoxItems: [] // set by the loadErrorTypes method
+                                }
+                            ]
                         }, {
-                            key: 'id',
-                            disabled: true,
+                            config: { cols: null },
+                            cols: [
+                                { key: 'formula' },
+                                { key: 'variables' },
+                                { key: 'criticalTemperature' },
+                                { key: 'appliedPressure' },
+                                { key: 'criticalTemperatureMeasurementMethod' }
+                            ]
                         }, {
-                            key: 'error_type',
-                            selectBoxItems: ['From table', 'Extraction', 'Linking', 'Tc classification', 'Composition resolution' ]
-                        }]
-                    }, {
-                        config: {
-                            cols: null,
-                        },
-                        cols: [{
-                            key: 'formula',
-                        },{
-                            key: 'variables',
-                        },{
-                            key: 'criticalTemperature',
-                        },{
-                            key: 'appliedPressure',
-                        },{
-                            key: 'criticalTemperatureMeasurementMethod',
-                        },]
-                    }, {
-                        config: {
-                            cols: null,
-                        },
-                        cols: [{
-                            key: 'spaceGroup',
-                        },{
-                            key: 'crystalStructure',
-                        },{
-                            key: 'unitCellType',
-                        },{
-                            key: 'doping',
-                        },{
-                            key: 'shape',
-                        },{
-                            key: 'fabrication',
-                        },{
-                            key: 'substrate',
-                        },]
-                    }, {
-                        config: {
-                            cols: null,
-                        },
-                        cols: [{
-                            key: 'hash',
-                            disabled: true,
-                        },{
-                            key: 'doi',
-                            disabled: true,
-                        },{
-                            key: 'authors',
-                            disabled: true,
-                        },{
-                            key: 'title',
-                            disabled: true,
-                        },{
-                            key: 'publisher',
-                            disabled: true,
-                        },{
-                            key: 'journal',
-                            disabled: true,
-                        },{
-                            key: 'year',
-                            disabled: true,
-                        },]
-                    }],
+                            config: { cols: null },
+                            cols: [
+                                { key: 'spaceGroup' },
+                                { key: 'crystalStructure' },
+                                { key: 'unitCellType' },
+                                { key: 'doping' },
+                                { key: 'shape' },
+                                { key: 'fabrication' },
+                                { key: 'substrate' },
+                            ]
+                        }, {
+                            config: { cols: null },
+                            cols: [
+                                { key: 'hash', disabled: true },
+                                { key: 'doi', disabled: true },
+                                { key: 'authors', disabled: true },
+                                { key: 'title', disabled: true },
+                                { key: 'publisher', disabled: true },
+                                { key: 'journal', disabled: true },
+                                { key: 'year', disabled: true },
+                            ]
+                        }
+                    ],
                     items: [],
                     rules: {
                         required: value => !!value || 'Required.',
@@ -424,7 +417,7 @@
                     return this.filteredItems[0]
                 },
                 saveIsValidated() {
-                    return this.editedItem.doi && this.editedItem.hash
+                    return this.editedItem.hash && this.editedItem.error_type
                 },
                 headerObject() {
                     return Object.fromEntries(new Map(
@@ -436,14 +429,19 @@
                 itemDialogTitle() {
                     switch (this.itemDialog.mode) {
                         case 'edit':
-                            return 'Edit the record'
+                            return 'Edit record'
                         case 'new':
-                            return 'Add a new record'
+                            return 'Add new record'
+                        case 'remove':
+                            return 'Remove record'
+                        case 'view':
+                            return 'View record'
                     }
                 }
             },
             mounted() {
                 this.loadItems()
+                this.loadErrorTypes()
                 document.addEventListener('keydown', this.onKeyDown)
             },
             beforeDestroy() {
@@ -461,6 +459,21 @@
                 }
             },
             methods: {
+                copyTextToClipboard(text) {
+                    try {
+                        copyTextToClipboard(text)
+                        this.snackbar = {
+                            text: `copied ${text}`,
+                            shouldShow: true
+                        }
+                    } catch (error) {
+                        console.error(error)
+                        this.snackbar = {
+                            text: `failed to copy`,
+                            shouldShow: true
+                        }
+                    }
+                },
                 showWholeSentence(item) {
                     item.sentenceIsExpanded = true
                     this.headerObject.sentence.width = 400
@@ -470,13 +483,27 @@
                     const url =
                         '{{ url_for("supercon.get_records_from_form_data") }}'
                     axios.get(url).then((data) => {
-                        this.items = data.data.map((item) => {
-                            return {
-                                ...item, ...{ flag: item.status === 'invalid' && item.type === 'manual' }
-                            }
-                        })
+                        this.items = data.data
+                        return
                     }).finally(() => {
                         this.isLoading = false
+                    })
+                },
+                loadErrorTypes() {
+                    const url = '{{ url_for("supercon.get_error_types") }}'
+                    axios.get(url).then((data) => {
+                        let errorTypes = [];
+                        for (let prop in data.data) {
+                            errorTypes.push ({'value': prop, 'text': data.data[prop]})
+                        }
+                        let dialog = this.rowsOnItemEditDialog[0].cols.find(col => {
+                            return col.key === "error_type"
+                        });
+                        dialog.selectBoxItems = errorTypes;
+                        this.headerObject.error_type.selectItems = new Array({"value":"all", text:"All"}).concat(errorTypes)
+                        return
+                    }).finally(() => {
+                        //
                     })
                 },
                 hasChangedPageCount(pageCount) {
@@ -501,7 +528,7 @@
                     }
                     // disable shortcut keys when the cursor in an input field
                     if (event.srcElement.nodeName.indexOf('INPUT') > -1) {
-                        return
+                       return
                     }
                     switch (event.key) {
                         case '?':
@@ -629,6 +656,9 @@
                 hashFilter(_, __, item) {
                     return this.keywordFilter(this.headerObject.hash, item.hash)
                 },
+                idFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.id, item.id)
+                },
                 timestampFilter(_, __, item) {
                     return this.keywordFilter(this.headerObject.timestamp, item.timestamp)
                 },
@@ -680,6 +710,15 @@
                             return item.type === keyword
                     }
                 },
+                errorTypeFilter(value, search, item) {
+                    const keyword = this.headerObject.error_type.filterKeyword
+                    switch (keyword) {
+                        case 'all':
+                            return true
+                        default:
+                            return value === keyword
+                    }
+                },
                 statusFilter(value, search, item) {
                     const keyword = this.headerObject.status.filterKeyword
                     switch (keyword) {
@@ -700,14 +739,21 @@
                             return !item.flag
                     }
                 },
-                async toggleFlag(record) {
-                    let url = ''
-                    if (record.flag) {
-                        url =
-                            '{{ url_for("supercon.unflag_record", id = "id") }}'
-                    } else {
-                        url = '{{ url_for("supercon.flag_record", id = "id") }}'
+                sortByPhysicalQuantity(a, b) {
+                    try {
+                        a = math.unit(a)
+                    } catch {
+                        return -1
                     }
+                    try {
+                        b = math.unit(b)
+                    } catch {
+                        return 1
+                    }
+                    return math.compare(a, b)
+                },
+                async markRecordValidated(record) {
+                    let url = '{{ url_for("supercon.mark_record_validated", id = "id") }}'
                     url = url.replace(
                         "id",
                         record.id
@@ -720,7 +766,42 @@
                             {
                                 type: data.type,
                                 status: data.status,
-                                flag: !record.flag,
+                    }
+                        )
+                    )
+                },
+                async markRecordInvalid(record) {
+                    let url = '{{ url_for("supercon.mark_record_invalid", id = "id") }}'
+                    url = url.replace(
+                        "id",
+                        record.id
+                    )
+                    const { data: data } = await axios.patch(url)
+                    this.items = Object.assign(
+                        this.items,
+                        Object.assign(
+                            this.items.find(item => item.id === record.id),
+                            {
+                                type: data.type,
+                                status: data.status,
+                            }
+                        )
+                    )
+                },
+                async resetRecord(record) {
+                    let url = '{{ url_for("supercon.reset_record", id = "id") }}'
+                    url = url.replace(
+                        "id",
+                        record.id
+                    )
+                    const { data: data } = await axios.patch(url)
+                    this.items = Object.assign(
+                        this.items,
+                        Object.assign(
+                            this.items.find(item => item.id === record.id),
+                            {
+                                type: data.type,
+                                status: data.status,
                             }
                         )
                     )
@@ -744,6 +825,13 @@
                     this.itemDialog = {
                         shouldShow: true,
                         mode: 'new'
+                    }
+                },
+                openItemDialogToRemove(item) {
+                    this.editedItem = JSON.parse(JSON.stringify(item))
+                    this.itemDialog = {
+                        shouldShow: true,
+                        mode: 'remove'
                     }
                 },
                 close() {
@@ -779,6 +867,8 @@
                     delete this.editedItem.flag
                     delete this.editedItem.status
                     delete this.editedItem.type
+                    // Deletes sentenceIsExpanded field because this field is for only frontend. The backend doesn't allow an unknown field.
+                    delete this.editedItem.sentenceIsExpanded
                     try {
                         await axios.put(url, this.editedItem)
                         this.close()
@@ -790,18 +880,21 @@
                     }
                 },
                 flagIsNotWritable(record) {
-                    return record.type === 'manual' && record.status === 'valid'
+                    return record.type === 'manual' && record.status === 'validated'
                 },
-                async removeRecord(item) {
+                async removeRecord() {
                     let url = '{{ url_for("supercon.delete_record", id="record_id") }}'
                     url = url.replace(
                         "record_id",
-                        item.id
+                        this.editedItem.id
                     )
+
+                    url = url + "?error_type=" + this.editedItem.error_type;
 
                     try {
                         await axios.delete(url, {})
                         this.loadItems()
+                        this.itemDialog.shouldShow = false
                     } catch (e) {
                         console.error(e)
                         window.alert(JSON.stringify(e.response.data))

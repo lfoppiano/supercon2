@@ -27,7 +27,7 @@ def find_differences(new, old, ignored_fields=[]):
     # exclude_paths = {"root['type']", "root['status']", "root['_id']", "root['previous']"}
 
     differences = DeepDiff(new, old, ignore_order=True,
-                           exclude_paths={"root['"+str(field)+"']" for field in ignored_fields})
+                           exclude_paths={"root['" + str(field) + "']" for field in ignored_fields})
 
     return differences
 
@@ -39,7 +39,8 @@ def write_correction(old_doc, corrections, collection, dry_run: bool = False, sk
     new_doc = post_process_fields(old_doc, remove_trailing_space, skip_none)
     correction_clean = post_process_fields(corrections, remove_trailing_space, skip_none)
 
-    differences = find_differences(new_doc, correction_clean, ignored_fields=['type', 'status', '_id', 'previous', 'error_type'])
+    differences = find_differences(new_doc, correction_clean,
+                                   ignored_fields=['type', 'status', '_id', 'previous'])
 
     if len(differences) == 0:
         raise Exception(
@@ -49,20 +50,16 @@ def write_correction(old_doc, corrections, collection, dry_run: bool = False, sk
     for field, value in correction_clean.items():
         new_doc[field] = value
 
-    old_doc['status'] = "obsolete"  ## 'obsolete' means that another record is taking over
+    # old_doc['status'] = "obsolete"  ## 'obsolete' means that another record is taking over
     # doc['type'] = "automatic"
-
-    # We save the error type in the previous document
-    if error_type: 
-        old_doc['error_type'] = error_type
 
     obsolete_id = old_doc['_id']
     new_doc['previous'] = obsolete_id
     new_doc['type'] = 'manual'
-    new_doc['status'] = 'valid'
+    new_doc['status'] = 'curated'
     new_doc['timestamp'] = datetime.utcnow()
 
-    # Cleanup
+    # Cleanup new doc
     for x in ['id', '_id']:
         if x in new_doc:
             del new_doc['_id']
@@ -75,14 +72,14 @@ def write_correction(old_doc, corrections, collection, dry_run: bool = False, sk
         print("Creating training data. Saving the sentence for the moment.")
         new_doc_id = "00000"
     else:
-        collection.update_one({
-            '_id': old_doc['_id']
-        }, {
-            '$set': {
-                'status': 'obsolete',
-                'type': 'automatic'
-            }
-        }, upsert=False)
+        query = {'status': 'obsolete',
+                 'type': 'automatic'}
+        if error_type:
+            query['error_type'] = error_type
+        else:
+            print("No error type specified. This is allowed in case the process is automatic. Skipping!")
+
+        collection.update_one({'_id': old_doc['_id']}, {'$set': query}, upsert=False)
         result = collection.insert_one(new_doc)
         new_doc_id = result.inserted_id
 
@@ -104,8 +101,11 @@ def post_process_fields(doc, remove_trailing_space=True, skip_none=True):
     return new_doc
 
 
-def write_raw_training_data(old_doc, new_doc_id, document_collection, training_data_collection, dry_run=False) -> ObjectId:
-    """Training data generation"""
+def write_raw_training_data(old_doc, new_doc_id, document_collection, training_data_collection, action=None, dry_run=False) -> ObjectId:
+    """Training data generation, it returns None if no data is inserted (also in case the data already exists)"""
+
+    if 'materialId' not in old_doc:
+        return
 
     hash = old_doc['hash']
 
@@ -114,7 +114,7 @@ def write_raw_training_data(old_doc, new_doc_id, document_collection, training_d
 
     training_data_id = training_data_collection.find_one({"corrected_record_id": str(old_doc['_id'])}, {'_id': 1})
     if training_data_id:
-        return training_data_id
+        return None
 
     # We get the latest document
     document_latest_version = \
@@ -132,17 +132,20 @@ def write_raw_training_data(old_doc, new_doc_id, document_collection, training_d
                 if dry_run:
                     print("Adding training data for span", span['id'])
                 else:
-                    result = training_data_collection.insert_one(
-                        {
-                            "text": passage['text'],
-                            "spans": passage['spans'],
-                            "tokens": passage['tokens'],
-                            "hash": hash,
-                            "corrected_record_id": str(new_doc_id),
-                            "status": "new",
-                            "timestamp": datetime.utcnow()
-                        }
-                    )
+                    object = {
+                        "text": passage['text'],
+                        "spans": passage['spans'],
+                        "tokens": passage['tokens'],
+                        "hash": hash,
+                        "corrected_record_id": str(new_doc_id),
+                        "status": "new",
+                        "timestamp": datetime.utcnow()
+                    }
+                    if action:
+                        object['action'] = action
+
+                    result = training_data_collection.insert_one(object)
+
                     return result.inserted_id
 
     print("If we are here, it means we did not manage to identify the correct passage to create the training data. ")

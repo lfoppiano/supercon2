@@ -1,128 +1,1248 @@
 <!DOCTYPE XHTML>
 <html lang="en">
+
 <head>
     <meta charset="utf-8">
-    <title>SuperCon<sup>2</sup> | Document viewer</title>
-    <script>
-        var annotation_url = "{{ url_for('supercon.get_annotations', hash="_HASH_") }}"
-        var pdf_document_url = "{{ url_for('supercon.get_binary', hash="_HASH_") }}"
-        var chevron_right_path = "{{ url_for('static', filename='resources/icons/chevron-right.svg') }}"
-        var chevron_down_path = "{{ url_for('static', filename='resources/icons/chevron-down.svg') }}"
-        var arrow_down_path = "{{ url_for('static', filename='resources/icons/arrow-down.svg') }}"
-        var arrow_up_path = "{{ url_for('static', filename='resources/icons/arrow-up.svg') }}"
-        var trash_path = "{{ url_for('static', filename='resources/icons/trash.svg') }}"
-    </script>
-    <!-- jquery -->
-    <script type="text/javascript" src={{ url_for('static', filename='resources/libs/jquery/jquery-3.4.1.js') }}></script>
-    <script type="text/javascript" src={{ url_for('static', filename='resources/libs/jquery/jquery.form.3.51.js') }}></script>
-
-    <!-- bootstrap -->
-    <script type="text/javascript" src={{ url_for('static', filename='resources/libs/bootstrap-4.5.0/js/bootstrap.bundle.min.js') }}></script>
-    <link rel="stylesheet" href={{ url_for('static', filename='resources/libs/bootstrap-4.5.0/css/bootstrap.min.css') }} media="screen"/>
-    <link rel="stylesheet" href={{ url_for('static', filename='resources/libs/font-awesome/font-awesome.min.css') }}>
-
-    <!-- X-editable -->
-    <link href={{ url_for('static', filename='resources/libs/bootstrap-editable/css/bootstrap-editable.css') }} rel="stylesheet">
-    <script src={{ url_for('static', filename='resources/libs/bootstrap-editable/js/bootstrap-editable.min.js') }}></script>
-
-    <!-- PDF.js stuff -->
-    <link type="text/css" href={{ url_for('static', filename='resources/libs/pdf.js/web/text_layer_builder.css') }} rel="stylesheet"/>
-    <link type="text/css" href={{ url_for('static', filename='resources/libs/pdf.js/web/annotation_layer_builder.css') }} rel="stylesheet"/>
-    <script type="text/javascript" src={{ url_for('static', filename='resources/libs/pdf.js/web/text_layer_builder.js') }}></script>
-    <script type="text/javascript" src={{ url_for('static', filename='resources/libs/pdf.js/web/pdf_link_service.js') }}></script>
-    <script type="text/javascript" src={{ url_for('static', filename='resources/libs/pdf.js/web/annotation_layer_builder.js') }}></script>
-    <script type="text/javascript" src={{ url_for('static', filename='resources/libs/pdf.js/build_/pdf.js') }}></script>
-
-    <!-- Grobid Javascript/CSS -->
-    <link rel="stylesheet" href={{ url_for('static', filename='resources/css/style.css') }}/>
-    <link rel="stylesheet" href={{ url_for('static', filename='resources/css/style-ner.css') }}/>
-    <link rel="stylesheet" href={{ url_for('static', filename='resources/css/style-quantities.css') }}/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+    <title>SuperCon2 | PDF viewer</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.5.95/css/materialdesignicons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@2.6.3/dist/vuetify.min.css" rel="stylesheet">    <link rel="icon" type="image/x-icon" href={{ url_for('static', filename='resources/img/favicon.ico' ) }} />
+    <link rel="shortcut icon" type="image/x-icon" href={{ url_for('static', filename='resources/img/favicon.ico' ) }} />
     <link rel="stylesheet" href={{ url_for('static', filename='resources/css/style-superconductors.css') }}/>
-    <script src={{ url_for('static', filename='grobid/grobid-superconductors.js') }}></script>
+    <style>
+        .bg-floralwhite {
+            background: floralwhite
+        }
+        .bg-white {
+            background: white
+        }
+    </style>
 </head>
 
 <body>
-<div class="container">
-    <div class="content">
+    <div id="app">
+    </div>
+    <!-- why use type as text/x-template: https://github.com/vuetifyjs/vuetify/issues/11599 -->
+    <script type="text/x-template" id="app-template">
+        <v-app>
+            <v-container fluid>
+                <v-row class="justify-space-between ma-0">
+                    <v-card flat>
+                        <h2>SuperCon<sup>2</sup> | PDF viewer</h2>
+                    </v-card>
+                </v-row>
+                <v-row justify="space-between" class="ma-0">
+                    <v-select v-model="selectedHeaders" :items="headers" label="Select Columns" multiple outlined
+                        return-object>
+                    </v-select>
+                </v-row>
+                <v-data-table v-model="selectedItems" :headers="showHeaders" :items="items" :dense="true" single-select
+                    loading-text="loading ..." :loading="isLoading" :multi-sort="true" class="elevation-1" :item-class="getItemClass"
+                    @current-items="hasChangedCurrentItems" :page.sync="page" :footer-props="{'items-per-page-options':[20, 50, 100]}"
+                    :sort-by.sync="sortBy" @page-count="hasChangedPageCount" @click:row="clickRow">
+                    <template v-slot:body.prepend>
+                        <tr>
+                            <td v-for="header in showHeaders" :key="header.value">
+                                <v-radio-group v-model="header.filterKeyword" v-if="header.value === 'type'" dense
+                                    hide-details>
+                                    <v-row class="pb-1" v-for="radio in headerObject.type.radioGroup">
+                                        <v-radio dense :value="radio.value" class="ma-0">
+                                        </v-radio>
+                                        <v-icon small :title="radio.value" @click="header.filterKeyword = radio.value">
+                                            [[ radio.icon ]]
+                                        </v-icon>
+                                    </v-row>
+                                </v-radio-group>
+                                <v-radio-group v-model="header.filterKeyword" v-else-if="header.value === 'status'" dense
+                                    hide-details>
+                                    <v-select :items="headerObject.status.selectItems" v-model="header.filterKeyword"></v-select>
+                                    {#<v-row class="pb-1" v-for="radio in headerObject.status.radioGroup">
+                                        <v-radio dense :value="radio.value" class="ma-0">
+                                        </v-radio>
+                                        <v-icon small :title="radio.value" @click="header.filterKeyword = radio.value">
+                                            [[ radio.icon ]]
+                                        </v-icon>
+                                        <div @click="header.filterKeyword = radio.value">[[ radio.value ]]</div>
+                                    </v-row>#}
+                                </v-radio-group>
+                                <template v-else-if="header.value === 'actions'"></template>
+                                <template v-else>
+                                    <v-text-field v-model="header.filterKeyword" type="text" placeholder="keyword"
+                                        hide-details clearable>
+                                    </v-text-field>
+                                    <v-switch v-model="headerObject[header.value].shouldHideEmpty" title="Hide empty">
+                                    </v-switch>
+                                </template>
 
-        <div class="page-header">
-            <div class="row">
-                <div class="col-11">
-                    <h1>SuperCon<sup>2</sup> | Document viewer</h1>
+                            </td>
+                        </tr>
+                    </template>
+                    <template v-slot:item.rawMaterial="{ item }">
+                        [[ item.rawMaterial ]]
+                        <v-icon
+                            @click="scrollToPdf(item.materialId, item.id)"
+                            v-if="!!item.materialId">mdi-arrow-down-thick
+                        </v-icon>
+                    </template>
+                    <template v-slot:item.criticalTemperature="{ item }">
+                        [[ item.criticalTemperature ]]
+                        <v-icon
+                            @click="scrollToPdf(item.criticalTemperatureId, item.id)"
+                            v-if="!!item.criticalTemperatureId">mdi-arrow-down-thick
+                        </v-icon>
+                    </template>
+                    <template v-slot:item.hash="{ item }">
+                        <v-row>
+                            <a :href="base_url + 'document_old/' + item.hash"
+                                target="_blank"
+                                :style="{'text-decoration': 'none'}"
+                                class="ma-1" title="View document">
+                                [[ item.hash ]]
+                            </a>
+                            <v-icon
+                                @click="headerObject.hash.filterKeyword = item.hash"
+                                :title="'Filter by this documenft ID: ' + item.hash">
+                                mdi-filter
+                            </v-icon>
+                        </v-row>
+                    </template>
+                    <template v-slot:item.id="{ item }">
+                        <v-row>
+                            <span class="ma-1" :title="item.id">
+                            [[ "..." + item.id.substring(item.id.length - 8) ]]
+                            </span>
+                            <v-icon
+                                @click="copyTextToClipboard(item.id)"
+                                :title="'Copy this entity ID: ' + item.id">
+                                mdi-content-paste
+                            </v-icon>
+                        </v-row>
+                    </template>
+                    <template v-slot:item.sentence="{ item }">
+                        <v-container>
+                            <div v-if="!!item.sentenceIsExpanded" v-html="item.sentence_decorated">
+                            </div>
+                            <div v-else :style="{cursor: 'ns-resize'}" @click="showWholeSentence(item)">
+                                [[ item.sentence.slice(0, 30) + ' ...' ]]
+                            </div>
+                        </v-container>
+                    </template>
+                    <template v-slot:item.flag="{ item }">
+                        <v-checkbox :input-value="item.flag" @click="toggleFlag(item)" :disabled="flagIsNotWritable(item)">
+                        </v-checkbox>
+                    </template>
+                    <template v-slot:item.actions="{ item }">
+                        <v-row>
+                            <v-icon small class="mr-1" @click="markRecordValidated(item)" title="Mark as validated">
+                                mdi-thumb-up
+                            </v-icon>
+                            <v-icon small class="mr-1" @click="markRecordInvalid(item)" title="Mark as invalid">
+                                mdi-thumb-down
+                            </v-icon>
+                            <v-icon small class="mr-1" @click="resetRecord(item)" title="Reset status">
+                                mdi-restart
+                            </v-icon>
+                            <v-icon small class="mr-1" @click="openEditItemDialog(item)" title="Edit">
+                            mdi-pencil
+                            </v-icon>
+                            <v-icon small class="mr-1" @click="openItemDialogToRemove(item)" title="Remove">
+                            mdi-delete-outline
+                            </v-icon>
+                            <v-icon small class="mr-1" @click="openCreateItemDialog(item)" title="Add new">
+                            mdi-folder-plus-outline
+                            </v-icon>
+                        </v-row>
+                    </template>
+                </v-data-table>
+                <div v-if="floatingItems.length > 0 && selectedSpanId.length > 0"
+                    :style="{position: 'sticky', 'z-index': 2, top: 0}" class="mt-4">
+                    <v-data-table
+                        id="floating-table"
+                        :headers="showHeaders" :items="floatingItems"
+                        hide-default-footer disable-sort class="elevation-1"
+                    >
+                        <template v-slot:item.id="{ item }">
+                            [[ "..." + item.id.substring(item.id.length - 8) ]]
+                        </template>
+                        <template v-slot:item.sentence="{ item }">
+                            [[ item.sentence.slice(0, 30) + ' ...' ]]
+                        </template>
+                        <template v-slot:item.actions="{ item }">
+                            <v-row>
+                                <v-icon small class="mr-1" @click="markRecordValidated(item)" title="Mark as validated">
+                                    mdi-thumb-up
+                                </v-icon>
+                                <v-icon small class="mr-1" @click="markRecordInvalid(item)" title="Mark as invalid">
+                                    mdi-thumb-down
+                                </v-icon>
+                                <v-icon small class="mr-1" @click="resetRecord(item)" title="Reset status">
+                                    mdi-restart
+                                </v-icon>
+                                <v-icon small class="mr-1" @click="openEditItemDialog(item)" title="Edit">
+                                    mdi-pencil
+                                </v-icon>
+                                <v-icon small class="mr-1" @click="openItemDialogToRemove(item)" title="Remove">
+                                    mdi-delete-outline
+                                </v-icon>
+                                <v-icon small class="mr-1" @click="openCreateItemDialog(item)" title="Add new">
+                                    mdi-folder-plus-outline
+                                </v-icon>
+                            </v-row>
+                        </template>
+                    </v-data-table>
+                    <v-icon @click="selectedSpanId = ''">mdi-close</v-icon>
                 </div>
-                <div class="col-1">
-                    <!--                    <a href="http://www.github.com/lfoppiano/grobid-superconductors"><img-->
-                    <!--                        src="resources/img/GitHub-Mark-32px.png"></a>-->
-                </div>
-            </div>
-        </div>
+                <v-dialog v-model="itemDialog.shouldShow">
+                    <v-card>
+                        <v-card-title>[[ itemDialogTitle ]]</v-card-title>
+                        <v-card-text>
+                            <v-container fluid>
+                                <v-row v-for="row of rowsOnItemEditDialog">
+                                    <v-col :cols="row.config.cols" v-for="col of row.cols">
+                                        <v-select
+                                            v-if="col.key === 'error_type'"
+                                            :rules="col.rules"
+                                            v-model="editedItem[col.key]"
+                                            :items="col.selectBoxItems"
+                                            :label="col.label">
+                                        </v-select>
+                                        <v-text-field
+                                            v-else
+                                            v-model="editedItem[col.key]"
+                                            :label="headerObject[col.key].text"
+                                            :disabled="col.disabled">
+                                        </v-text-field>
+                                    </v-col>
+                                </v-row>
+                            </v-container>
+                        </v-card-text>
 
-        <div id="hash">{{ hash }}</div>
-
-        <div id="infoResultBlock">
-            <div class="row m-3">
-                <div id="infoResultMessage"></div>
-            </div>
-        </div>
-
-        <div id="requestResultPdf">
-            <div id="tableResults">
-                <div class="row">
-                    <div class="col-1">
-                        <a data-toggle="collapse" href="#tableResultCollapseDiv" role="button"
-                           aria-expanded="false" aria-controls="tableResultCollapseDiv">
-                            <svg class="bi" width="32" height="32" viewBox="0 0 20 20" fill="currentColor">
-                                <img src={{ url_for('static', filename='resources/icons/chevron-right.svg') }} alt="" width="32" height="32"
-                                     title="Bootstrap"/>
-                            </svg>
-                        </a>
+                        <v-card-actions>
+                            <v-spacer></v-spacer>
+                            <v-btn color="blue darken-1" text @click="close">
+                                Cancel
+                            </v-btn>
+                            <v-btn
+                                v-if="itemDialog.mode === 'remove'"
+                                color="error" text
+                                @click="removeRecord"
+                                :disabled="!saveIsValidated">
+                                Remove
+                            </v-btn>
+                            <v-btn v-else color="blue darken-1" text @click="save" :disabled="!saveIsValidated">
+                                Save
+                            </v-btn>
+                        </v-card-actions>
+                    </v-card>
+                </v-dialog>
+                <v-dialog v-model="shouldShowShortcutKeysDialog" max-width="600">
+                    <v-card>
+                        <v-card-title>
+                            Shortcut Keys
+                        </v-card-title>
+                        <v-card-text>
+                            <v-container>
+                                <v-row v-for="key of shortcutKeys" align="center">
+                                    <v-chip class="ma-2" label>[[key.name]]</v-chip>[[key.text]]
+                                </v-row>
+                            </v-container>
+                        </v-card-text>
+                    </v-card>
+                </v-dialog>
+                <div id="pdfViewer" :style="{'position': 'relative'}" class="mt-4">
+                    <div id="pdfAnnotations">
+                        <div v-for="passage in passages">
+                            <div v-for="span in passage.spans">
+                                <div v-for="(box, index) in span.boundingBoxes">
+                                    <div :style="{
+                                        'position': 'absolute',
+                                        'left': box.x * scale,
+                                        'top': getPdfsHeight(box.page, scale) + box.y * scale,
+                                        'width': box.width * scale,
+                                        'height': box.height * scale,
+                                        'outline': '2px solid',
+                                        'outline-color': colors[getPlainType(span.type)],
+                                        'cursor': 'pointer'
+                                    }" :id="span.id" @click="showSpanDetail(span)"></div>
+                                    <v-icon :style="{
+                                        'position': 'absolute',
+                                        'left': box.x2 * scale,
+                                        'top': (Math.floor(pages[0].height) * (box.page-1) + box.y - 5) * scale,
+                                        'opacity': '0.8',
+                                        'z-index': 1,
+                                    }"
+                                            color="red"
+                                            v-if="index === span.boundingBoxes.length -1 && span.id === selectedSpanId"
+                                            @click="selectedSpanId = ''" title="hide this icon">
+                                        mdi-lightbulb-on
+                                    </v-icon>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="collapse show col-9" id="tableResultCollapseDiv">
-                        <table class="table table-editable">
-                            <thead>
-                            <tr class="d-flex">
-                                <th scope="col">#</th>
-                                <th scope="col">#</th>
-                                <th class="col-3">Material</th>
-                                <th class="col-2">Class</th>
-                                <th class="col-2">Shape</th>
-                                <th class="col-2">Critical temperature</th>
-                                <th class="col-2">Applied pressure</th>
-                                <th class="col-1">Link type</th>
-                            </tr>
-                            </thead>
-                            <tbody id="tableResultsBody">
-                            </tbody>
-                            <tfoot>
-                            <tr>
-                                <td colspan="3">
-                                    <button type="button" class="btn btn-outline-dark" id="add-button">+</button>
-                                    <button type="button" class="btn btn-outline-dark" id="copy-button">
-                                        Clipboard
-                                    </button>
-                                    <button type="button" class="btn btn-outline-dark" id="download-rdf-button">
-                                        Download RDF
-                                    </button>
-                                    <button type="button" class="btn btn-outline-dark" id="download-csv-button">
-                                        Download CSV
-                                    </button>
-                                </td>
-                            </tr>
-                            </tfoot>
-
-                        </table>
-                    </div>
+                    <v-card id="spanDetail" v-if="clickedSpan" :style="{
+                        'position': 'absolute',
+                        'top': (Math.floor(pages[0].height) * (clickedSpan.boundingBoxes[0].page-1) + clickedSpan.boundingBoxes[0].y) * scale,
+                        'left': Math.floor(pages[0].width) * scale,
+                    }">
+                        <v-card-title :style="{
+                            'background-color': colors[getPlainType(clickedSpan.type)],
+                            'color': getProperTextColorByBackgroundColor(colors[getPlainType(clickedSpan.type)]),
+                        }">
+                            [[getPlainType(clickedSpan.type)]]
+                        </v-card-title>
+                        <v-card-text>
+                            <p class="mt-4">
+                                name:
+                                <span class="font-weight-bold" v-html="clickedSpan.formattedText || clickedSpan.text"/>
+                            </p>
+                            <p v-if="clickedSpan?.links?.length > 0">
+                                linked:
+                                <span v-for="(link, index) in clickedSpan.links">
+                                    <span class="font-weight-bold">[[link.targetText]]</span>
+                                    <span>[["(" + getPlainType(link.targetType) + ") [" + link.type + "]"]]</span><span v-if="index < clickedSpan.links.length-1">, </span>
+                                </span>
+                            </p>
+                            <div
+                                v-if="clickedSpan?.attributes"
+                                :style="{border: '1px solid #dee2e6'}"
+                                v-html="generateAttributeHtml(clickedSpan.attributes)">
+                            </div>
+                        </v-card-text>
+                    </v-card>
                 </div>
-            </div>
-            <div id="requestResultPdfContent">
+                <p><span style="color:#848484;">&copy; Contributors, 2021-2023 |</span> <span id="version" style="color:#848484;" v-html="version"></span></p>
+                <v-snackbar v-model="snackbar.shouldShow" :color="snackbar.color">
+                    [[ snackbar.text ]]
+                    <template v-slot:action="{ attrs }">
+                        <v-btn text v-bind="attrs" @click="snackbar.shouldShow = false">
+                            Close
+                        </v-btn>
+                    </template>
+                </v-snackbar>
+            </v-container>
+        </v-app>
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@2.6.3/dist/vuetify.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios@0.26.1/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjs@11.3.1/lib/browser/math.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.0.279"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.0.279/build/pdf.worker.min.js"></script>
+    <script type="module">
+        import { colors } from "{{ url_for('static', filename='grobid/colors.js')}}"
+        import { shortcutKeys } from "{{ url_for('static', filename='grobid/shortcut-keys.js')}}"
+        import {copyTextToClipboard} from "{{ url_for('static', filename='grobid/lib.js')}}"
 
-            </div>
-        </div>
+        const scale = 1.5
+        let itemClassStore = {
+            class: 'bg-white',
+            hashes: [],
+        }
+        const app = {
+            template: '#app-template',
+            delimiters: ['[[', ']]'],
+            data() {
+                return {
+                    snackbar: {
+                        shouldShow: false,
+                        color: "",
+                        text: "",
+                    },
+                    base_url: '{{ base_url }}',
+                    hash: '{{hash}}',
+                    passages: [],
+                    pages: [],
+                    scale,
+                    colors,
+                    itemDialog: {
+                        mode: '', // 'edit', 'new', 'remove'
+                        shouldShow: false,
+                    },
+                    shouldShowShortcutKeysDialog: false,
+                    shortcutKeys,
+                    isLoading: true,
+                    version: 'unknown version',
+                    editedItem: {},
+                    page: 1,
+                    pageCount: 0,
+                    itemsPerPage: 10,
+                    itemsPerPageOptions: [25, 50, 100],
+                    sortBy: [],
+                    selectedItems: [],
+                    floatingItems: [],
+                    selectedSpanId: "", // selected on the table
+                    clickedSpan: undefined, // clicked on the pdf
+                    filteredItems: [],
+                    selectedHeaders: [],
+                    headers: [
+                        { text: 'Raw Material', value: 'rawMaterial', hidden: false, filter: this.rawMaterialFilter, filterKeyword: '', shouldHideEmpty: false, width: 150 },
+                        { text: 'Name', value: 'name', hidden: false, filter: this.nameFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Formula', value: 'formula', hidden: false, filter: this.formulaFilter, filterKeyword: '', shouldHideEmpty: false , width: 150 },
+                        { text: 'Space Group', value: 'spaceGroup', hidden: true, filter: this.spaceGroupFilter, filterKeyword: '', shouldHideEmpty: false },
+                        // { text: 'Space Group ID', value: 'spaceGroupId', hidden: true },
+                        { text: 'Crystal Structure', value: 'crystalStructure', hidden: true, filter: this.crystalStructureFilter, filterKeyword: '', shouldHideEmpty: false },
+                        // { text: 'Crystal Structure ID', value: 'crystalStructureId', hidden: true },
+                        { text: 'Unit Cell Type', value: 'unitCellType', hidden: true, filter: this.unitCellTypeFilter, filterKeyword: '', shouldHideEmpty: false },
+                        // { text: 'Unit Cell Type ID', value: 'unitCellTypeId', hidden: true },
+                        { text: 'Doping', value: 'doping', hidden: false, filter: this.dopingFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Shape', value: 'shape', hidden: false, filter: this.shapeFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Variables', value: 'variables', hidden: false, filter: this.variablesFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Material Class', value: 'materialClass', hidden: true, filter: this.materialClassFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Other Information', value: 'fabrication', hidden: true, filter: this.fabricationFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Substrate', value: 'substrate', hidden: true, filter: this.substrateFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Critical Temperature', value: 'criticalTemperature', hidden: false, filter: this.criticalTemperatureFilter, filterKeyword: '', shouldHideEmpty: false, sort: this.sortByPhysicalQuantity },
+                        // { text: 'Critical TemperatureId', value: 'criticalTemperatureId', hidden: true },
+                        { text: 'Applied Pressure', value: 'appliedPressure', hidden: false, filter: this.appliedPressureFilter, filterKeyword: '', shouldHideEmpty: false, sort: this.sortByPhysicalQuantity },
+                        // { text: 'Applied Pressure ID', value: 'appliedPressureId', hidden: true },
+                        { text: 'Measurement Method', value: 'criticalTemperatureMeasurementMethod', hidden: false, filter: this.measurementMethodFilter, filterKeyword: '', shouldHideEmpty: false },
+                        // { text: 'Measurement MethodId', value: 'measurementMethodId', hidden: true },
+                        //{#{ text: 'Link Type', value: 'linkType', hidden: true, filter: this.linkTypeFilter, filterKeyword: '', shouldHideEmpty: false },#}
+                        { text: 'Section', value: 'section', hidden: true, filter: this.sectionFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Subsection', value: 'subsection', hidden: true, filter: this.subsectionFilter, filterKeyword: '', shouldHideEmpty: false },
+                        //{#{ text: 'Path', value: 'path', hidden: true, filter: this.pathFilter, filterKeyword: '', shouldHideEmpty: false },#}
+                        //{#{ text: 'Filename', value: 'filename', hidden: true, filter: this.filenameFilter, filterKeyword: '', shouldHideEmpty: false },#}
+                        { text: 'Document', value: 'hash', hidden: true, filter: this.hashFilter, filterKeyword: '', width: 120, shouldHideEmpty: false },
+                        { text: 'Entity ID', value: 'id', hidden: true, filter: this.idFilter, filterKeyword: '', shouldHideEmpty: false, width: 120, },
+                        { text: 'Timestamp', value: 'timestamp', hidden: true, filter: this.timestampFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'DOI', value: 'doi', hidden: true, filter: this.doiFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Authors', value: 'authors', width: 300, hidden: true, filter: this.authorsFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Title', value: 'title', width: 500, hidden: true, filter: this.titleFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Publisher', value: 'publisher', hidden: true, filter: this.publisherFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Journal', value: 'journal', hidden: true, filter: this.journalFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Year', value: 'year', hidden: true, filter: this.yearFilter, filterKeyword: '', shouldHideEmpty: false },
+                        { text: 'Sentence', value: 'sentence', width: 200, hidden: false, filter: this.sentenceFilter},
+                        {
+                            text: 'Type', value: 'type', hidden: true, filter: this.typeFilter, filterKeyword: 'all', width: 80,
+                            radioGroup: [{
+                                value: 'all',
+                                icon: 'mdi-filter-off'
+                           }, {
+                                value: 'manual',
+                                icon: 'mdi-human'
+                            }, {
+                                value: 'automatic',
+                                icon: 'mdi-robot'
+                            },]
+                        },
+                        {
+                            text: 'Latest error type', value: 'error_type', hidden: false, filter: this.errorTypeFilter, filterKeyword: 'all', shouldHideEmpty: false,
+                            selectItems: [], // filled by loadErrorTypes method
+                        },
+                        {
+                            text: 'Status', value: 'status', sortable: false, hidden: true, filter: this.statusFilter, filterKeyword: 'all', width: 80,
+                            radioGroup: [{
+                                value: 'all',
+                                icon: 'mdi-filter-off'
+                            }, {
+                                value: 'valid',
+                                icon: 'mdi-thumb-up'
+                            }, {
+                                value: 'invalid',
+                                icon: 'mdi-thumb-down'
+                            },]
+                        },
+                        {
+                            text: 'Status', value: 'status', sortable: false, hidden: false, filter: this.statusFilter, filterKeyword: 'all', width: 80,
+                            // radioGroup is obsolete of the status header
+                            radioGroup: [
+                                { value: 'all',       icon: 'mdi-filter-off' },
+                                { value: 'new',       icon: 'mdi-new-box' },
+                                { value: 'curated',   icon: 'mdi-auto-fix' },
+                                { value: 'validated', icon: 'mdi-thumb-up' },
+                                { value: 'invalid',   icon: 'mdi-thumb-down' }
+                            ],
+                            selectItems: [
+                                'all', 'new', 'curated', 'validated', 'invalid'
+                            ]
+                        },
+                        { text: 'Actions', value: 'actions', sortable: false, hidden: false },
+                        // { text: 'Doc URL', value: 'doc_url', hidden: true},
+                        // { text: 'ID', value: 'id', hidden: true},
+                        // { text: 'Material ID', value: 'materialId', hidden: true},
+                    ],
+                    rowsOnItemEditDialog: [
+                        {
+                            config: { cols: 3 },
+                            cols: [
+                                { key: 'rawMaterial'},
+                                { key: 'name' },
+                                { key: 'id', disabled: true },
+                                {
+                                    key: 'error_type', label: '*Error type', rules: [(value) => !!value || 'This field is required'],
+                                    errorMessages: [],
+                                    selectBoxItems: [] // set by the loadErrorTypes method
+                                }
+                            ]
+                        }, {
+                            config: { cols: null },
+                            cols: [
+                                { key: 'formula' },
+                                { key: 'variables' },
+                                { key: 'criticalTemperature' },
+                                { key: 'appliedPressure' },
+                                { key: 'criticalTemperatureMeasurementMethod' }
+                            ]
+                        }, {
+                            config: { cols: null },
+                            cols: [
+                                { key: 'spaceGroup' },
+                                { key: 'crystalStructure' },
+                                { key: 'unitCellType' },
+                                { key: 'doping' },
+                                { key: 'shape' },
+                                { key: 'fabrication' },
+                                { key: 'substrate' },
+                            ]
+                        }, {
+                            config: { cols: null },
+                            cols: [
+                                { key: 'hash', disabled: true },
+                                { key: 'doi', disabled: true },
+                                { key: 'authors', disabled: true },
+                                { key: 'title', disabled: true },
+                                { key: 'publisher', disabled: true },
+                                { key: 'journal', disabled: true },
+                                { key: 'year', disabled: true },
+                            ]
+                        }
+                    ],
+                    items: [],
+                    rules: {
+                        required: value => !!value || 'Required.',
+                    },
+                }
+            },
+            computed: {
+                showHeaders() {
+                    return this.headers.filter(s => this.selectedHeaders.includes(s));
+                },
+                selectedItem() {
+                    return this.selectedItems[0]
+                },
+                pageIsFirst() {
+                    return this.page === 1
+                },
+                pageIsLast() {
+                    return this.page === this.pageCount
+                },
+                rowNumber() {
+                    const ids = this.filteredItems.map(item => item.id)
+                    return this.selectedItems.length === 1 ? ids.indexOf(this.selectedItem.id) : undefined
+                },
+                lastFilteredItem() {
+                    return this.filteredItems[this.filteredItems.length - 1]
+                },
+                firstFilteredItem() {
+                    return this.filteredItems[0]
+                },
+                saveIsValidated() {
+                    return this.editedItem.hash && this.editedItem.error_type
+                },
+                headerObject() {
+                    return Object.fromEntries(new Map(
+                        this.headers.map(header => {
+                            return [header.value, header]
+                        })
+                    ))
+                },
+                itemDialogTitle() {
+                    switch (this.itemDialog.mode) {
+                        case 'edit':
+                            return 'Edit record'
+                        case 'new':
+                            return 'Add new record'
+                        case 'remove':
+                            return 'Remove record'
+                        case 'view':
+                            return 'View record'
+                    }
+                }
+            },
+            created() {
+                this.selectedHeaders = this.headers.filter(h => !h.hidden)
+            },
+            destroyed () {
+                window.removeEventListener('scroll', this.onScroll)
+            },
+            mounted() {
+                this.loadPdfs()
+                this.loadAnnotations()
+                this.loadItems()
+                this.loadErrorTypes()
+            },
+            async beforeMount() {
+                let url = '{{ url_for("supercon.get_version") }}'
+                try {
+                    const result = await axios.get(url, {})
+                    this.version = result.data['version']
+                } catch (e) {
+                    console.error(e)
+                    window.alert(JSON.stringify(e.response.data))
+                } finally {
+                }
+            },
+            methods: {
+                getPdfsHeight(page, ratio) {
+                    let height = 0
+                    for (let i = 1; i < page; i++) {
+                        height += Math.floor(this.pages[i-1].height * ratio)
+                    }
+                    return height
+                },
+                onScroll() {
+                    const viewer = document.getElementById('pdfViewer')
+                    if (window.scrollY < viewer.offsetTop) {
+                        this.selectedSpanId = ""
+                        window.removeEventListener('scroll', this.onScroll)
+                    }
+                },
+                generateAttributeHtml(attributes) {
+                    let string = ""
+                    let previousPrefix = "";
+                    let attributeHtmlStringStart = "<div class='border col-12 p-0'>";
+                    let attributeHtmlString = ""
+                    let obj = {}
 
-    <footer>
-        <p><span style="color:#848484;">&copy; Contributors, 2022 |</span> <span id="version" style="color:#848484;">unknown version</span></p>
-    </footer>
-</div>
+                    Object.keys(attributes).sort().forEach((key) => {
+                        let splits = key.split("_");
+                        let value = attributes[key];
+                        this.createNestedObject(obj, splits, value);
+                    });
+
+                    Object.keys(obj).forEach(function (key) {
+                        attributeHtmlString += attributeHtmlStringStart;
+                        let resolvedFormulas = [];
+                        let formula = "";
+                        let variables = []
+
+                        Object.keys(obj[key]).forEach(function (sub_key) {
+                            let propertyName = sub_key
+
+                            if (propertyName === "formula") {
+                                formula = obj[key][sub_key]['rawValue'];
+                                if (formula === undefined) {
+                                    formula = obj[key][sub_key]
+                                }
+                                attributeHtmlString += "<row><div>" + propertyName + ": <strong>" + formula + "</strong></div></row>";
+                            } else if (propertyName === 'rawTaggedValue') {
+                                // continue
+                            } else if (propertyName === 'clazz') {
+                                attributeHtmlString += "<row><div>Class: <strong>" + obj[key][sub_key] + "</strong></div></row>";
+                            } else if (propertyName === 'resolvedFormulas') {
+                                let resolvedFormulasList = obj[key][sub_key];
+                                Object.keys(resolvedFormulasList).forEach(function (k) {
+                                    resolvedFormulas.push(resolvedFormulasList[k]['rawValue'])
+                                });
+                            } else if (propertyName === 'resolvedFormula') {
+                                Object.keys(obj[key][sub_key]).forEach(function (k) {
+                                    resolvedFormulas.push(obj[key][sub_key][k])
+                                })
+                            } else if (propertyName === 'variables') {
+                                let variableList = obj[key][sub_key]
+                                Object.keys(variableList).forEach(function (variable_name) {
+                                    let var_values = variableList[variable_name];
+                                    Object.keys(var_values).forEach(function (var_value_index) {
+                                        variables.push(var_values[var_value_index]);
+                                    })
+                                    attributeHtmlString += "<row><div>" + "variable " + variable_name + ": <strong>" + variables.join(", ") + "</strong></div></row>";
+                                });
+                            } else {
+                                attributeHtmlString += "<row><div>" + propertyName + ": <strong>" + obj[key][sub_key] + "</strong></div></row>";
+                            }
+                            previousPrefix = key;
+
+                        })
+
+                        if (resolvedFormulas.length > 0 && resolvedFormulas[0] !== formula) {
+                            attributeHtmlString += "<row><div>resolvedFormula: <strong>" + resolvedFormulas.join(", ") + "</strong></div></row>";
+                        }
+                        attributeHtmlString += "</div>";
+                    })
+
+                    string += attributeHtmlString;
+                    return string
+                },
+                createNestedObject (base, names, value) {
+                    // If a value is given, remove the last name and keep it for later:
+                    var lastName = arguments.length === 3 ? names.pop() : false;
+
+                    // Walk the hierarchy, creating new objects where needed.
+                    // If the lastName was removed, then the last object is not set yet:
+                    for (var i = 0; i < names.length; i++) {
+                        base = base[names[i]] = base[names[i]] || {};
+                    }
+
+                    // If a value was given, set it to the last name:
+                    if (lastName) base = base[lastName] = value;
+
+                    // Return the last object in the hierarchy:
+                    return base;
+                },
+                getProperTextColorByBackgroundColor(hexColor) {
+                    const r = parseInt( hexColor.substr( 1, 2 ), 16 ) ;
+                    const g = parseInt( hexColor.substr( 3, 2 ), 16 ) ;
+                    const b = parseInt( hexColor.substr( 5, 2 ), 16 ) ;
+                    // https://www.w3.org/TR/AERT/#color-contrast
+                    return ( ( ( (r * 299) + (g * 587) + (b * 114) ) / 1000 ) < 128 ) ? "white" : "black" ;
+                },
+                showSpanDetail(span) {
+                    this.clickedSpan = span
+                },
+                scrollToPdf(spanId, itemId) {
+                    this.floatingItems = this.items.filter(item => item.id === itemId)
+                    this.selectedSpanId = spanId
+                    const span = document.getElementById(spanId)
+                    this.smoothScroll(span, -100).then(() => {
+                        window.addEventListener('scroll', this.onScroll)
+                    })
+                },
+                smoothScroll(elem, offset = 0) {
+                    const rect = elem.getBoundingClientRect();
+                    let targetPosition = Math.floor(rect.top + self.pageYOffset + offset);
+                    window.scrollTo({
+                        top: targetPosition,
+                        behavior: 'smooth'
+                    });
+
+                    return new Promise((resolve, reject) => {
+                        const failed = setTimeout(() => {
+                            reject();
+                        }, 2000);
+
+                        const scrollHandler = () => {
+                            if (self.pageYOffset === targetPosition) {
+                                window.removeEventListener("scroll", scrollHandler);
+                                clearTimeout(failed);
+                                resolve();
+                            }
+                        };
+                        if (self.pageYOffset === targetPosition) {
+                            clearTimeout(failed);
+                            resolve();
+                        } else {
+                            window.addEventListener("scroll", scrollHandler);
+                            elem.getBoundingClientRect();
+                        }
+                    });
+                },
+                copyTextToClipboard(text) {
+                    try {
+                        copyTextToClipboard(text)
+                        this.snackbar = {
+                            text: `copied ${text}`,
+                            shouldShow: true
+                        }
+                    } catch (error) {
+                        console.error(error)
+                        this.snackbar = {
+                            text: `failed to copy`,
+                            shouldShow: true
+                        }
+                    }
+                },
+                showWholeSentence(item) {
+                    item.sentenceIsExpanded = true
+                    this.headerObject.sentence.width = 400
+                },
+                async loadItems() {
+                    this.isLoading = true
+                    const url =
+                        '{{ url_for("supercon.get_records_by_document", hash = hash) }}'
+                    try {
+                        const response = await axios.get(url)
+                        this.items = response.data
+                        this.floatingItems = this.items.filter(item => item.hash === this.editedItem.hash)
+                    } catch(e) {
+                        console.error("failed to load documents", e)
+                    } finally {
+                        this.isLoading = false
+                    }
+                },
+                loadErrorTypes() {
+                    const url = '{{ url_for("supercon.get_error_types") }}'
+                    axios.get(url).then((data) => {
+                        let errorTypes = [];
+                        for (let prop in data.data) {
+                            errorTypes.push ({'value': prop, 'text': data.data[prop]})
+                        }
+                        let dialog = this.rowsOnItemEditDialog[0].cols.find(col => {
+                            return col.key === "error_type"
+                        });
+                        dialog.selectBoxItems = errorTypes;
+                        this.headerObject.error_type.selectItems = new Array({"value":"all", text:"All"}).concat(errorTypes)
+                        return
+                    }).finally(() => {
+                        //
+                    })
+                },
+                hasChangedPageCount(pageCount) {
+                    this.pageCount = pageCount
+                },
+                clickRow(item, event) {
+                    event.select(!event.isSelected)
+                },
+                hasChangedCurrentItems(items) {
+                    this.filteredItems = items
+                },
+                async onKeyDown(event) {
+                    if (this.itemDialog.shouldShow) {
+                        if (event.key === 'Enter') {
+                            // for Mac
+                            if (event.metaKey) return this.save()
+                            // for Windows
+                            if ((!event.metaKey && event.ctrlKey)) return this.save()
+                        }
+                        // disable shortcut keys when edit dialog opens
+                        return
+                    }
+                    // disable shortcut keys when the cursor in an input field
+                    if (event.srcElement.nodeName.indexOf('INPUT') > -1) {
+                       return
+                    }
+                    switch (event.key) {
+                        case '?':
+                            event.preventDefault()
+                            this.shouldShowShortcutKeysDialog = true
+                        case 'ArrowDown':
+                            event.preventDefault()
+                            switch (this.rowNumber) {
+                                case undefined:
+                                    this.selectedItems = [this.firstFilteredItem]
+                                    break
+                                // the row number is the last of the filtered items
+                                case this.filteredItems.length - 1:
+                                    if (!this.pageIsLast) {
+                                        this.page++
+                                        this.selectedItems = []
+                                    }
+                                    break
+                                default:
+                                    // move to next row
+                                    this.selectedItems = [this.filteredItems[this.rowNumber + 1]]
+                            }
+                            break
+                        case 'ArrowUp':
+                            event.preventDefault()
+                            switch (this.rowNumber) {
+                                case undefined:
+                                    this.selectedItems = [this.lastFilteredItem]
+                                    break
+                                case 0:
+                                    if (!this.pageIsFirst) {
+                                        this.page--
+                                        this.selectedItems = []
+                                    }
+                                    break
+                                default:
+                                    // move to previous row
+                                    this.selectedItems = [this.filteredItems[this.rowNumber - 1]]
+                            }
+                            break
+                        case 'Enter':
+                            await this.toggleFlag(this.selectedItem)
+                            break
+                        // e stands for "edit item"
+                        case 'e':
+                            event.preventDefault()
+                            if (this.selectedItems.length === 1) {
+                                this.openEditItemDialog(this.selectedItem)
+                            }
+                            break
+                        // n stands for "new item"
+                        case 'n':
+                            event.preventDefault()
+                            if (this.selectedItems.length === 1) {
+                                this.openCreateItemDialog(this.selectedItem)
+                            }
+                            break
+                        default:
+                            break;
+                    }
+                },
+                rawMaterialFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.rawMaterial, item.rawMaterial)
+                },
+                nameFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.name, item.name)
+                },
+                formulaFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.formula, item.formula)
+                },
+                spaceGroupFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.spaceGroup, item.spaceGroup)
+                },
+                crystalStructureFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.crystalStructure, item.crystalStructure)
+                },
+                unitCellTypeFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.unitCellType, item.unitCellType)
+                },
+                dopingFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.doping, item.doping)
+                },
+                shapeFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.shape, item.shape)
+                },
+                variablesFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.variables, item.variables)
+                },
+                materialClassFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.materialClass, item.materialClass)
+                },
+                fabricationFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.fabrication, item.fabrication)
+                },
+                substrateFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.substrate, item.substrate)
+                },
+                criticalTemperatureFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.criticalTemperature, item.criticalTemperature)
+                },
+                appliedPressureFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.appliedPressure, item.appliedPressure)
+                },
+                criticalTemperatureMeasurementMethodFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.criticalTemperatureMeasurementMethod, item.criticalTemperatureMeasurementMethod)
+                },
+                linkTypeFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.linkType, item.linkType)
+                },
+                sectionFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.section, item.section)
+                },
+                subsectionFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.subsection, item.subsection)
+                },
+                sentenceFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.sentence, item.sentence)
+                },
+                pathFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.path, item.path)
+                },
+                filenameFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.filename, item.filename)
+                },
+                hashFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.hash, item.hash)
+                },
+                idFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.id, item.id)
+                },
+                timestampFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.timestamp, item.timestamp)
+                },
+                doiFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.doi, item.doi)
+                },
+                authorsFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.authors, item.authors)
+                },
+                titleFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.title, item.title)
+                },
+                publisherFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.publisher, item.publisher)
+                },
+                journalFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.journal, item.journal)
+                },
+                yearFilter(_, __, item) {
+                    return this.keywordFilter(this.headerObject.year, item.year)
+                },
+                keywordFilter(header, target) {
+                    const keyword = this.sanitizeString(header.filterKeyword)
+                    target = this.sanitizeString(target);
+                    const shouldHideEmpty = header.shouldHideEmpty
+                    if (!keyword && !shouldHideEmpty) {
+                        return true
+                    }
+                    if (!target) {
+                        return false
+                    }
+                    const target_lower = target.toLowerCase()
+                    const keyword_lower = keyword.toLowerCase()
+                    return target_lower.indexOf(keyword_lower) > -1
+                },
+                sanitizeString(target) {
+                    if (typeof target === 'string') {
+                        return target.trim()
+                    } else {
+                        return ''
+                    }
+                },
+                typeFilter(value, search, item) {
+                    const keyword = this.headerObject.type.filterKeyword
+                    switch (keyword) {
+                        case 'all':
+                            return true
+                        default:
+                            return item.type === keyword
+                    }
+                },
+                errorTypeFilter(value, search, item) {
+                    const keyword = this.headerObject.error_type.filterKeyword
+                    switch (keyword) {
+                        case 'all':
+                            return true
+                        default:
+                            return value === keyword
+                    }
+                },
+                statusFilter(value, search, item) {
+                    const keyword = this.headerObject.status.filterKeyword
+                    switch (keyword) {
+                        case 'all':
+                            return true
+                        default:
+                            return item.status === keyword
+                    }
+                },
+                flagFilter(value, search, item) {
+                    const keyword = this.headerObject.flag.filterKeyword
+                    switch (keyword) {
+                        case 'all':
+                            return true
+                        case 'flag':
+                            return item.flag
+                        case 'unflag':
+                            return !item.flag
+                    }
+                },
+                sortByPhysicalQuantity(a, b) {
+                    try {
+                        a = math.unit(a)
+                    } catch {
+                        return -1
+                    }
+                    try {
+                        b = math.unit(b)
+                    } catch {
+                        return 1
+                    }
+                    return math.compare(a, b)
+                },
+                async markRecordValidated(record) {
+                    let url = '{{ url_for("supercon.mark_record_validated", id = "id") }}'
+                    url = url.replace(
+                        "id",
+                        record.id
+                    )
+                    const { data: data } = await axios.patch(url)
+                    this.items = Object.assign(
+                        this.items,
+                        Object.assign(
+                            this.items.find(item => item.id === record.id),
+                            {
+                                type: data.type,
+                                status: data.status,
+                    }
+                        )
+                    )
+                },
+                async markRecordInvalid(record) {
+                    let url = '{{ url_for("supercon.mark_record_invalid", id = "id") }}'
+                    url = url.replace(
+                        "id",
+                        record.id
+                    )
+                    const { data: data } = await axios.patch(url)
+                    this.items = Object.assign(
+                        this.items,
+                        Object.assign(
+                            this.items.find(item => item.id === record.id),
+                            {
+                                type: data.type,
+                                status: data.status,
+                            }
+                        )
+                    )
+                },
+                async resetRecord(record) {
+                    let url = '{{ url_for("supercon.reset_record", id = "id") }}'
+                    url = url.replace(
+                        "id",
+                        record.id
+                    )
+                    const { data: data } = await axios.patch(url)
+                    this.items = Object.assign(
+                        this.items,
+                        Object.assign(
+                            this.items.find(item => item.id === record.id),
+                            {
+                                type: data.type,
+                                status: data.status,
+                            }
+                        )
+                    )
+                },
+                openEditItemDialog(item) {
+                    // make a deep copy so that the record is not updated in the table
+                    this.editedItem = JSON.parse(JSON.stringify(item))
+                    this.itemDialog = {
+                        shouldShow: true,
+                        mode: 'edit'
+                    }
+                },
+                openCreateItemDialog(item) {
+                    let newItem = {}
+                    let fields = ['hash', 'doi', "authors", "title", "publisher", "journal", "year"]
+
+                    fields.forEach(function (field) {
+                        newItem[field] = item[field]
+                    })
+                    this.editedItem = newItem
+                    this.itemDialog = {
+                        shouldShow: true,
+                        mode: 'new'
+                    }
+                },
+                openItemDialogToRemove(item) {
+                    this.editedItem = JSON.parse(JSON.stringify(item))
+                    this.itemDialog = {
+                        shouldShow: true,
+                        mode: 'remove'
+                    }
+                },
+                close() {
+                    this.itemDialog.shouldShow = false
+                },
+                async save() {
+                    if (this.editedItem.id) {
+                        await this.updateItem()
+                    } else {
+                        await this.createItem()
+                    }
+                    await this.loadItems()
+                },
+                async createItem() {
+                    const url = '{{ url_for("supercon.create_record") }}'
+                    try {
+                        await axios.post(url, this.editedItem)
+                        this.close()
+                    } catch (e) {
+                        console.error(e)
+                        window.alert(JSON.stringify(e.response.data))
+                    } finally {
+                        //
+                    }
+                },
+                async updateItem() {
+                    let url = '{{ url_for("supercon.update_record", id = "id") }}'
+                    url = url.replace(
+                        "id",
+                        this.editedItem.id
+                    )
+                    // delete as non-editable item
+                    delete this.editedItem.flag
+                    delete this.editedItem.status
+                    delete this.editedItem.type
+                    // Deletes sentenceIsExpanded field because this field is for only frontend. The backend doesn't allow an unknown field.
+                    delete this.editedItem.sentenceIsExpanded
+                    try {
+                        await axios.put(url, this.editedItem)
+                        this.close()
+                    } catch (e) {
+                        console.error(e)
+                        window.alert(JSON.stringify(e.response.data))
+                    } finally {
+                        //
+                    }
+                },
+                flagIsNotWritable(record) {
+                    return record.type === 'manual' && record.status === 'validated'
+                },
+                async removeRecord() {
+                    let url = '{{ url_for("supercon.delete_record", id="record_id") }}'
+                    url = url.replace(
+                        "record_id",
+                        this.editedItem.id
+                    )
+
+                    url = url + "?error_type=" + this.editedItem.error_type;
+
+                    try {
+                        await axios.delete(url, {})
+                        this.loadItems()
+                        this.itemDialog.shouldShow = false
+                    } catch (e) {
+                        console.error(e)
+                        window.alert(JSON.stringify(e.response.data))
+                    } finally {
+                        //
+                    }
+                },
+                getItemClass(item) {
+                    const store = itemClassStore
+                    // to prevent reverse coloring when re-rendering
+                    if (store.hashes.length > 1 && item.hash === store.hashes[0]) {
+                        // initialize store
+                        store.hashes = []
+                        store.class = "bg-white"
+                    }
+                    if (item.hash === store.hashes[store.hashes.length-1]) {
+                        return store.class
+                    } else {
+                        store.hashes.push(item.hash)
+                        store.class = store.class === 'bg-floralwhite' ? 'bg-white' : 'bg-floralwhite'
+                        return store.class
+                    }
+                },
+                getPlainType(type) {
+                    return type.replace("<","").replace(">","")
+                },
+                async loadAnnotations() {
+                    let url = "{{ url_for('supercon.get_annotations', hash=hash) }}"
+                    try {
+                        const result = await axios.get(url, {})
+                        this.passages = result.data.passages
+                        this.pages = result.data.pages
+                    } catch (e) {
+                        console.error("failed to load annotations", e)
+                    } finally {
+                    }
+                },
+                async loadPdfs() {
+                    const url = "{{ url_for('supercon.get_binary', hash=hash) }}"
+
+                    const loadingTask = await pdfjsLib.getDocument(url)
+                    loadingTask.promise.then(async function(pdf) {
+                        for (let i = 1; i <= pdf.numPages; i++) {
+                            const page = await pdf.getPage(i)
+
+                            const viewport = page.getViewport({scale});
+
+                            const canvas = document.createElement("canvas")
+                            const context = canvas.getContext('2d');
+                            const pdfViewer = document.getElementById('pdfViewer')
+                            pdfViewer.append(canvas)
+                            canvas.height = viewport.height;
+                            canvas.width = viewport.width;
+                            canvas.style.display = 'block'
+
+                            const renderContext = {
+                                canvasContext: context,
+                                viewport: viewport
+                            };
+                            const renderTask = page.render(renderContext);
+                            renderTask.promise.then(function () {
+                                console.log('Page rendered');
+                            })
+                        }
+                    }).catch(error => {
+                        window.alert(error.message)
+                        console.error(error)
+                    })
+                }
+            },
+        }
+        new Vue({
+            vuetify: new Vuetify(),
+            render: h => h(app)
+          }).$mount('#app')
+        </script>
 
 </body>
+
 </html>
