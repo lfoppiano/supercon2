@@ -28,6 +28,13 @@ def decorate_text_with_annotations(text, spans, tag="span"):
     start = 0
     for span in sorted_spans:
         type = span['type'].replace("<", "").replace(">", "")
+        # For changing linking color needs more data in the db
+        # if 'linkable' in span and span['linkable'] is True:
+        #     print(span)
+        #     if 'links' in span and len(span['links']) > 0:
+        #         print("links")
+        #         type += " linked"
+        # print(type)
         annotated_text += escape(text[start: span['offset_start']])
         annotated_text += get_span_start(type) if tag == "span" else get_rs_start(type)
         annotated_text += escape(text[span['offset_start']: span['offset_end']])
