@@ -10,10 +10,11 @@ grobid:
     ping: "/"
 
 mongo:
-#  server: "falcon.nims.go.jp:27017"
-  server: "localhost:27017"
+  server: "falcon.nims.go.jp:27017"
+#  server: "localhost:27017"
 #  db: "supercon_correction"
-  db: "supercon_tmp"
+#  db: "supercon_tmp"
+  db: "supercon_dev_221122"
 
 batch_size: 1000
 
