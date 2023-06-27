@@ -6,14 +6,15 @@
 * [Curation interface](#curation-interface)
     + [Overview](#overview)
     + [Keystrokes](#keystrokes)
-    + [Interface features](#interface-features)
-    + [Workflows](#workflows)
-      + [Mark records as validated/invalid](#mark-records-as-validated--invalid)
-      + [Record manipulation (add, remove, edit)](#record-manipulation-editremoveadd)
-      + [Look for the extracted value on the paper](#look-for-the-extracted-value-on-the-paper)
-      + [Training data management](#training-data-management)
-    + [Getting started](#getting-started)
-    + [API documentation](#api-documentation)
+    + [Interface documentation](#interface-documentation)
+* [Guidelines for data correction](docs/guidelines/guidelines.md) 
+* [Workflows](#workflows)
+  + [Mark records as validated/invalid](#mark-records-as-validated--invalid)
+  + [Record manipulation (add, remove, edit)](#record-manipulation-editremoveadd)
+  + [Look for the extracted value on the paper](#look-for-the-extracted-value-on-the-paper)
+  + [Training data management](#training-data-management)
+* [Getting started](#getting-started)
+* [API documentation](#api-documentation)
 * [Process](#process)
     + [Scripts](#scripts)
 
@@ -63,27 +64,7 @@ The `supercon2` service provides the following features:
  - Document versioning
  - ...
 
-### Keystrokes
-
-The interface can be managed entirely with the keyboard, which improves the efficiency of the curation work. 
-
-The table can be navigated using the arrows after having selected one row with the mouse. 
-
-The shortcuts are: 
-
-| Key          | Description                                                  |
-|--------------|--------------------------------------------------------------|
-| n            | Add new record (in the same document of the selected record) |
-| e            | Edit the selected record                                     |
-| ⌘ + Enter    | Save the record in the edit dialog (Mac)                     |
-| Ctrl + Enter | Save the record in the edit dialog (Win)                     |
-| arrow-up     | Selection up one record                                      |
-| arrow-down   | Selection down one record                                    |
-| enter        | Flag/unflag the selected record                              |
-| ?            | Show the keyboard shortcuts dialog                           |
-| esc          | Close the dialog you open                                    |
-
-### Interface features
+### Interface documentation
 
 Here a list of the main features, please notice that they **can all be used simultaneously**. 
 
@@ -143,6 +124,29 @@ The document id can be used for
 The entity-id is the unique identifier for each entity. It can be expanded by clicking on it, or copied by clicking on the clipboard icon. 
 
 ![](docs/images/document-entity-id.png)
+
+### Keystrokes
+
+The interface can be managed entirely with the keyboard, which improves the efficiency of the curation work. 
+
+The table can be navigated using the arrows after having selected one row with the mouse. 
+
+The shortcuts are: 
+
+| Key          | Description                                                  |
+|--------------|--------------------------------------------------------------|
+| n            | Add new record (in the same document of the selected record) |
+| e            | Edit the selected record                                     |
+| ⌘ + Enter    | Save the record in the edit dialog (Mac)                     |
+| Ctrl + Enter | Save the record in the edit dialog (Win)                     |
+| arrow-up     | Selection up one record                                      |
+| arrow-down   | Selection down one record                                    |
+| enter        | Flag/unflag the selected record                              |
+| ?            | Show the keyboard shortcuts dialog                           |
+| esc          | Close the dialog you open                                    |
+
+
+## Workflows 
 
 ### Correction workflows 
 
@@ -229,9 +233,9 @@ The `actions` column comprises two action-buttons:
  - `send` the training data to label-studio 
  - `remove` the training data, in case of duplicates. **In general is always better to keep the training data even if they have been sent to label-studio already**
 
-### Getting started
+## Getting started
 
-#### Docker
+### Docker
 
 Docker can be built with:
 
@@ -244,7 +248,7 @@ and run:
 For connecting to mongodb is possible to connect directly to the mongodb IP (to be specified in `config-docker.yaml`),
 if this is not possible then it's recommended to use docker-compose.
 
-#### Docker compose
+### Docker compose
 
 The docker compose is going to mount the volume `resources/mongo` as `/data/db` in the container. And mapping the
 mongodb container with port 27018 (to avoid conflicts with the default mongodb port).
@@ -310,7 +314,7 @@ Finally, to run the service you can use:
 python -m supercon2 --config supercon2/config.yaml
 ```
 
-### API documentation
+## API documentation
 
 The application supports custom `root_path`, which can be configured from the `config.yaml` file. All the API is served
 under the custom `root_path`.
@@ -360,7 +364,7 @@ Following an API documentation summary:
 | `/version`                                              | GET        | Render interface for managing the training data                                  |
 | `/years`                                                | GET        | Render interface for managing the training data                                  |
 
-## Process
+## Data ingestion processes
 
 The processes are composed by a set of python scripts that were built under the following principles:
 
@@ -368,9 +372,7 @@ The processes are composed by a set of python scripts that were built under the 
 - skip/force reprocessing
 - simple logging (successes and failures divided by process steps)
 
-### Scripts
-
-#### PDF processing and extraction
+### PDF processing and extraction
 
 Extract superconductor materials and properties and save them on MongoDB - extraction
 
@@ -395,7 +397,7 @@ Example:
 python -m process.supercon_batch_mongo_extraction --config ./process/config.yaml --input <your_pdf_input_directory>
 ```
 
-#### Conversion from document representation to material-properties records
+### Conversion from document representation to material-properties records
 
 Process extracted documents and compute the tabular format:
 
@@ -420,7 +422,7 @@ Example:
 python -m process.supercon_batch_mongo_compute_table --config ./process/config.yaml
 ```
 
-#### Feedback manual corrections from Excel to the database
+### Feedback manual corrections from Excel to the database
 
 Feedback to SuperCon 2 the corrections from an Excel file
 
