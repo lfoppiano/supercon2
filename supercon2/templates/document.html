@@ -760,9 +760,12 @@
                     try {
                         const response = await axios.get(url)
                         this.items = response.data
-                        this.floatingItems = this.items.filter(item => {
-                            return item.id === this.newItemId
-                        })
+                        if (this.floatingItems.length > 0) {
+                            // Keep floating records from disappearing when updating or not updating records.
+                            this.floatingItems = this.items.filter(item => {
+                                return item.id === this.newItemId || item.id === this.floatingItems[0].id
+                            })
+                        }
                     } catch(e) {
                         console.error("failed to load documents", e)
                     } finally {
