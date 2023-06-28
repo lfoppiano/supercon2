@@ -378,6 +378,7 @@
                     sortBy: [],
                     selectedItems: [],
                     floatingItems: [],
+                    newItemId: "",
                     selectedSpanId: "", // selected on the table
                     clickedSpan: undefined, // clicked on the pdf
                     filteredItems: [],
@@ -759,7 +760,9 @@
                     try {
                         const response = await axios.get(url)
                         this.items = response.data
-                        this.floatingItems = this.items.filter(item => item.hash === this.editedItem.hash)
+                        this.floatingItems = this.items.filter(item => {
+                            return item.id === this.newItemId
+                        })
                     } catch(e) {
                         console.error("failed to load documents", e)
                     } finally {
@@ -1147,7 +1150,9 @@
                     // Deletes sentenceIsExpanded field because this field is for only frontend. The backend doesn't allow an unknown field.
                     delete this.editedItem.sentenceIsExpanded
                     try {
-                        await axios.put(url, this.editedItem)
+                        const response = await axios.put(url, this.editedItem)
+                        // Because the ID changes when the record is updated
+                        this.newItemId = response.data.id
                         this.close()
                     } catch (e) {
                         console.error(e)
