@@ -750,7 +750,7 @@
                     }
                 },
                 showWholeSentence(item) {
-                    item.sentenceIsExpanded = true
+                    this.$set(item, 'sentenceIsExpanded', true);
                     this.headerObject.sentence.width = 400
                 },
                 async loadItems() {
