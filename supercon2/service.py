@@ -1,16 +1,18 @@
 import json
+import random
 import urllib
 from collections import OrderedDict
 from datetime import datetime
 from typing import Union
 
 import gridfs
-from apiflask import APIBlueprint, abort, output, input
+from apiflask import APIBlueprint, abort
 from bson import ObjectId
 from bson.errors import InvalidId
 from flask import render_template, Response, url_for, request
 from pymongo import UpdateOne
 
+from commons.annotations_utils import decorate_text_with_annotations
 from commons.correction_utils import write_correction, write_raw_training_data
 from commons.label_studio_commons import to_label_studio_format_single
 from commons.mongo_utils import connect_mongo
@@ -49,6 +51,50 @@ def read_info_from_file(file, default="unknown"):
     return version
 
 
+@bp.route('/stats/error_types')
+def get_template_stats_error_types():
+    return render_template('error_type_statistics.html', version=get_version()['version'])
+
+
+@bp.route("/stats/errors")
+def get_error_types_stats():
+    curated_records = get_curation_records()
+
+    error_type_distribution = OrderedDict()
+
+    for record in curated_records:
+        if 'error_type' in record:
+            if record['error_type'] not in error_type_distribution.keys():
+                error_type_distribution[record['error_type']] = 1
+            else:
+                error_type_distribution[record['error_type']] += 1
+
+    # sorted_keys = sorted(error_type_distribution, key=error_type_distribution.get)
+    sorted_keys = list(error_type_distribution.keys())
+    sorted_values = [error_type_distribution[k] for k in sorted_keys]
+    sorted_error_type_distribution = OrderedDict([(key, error_type_distribution[key]) for key in sorted_keys])
+
+    error_type = get_error_types()
+    sorted_keys_names = [error_type[k] if k in error_type else "N/A (" + str(k) + ")" for k in sorted_keys]
+
+    background_colors = ['rgba(' + str(",".join([str(random.randint(0, 255)) for i in range(3)] + ["0.2"])) + ')' for k in sorted_keys]
+    border_color = [bc.replace("rba", "rgb").replace(",0.2)'", ")'") for bc in background_colors]
+    output = {
+        "labels": sorted_keys_names,
+        "datasets": [{
+            "axis": 'y',
+            "label": 'Error types',
+            "data": sorted_values,
+            "backgroundColor": background_colors,
+            "borderColor": border_color,
+            "borderWidth": 1
+        }],
+
+    }
+
+    return output
+
+
 @bp.route('/')
 def index():
     return render_template('index.html', version=get_version()['version'])
@@ -66,7 +112,7 @@ def index():
 
 
 @bp.route('/publishers')
-@output(Publishers)
+@bp.output(Publishers)
 def get_publishers():
     db = connect_and_get_db()
 
@@ -82,7 +128,7 @@ def connect_and_get_db():
 
 
 @bp.route('/years')
-@output(Years)
+@bp.output(Years)
 def get_years():
     db = connect_and_get_db()
 
@@ -168,8 +214,8 @@ def replace_empty_key(input):
 
 
 @bp.route("/record/<id>", methods=["PUT", "PATCH"])
-@input(Record)
-@output(UpdatedRecord)
+@bp.input(Record)
+@bp.output(UpdatedRecord)
 def update_record(id, record: Union[Record, dict]):
     object_id = validate_objectId(id)
     validate_record(record)
@@ -211,7 +257,7 @@ def _update_record(object_id: ObjectId, new_doc: Union[Record, dict], db):
     if old_doc['status'] == "obsolete":
         latest_record = find_latest(old_doc, tabular_collection)
         message = "The record with id " + str(
-            object_id) + " is obsolete. The latest updated record of the chain is" + str(
+            object_id) + " is obsolete. The latest updated record of the chain is " + str(
             latest_record['_id'])
         raise Exception(message)
 
@@ -277,8 +323,8 @@ def rollback_delete(previous_record, training_data_id, tabular_collection, train
 
 
 @bp.route("/record", methods=["POST"])
-@input(Record)
-@output(Record)
+@bp.input(Record)
+@bp.output(Record)
 def create_record(record: Record):
     validate_record(record)
     if 'timestamp' not in record:
@@ -302,6 +348,8 @@ def get_error_types():
     error_types['linking'] = "Linking"
     error_types['composition_resolution'] = "Composition resolution"
     error_types['value_resolution'] = "Value resolution"
+    error_types['curation_amend'] = "Curation amend"
+    error_types['anomaly_detection'] = "Anomaly detection"
 
     return error_types
 
@@ -326,7 +374,7 @@ def add_record(record: Record):
     tabular_collection = db.get_collection("tabular")
 
     record['timestamp'] = datetime.utcnow()
-    record['status'] = "valid"
+    record['status'] = "curated"
     record['type'] = "manual"
 
     new_record = tabular_collection.insert_one(record)
@@ -335,38 +383,42 @@ def add_record(record: Record):
 
 
 @bp.route("/records", methods=["GET"])
-@input(RecordParamsIn, location='query')
-@output(Record(many=True))
+@bp.input(RecordParamsIn, location='query')
+@bp.output(Record(many=True))
 def get_records_from_form_data(query_data):
     return get_records(**query_data)
 
 
 @bp.route("/records/<type>", methods=["GET"])
-@output(Record(many=True))
+@bp.output(Record(many=True))
 def get_tabular_from_path_by_type(type):
     return get_records(type)
 
 
 @bp.route("/records/<type>/<publisher>/<year>", methods=["GET"])
-@output(Record(many=True))
+@bp.output(Record(many=True))
 def get_tabular_from_path_by_type_publisher_year(type, publisher, year):
     return get_records(type, publisher, year)
 
 
 @bp.route("/records/<type>/<year>", methods=["GET"])
-@output(Record(many=True))
+@bp.output(Record(many=True))
 def get_tabular_from_path_by_type_year(type, year):
     return get_records(type, publisher=None, year=year)
 
 
 @bp.route("/records/document/<hash>", methods=["GET"])
-@output(Record(many=True))
+@bp.output(Record(many=True))
 def get_records_by_document(hash):
     return get_records(document=hash)
 
 
 @bp.route("/curation/records", methods=["GET"])
-@output(Record(many=True))
+@bp.output(Record(many=True))
+def get_curation_records_response():
+    return get_curation_records()
+
+
 def get_curation_records():
     db = connect_and_get_db()
 
@@ -402,7 +454,7 @@ def get_curation_records():
 
 
 @bp.route("/process/records", methods=["GET"])
-@output(ProcessRecord(many=True))
+@bp.output(ProcessRecord(many=True))
 def get_process_records():
     db = connect_and_get_db()
     logger_collection = db.get_collection("logger")
@@ -535,7 +587,7 @@ def get_binary(hash):
 
 
 @bp.route('/record/<id>', methods=['GET'])
-@output(Record)
+@bp.output(Record)
 def get_record(id):
     object_id = validate_objectId(id)
     db = connect_and_get_db()
@@ -573,7 +625,7 @@ def _delete_record(id, error_type, db):
 
 
 @bp.route('/record/<id>', methods=['DELETE'])
-@output(UpdatedRecord)
+@bp.output(UpdatedRecord)
 def delete_record(id):
     object_id = validate_objectId(id)
     db = connect_and_get_db()
@@ -595,7 +647,7 @@ def delete_record(id):
 
 
 @bp.route('/record/<id>/status', methods=['GET'])
-@output(Flag)
+@bp.output(Flag)
 def get_record_status(id):
     object_id = validate_objectId(id)
     db = connect_and_get_db()
@@ -605,7 +657,7 @@ def get_record_status(id):
 
 
 @bp.route('/record/<id>/mark_invalid', methods=['PUT', 'PATCH'])
-@output(Flag)
+@bp.output(Flag)
 def mark_record_invalid(id):
     """The record is marked as invalid"""
     object_id = validate_objectId(id)
@@ -625,7 +677,7 @@ def mark_record_invalid(id):
 
 
 @bp.route('/record/<id>/mark_validated', methods=['PUT', 'PATCH'])
-@output(Flag)
+@bp.output(Flag)
 def mark_record_validated(id):
     """The record is marked as correct"""
     object_id = validate_objectId(id)
@@ -656,7 +708,7 @@ def validate_objectId(id):
 
 
 @bp.route('/record/<id>/reset', methods=['PUT', 'PATCH'])
-@output(Flag)
+@bp.output(Flag)
 def reset_record(id):
     """Reset the status of the record"""
     object_id = validate_objectId(id)
@@ -753,14 +805,6 @@ def get_training_data_by_id_and_status(record_id, status, db):
     return new_structure, training_data['_id']
 
 
-def get_span_start(type):
-    return '<span class="label ' + type + '">'
-
-
-def get_span_end():
-    return '</span>'
-
-
 @bp.route('/training/data', methods=['GET'])
 def get_training_data_list():
     db = connect_and_get_db()
@@ -789,20 +833,6 @@ def get_training_data_list():
         })
 
     return Response(json.dumps(training_output, default=json_serial), mimetype="application/json")
-
-
-def decorate_text_with_annotations(text, spans):
-    sorted_spans = list(sorted(spans, key=lambda item: item['offset_start']))
-    annotated_text = ""
-    start = 0
-    for span in sorted_spans:
-        type = span['type'].replace("<", "").replace(">", "")
-        annotated_text += text[start: span['offset_start']] + get_span_start(type) + text[
-                                                                                     span['offset_start']: span[
-                                                                                         'offset_end']] + get_span_end()
-        start = span['offset_end']
-    annotated_text += text[start: len(text)]
-    return annotated_text
 
 
 @bp.route("/label/studio/projects", methods=['GET'])

@@ -1,0 +1,34 @@
+{"hash":"0012333581"}
+{"hash":"0021fd339f"}
+{"hash":"08e1cb8f4f"}
+{"hash":"00c32076f4"}
+{"hash":"00b50fc0a8"}
+{"hash":"021c413172"}
+{"hash":"02bf1b3db9"}
+{"hash":"02c4f00127"}
+{"hash":"02cbc58819"}
+{"hash":"039105663f"}
+{"hash":"044939701d"}
+{"hash":"0454e07f64"}
+{"hash":"0aa1b3161f"}
+{"hash":"0c7d3163ea"}
+{"hash":"0da5febabf"}
+
+
+
+{"hash": {"$in": ["0012333581", "0021fd339f", "08e1cb8f4f", "00c32076f4", "00b50fc0a8", "021c413172", "02bf1b3db9", "02c4f00127", "02cbc58819", "039105663f", "044939701d", "0454e07f64", "0aa1b3161f", "0c7d3163ea", "0da5febabf"]}}
+
+
+
+{"files_id": {"$in": [{"$oid": "637f3d6ced40f5e761c4e4a9"}, {"$oid": "638420c0c9043ddb9b837585"}, {"$oid": "637fcd3e900aa014adc55cad"}, {"$oid": "6380433c2dd6479368745d9d"}, {"$oid": "637fde2bed40f5e761c56ced"}, {"$oid": "63800f0ad210787aa2c59a9d"}, {"$oid": "637f2d2a900aa014adc4d6cf"}, {"$oid": "637f7aa1ed40f5e761c5152a"}, {"$oid": "637f3912900aa014adc4e3c3"}, {"$oid": "637f2658900aa014adc4d1e4"}, {"$oid": "637f2df9900aa014adc4d777"}, {"$oid": "637f0e7fd210787aa2c4c1e2"}, {"$oid": "637f1865d210787aa2c4c8b1"}, {"$oid": "63840719e87bc65065836f83"}, {"$oid": "637ef62ad210787aa2c4b22a"}] }}
+
+
+mongodump --db supercon_dev_221122 --collection binary.chunks --query='{"files_id": {"$in": [{"$oid": "637f3d6ced40f5e761c4e4a9"}, {"$oid": "638420c0c9043ddb9b837585"}, {"$oid": "637fcd3e900aa014adc55cad"}, {"$oid": "6380433c2dd6479368745d9d"}, {"$oid": "637fde2bed40f5e761c56ced"}, {"$oid": "63800f0ad210787aa2c59a9d"}, {"$oid": "637f2d2a900aa014adc4d6cf"}, {"$oid": "637f7aa1ed40f5e761c5152a"}, {"$oid": "637f3912900aa014adc4e3c3"}, {"$oid": "637f2658900aa014adc4d1e4"}, {"$oid": "637f2df9900aa014adc4d777"}, {"$oid": "637f0e7fd210787aa2c4c1e2"}, {"$oid": "637f1865d210787aa2c4c8b1"}, {"$oid": "63840719e87bc65065836f83"}, {"$oid": "637ef62ad210787aa2c4b22a"}] }}'
+mongodump --db supercon_dev_221122 --collection binary.files --query='{"hash": {"$in": ["0012333581", "0021fd339f", "08e1cb8f4f", "00c32076f4", "00b50fc0a8", "021c413172", "02bf1b3db9", "02c4f00127", "02cbc58819", "039105663f", "044939701d", "0454e07f64", "0aa1b3161f", "0c7d3163ea", "0da5febabf"]}}'
+mongodump --db supercon_dev_221122 --collection logger --query='{"hash": {"$in": ["0012333581", "0021fd339f", "08e1cb8f4f", "00c32076f4", "00b50fc0a8", "021c413172", "02bf1b3db9", "02c4f00127", "02cbc58819", "039105663f", "044939701d", "0454e07f64", "0aa1b3161f", "0c7d3163ea", "0da5febabf"]}}'
+mongodump --db supercon_dev_221122 --collection document --query='{"hash": {"$in": ["0012333581", "0021fd339f", "08e1cb8f4f", "00c32076f4", "00b50fc0a8", "021c413172", "02bf1b3db9", "02c4f00127", "02cbc58819", "039105663f", "044939701d", "0454e07f64", "0aa1b3161f", "0c7d3163ea", "0da5febabf"]}}'
+mongodump --db supercon_dev_221122 --collection tabular --query='{"hash": {"$in": ["0012333581", "0021fd339f", "08e1cb8f4f", "00c32076f4", "00b50fc0a8", "021c413172", "02bf1b3db9", "02c4f00127", "02cbc58819", "039105663f", "044939701d", "0454e07f64", "0aa1b3161f", "0c7d3163ea", "0da5febabf"]}}'
+
+
+
+

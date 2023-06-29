@@ -55,11 +55,15 @@
     background-color: #0e90d270;
 }
 
+.label.me_method.linked {
+    background-color: rgba(153, 198, 231, 0.91);
+}
+
 .label.material {
     background-color: #2262d270;
 }
 
-.label.material-tc {
+.label.material.linked {
     background-color: #50ced270;
 }
 
@@ -87,12 +91,20 @@
     background-color: #83ff8370;
 }
 
+.label.temperature.linked {
+    background-color: #83ff8370;
+}
+
 .label.magnetisation {
     background-color: #20bd4e70;
 }
 
 .label.pressure {
     background-color: #92d98370;
+}
+
+.label.pressure.linked {
+    background-color: #c4ac35;
 }
 
 

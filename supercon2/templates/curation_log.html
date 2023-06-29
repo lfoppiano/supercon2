@@ -92,7 +92,7 @@
                     <v-row>[[ new Intl.DateTimeFormat(['en-US', 'ja'], { dateStyle: 'short', timeStyle: 'short'}).format(new Date(item.timestamp + "Z")) ]]   </v-row>
                 </template>
             </v-data-table>
-            <p><span style="color:#848484;">&copy; Contributors, 2022 |</span> <span id="version" style="color:#848484;" v-html="version"></span></p>
+            <p><span style="color:#848484;">&copy; Contributors, 2021-2023 |</span> <span id="version" style="color:#848484;" v-html="version"></span></p>
             <v-dialog v-model="itemDialog.shouldShow">
                 <v-card>
                     <v-card-title>[[ itemDialogTitle ]]</v-card-title>
@@ -390,7 +390,7 @@
                 loadItems() {
                     this.isLoading = true
                     const url =
-                        '{{ url_for("supercon.get_curation_records") }}'
+                        '{{ url_for("supercon.get_curation_records_response") }}'
                     axios.get(url).then((data) => {
                         this.items = data.data
                         return

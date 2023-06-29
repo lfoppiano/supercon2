@@ -24,5 +24,5 @@ export const shortcutKeys = [{
     text: 'Show the keyboard shortcuts dialog',
 }, {
     name: 'esc',
-    text: 'Close this dialog',
+    text: 'Close the dialog you open',
 }]

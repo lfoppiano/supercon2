@@ -51,7 +51,7 @@
             </template>
         </v-data-table>
 
-        <p><span style="color:#848484;">&copy; Contributors, 2022 |</span> <span id="version" style="color:#848484;" v-html="version"></span></p>
+        <p><span style="color:#848484;">&copy; Contributors, 2021-2023 |</span> <span id="version" style="color:#848484;" v-html="version"></span></p>
         </p>
         <v-dialog v-model="tokenDialog" max-width="500">
             <v-card>
@@ -104,7 +104,7 @@
                     {text: 'Id', value: 'id', sortable: false, hidden: true},
                     {text: 'Text', value: 'annotated_text', sortable: false, hidden: false},
                     {text: 'Status', value: 'status', sortable: true, hidden: false},
-                    {text: 'Timestamp', value: 'timestamp', sortable: true, hidden: false, width: 120},
+                    {text: 'Timestamp', value: 'timestamp', sortable: true, hidden: true, width: 120},
                     {text: 'Task Id', value: 'task_id', sortable: true, hidden: false},
                     {text: 'Document', value: 'hash', sortable: true, hidden: false},
                     {text: 'Actions', value: 'actions', sortable: false, hidden: false},

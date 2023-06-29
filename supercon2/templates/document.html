@@ -80,11 +80,17 @@
                     </template>
                     <template v-slot:item.rawMaterial="{ item }">
                         [[ item.rawMaterial ]]
-                        <v-icon @click="scrollToPdf(item.materialId, item.id)">mdi-arrow-down-thick</v-icon>
+                        <v-icon
+                            @click="scrollToPdf(item.materialId, item.id)"
+                            v-if="!!item.materialId">mdi-arrow-down-thick
+                        </v-icon>
                     </template>
                     <template v-slot:item.criticalTemperature="{ item }">
                         [[ item.criticalTemperature ]]
-                        <v-icon @click="scrollToPdf(item.criticalTemperatureId, item.id)">mdi-arrow-down-thick</v-icon>
+                        <v-icon
+                            @click="scrollToPdf(item.criticalTemperatureId, item.id)"
+                            v-if="!!item.criticalTemperatureId">mdi-arrow-down-thick
+                        </v-icon>
                     </template>
                     <template v-slot:item.hash="{ item }">
                         <v-row>
@@ -134,9 +140,9 @@
                             <v-icon small class="mr-1" @click="markRecordInvalid(item)" title="Mark as invalid">
                                 mdi-thumb-down
                             </v-icon>
-                            <v-icon small class="mr-1" @click="resetRecord(item)" title="Reset status">
-                                mdi-restart
-                            </v-icon>
+{#                            <v-icon small class="mr-1" @click="resetRecord(item)" title="Reset status">#}
+{#                                mdi-restart#}
+{#                            </v-icon>#}
                             <v-icon small class="mr-1" @click="openEditItemDialog(item)" title="Edit">
                             mdi-pencil
                             </v-icon>
@@ -160,7 +166,13 @@
                             [[ "..." + item.id.substring(item.id.length - 8) ]]
                         </template>
                         <template v-slot:item.sentence="{ item }">
-                            [[ item.sentence.slice(0, 30) + ' ...' ]]
+                            <v-container>
+                                <div v-if="!!item.sentenceIsExpanded" v-html="item.sentence_decorated">
+                                </div>
+                                <div v-else :style="{cursor: 'ns-resize'}" @click="showWholeSentence(item)">
+                                    [[ item.sentence.slice(0, 30) + ' ...' ]]
+                                </div>
+                            </v-container>
                         </template>
                         <template v-slot:item.actions="{ item }">
                             <v-row>
@@ -170,9 +182,9 @@
                                 <v-icon small class="mr-1" @click="markRecordInvalid(item)" title="Mark as invalid">
                                     mdi-thumb-down
                                 </v-icon>
-                                <v-icon small class="mr-1" @click="resetRecord(item)" title="Reset status">
-                                    mdi-restart
-                                </v-icon>
+{#                                <v-icon small class="mr-1" @click="resetRecord(item)" title="Reset status">#}
+{#                                    mdi-restart#}
+{#                                </v-icon>#}
                                 <v-icon small class="mr-1" @click="openEditItemDialog(item)" title="Edit">
                                     mdi-pencil
                                 </v-icon>
@@ -245,10 +257,10 @@
                     </v-card>
                 </v-dialog>
                 <div id="pdfViewer" :style="{'position': 'relative'}" class="mt-4">
-                    <div id="pdfAnnotaions">
+                    <div id="pdfAnnotations">
                         <div v-for="passage in passages">
                             <div v-for="span in passage.spans">
-                                <div v-for="box in span.boundingBoxes">
+                                <div v-for="(box, index) in span.boundingBoxes">
                                     <div :style="{
                                         'position': 'absolute',
                                         'left': box.x * scale,
@@ -265,7 +277,10 @@
                                         'top': (Math.floor(pages[0].height) * (box.page-1) + box.y - 5) * scale,
                                         'opacity': '0.8',
                                         'z-index': 1,
-                                    }" color="red" v-if="span.id === selectedSpanId" @click="selectedSpanId = ''" title="hide this icon">
+                                    }"
+                                            color="red"
+                                            v-if="index === span.boundingBoxes.length -1 && span.id === selectedSpanId"
+                                            @click="selectedSpanId = ''" title="hide this icon">
                                         mdi-lightbulb-on
                                     </v-icon>
                                 </div>
@@ -303,7 +318,7 @@
                         </v-card-text>
                     </v-card>
                 </div>
-                <p><span style="color:#848484;">&copy; Contributors, 2022 |</span> <span id="version" style="color:#848484;" v-html="version"></span></p>
+                <p><span style="color:#848484;">&copy; Contributors, 2021-2023 |</span> <span id="version" style="color:#848484;" v-html="version"></span></p>
                 <v-snackbar v-model="snackbar.shouldShow" :color="snackbar.color">
                     [[ snackbar.text ]]
                     <template v-slot:action="{ attrs }">
@@ -343,7 +358,6 @@
                     },
                     base_url: '{{ base_url }}',
                     hash: '{{hash}}',
-                    version: "",
                     passages: [],
                     pages: [],
                     scale,
@@ -364,6 +378,7 @@
                     sortBy: [],
                     selectedItems: [],
                     floatingItems: [],
+                    newItemId: "",
                     selectedSpanId: "", // selected on the table
                     clickedSpan: undefined, // clicked on the pdf
                     filteredItems: [],
@@ -418,7 +433,10 @@
                                 icon: 'mdi-robot'
                             },]
                         },
-                        { text: 'Latest error type', value: 'error_type', hidden: false, filter: this.hashFilter, shouldHideEmpty: false },
+                        {
+                            text: 'Latest error type', value: 'error_type', hidden: false, filter: this.errorTypeFilter, filterKeyword: 'all', shouldHideEmpty: false,
+                            selectItems: [], // filled by loadErrorTypes method
+                        },
                         {
                             text: 'Status', value: 'status', sortable: false, hidden: true, filter: this.statusFilter, filterKeyword: 'all', width: 80,
                             radioGroup: [{
@@ -453,14 +471,15 @@
                     ],
                     rowsOnItemEditDialog: [
                         {
-                            config: { cols: 4 },
+                            config: { cols: 3 },
                             cols: [
                                 { key: 'rawMaterial'},
+                                { key: 'name' },
                                 { key: 'id', disabled: true },
                                 {
                                     key: 'error_type', label: '*Error type', rules: [(value) => !!value || 'This field is required'],
                                     errorMessages: [],
-                                    selectBoxItems: ['From table', 'Extraction', 'Linking', 'Tc classification', 'Composition resolution', 'Value resolution']
+                                    selectBoxItems: [] // set by the loadErrorTypes method
                                 }
                             ]
                         }, {
@@ -526,7 +545,7 @@
                     return this.filteredItems[0]
                 },
                 saveIsValidated() {
-                    return this.editedItem.doi && this.editedItem.hash && this.editedItem.error_type
+                    return this.editedItem.hash && this.editedItem.error_type
                 },
                 headerObject() {
                     return Object.fromEntries(new Map(
@@ -558,6 +577,18 @@
                 this.loadPdfs()
                 this.loadAnnotations()
                 this.loadItems()
+                this.loadErrorTypes()
+            },
+            async beforeMount() {
+                let url = '{{ url_for("supercon.get_version") }}'
+                try {
+                    const result = await axios.get(url, {})
+                    this.version = result.data['version']
+                } catch (e) {
+                    console.error(e)
+                    window.alert(JSON.stringify(e.response.data))
+                } finally {
+                }
             },
             methods: {
                 getPdfsHeight(page, ratio) {
@@ -598,6 +629,9 @@
 
                             if (propertyName === "formula") {
                                 formula = obj[key][sub_key]['rawValue'];
+                                if (formula === undefined) {
+                                    formula = obj[key][sub_key]
+                                }
                                 attributeHtmlString += "<row><div>" + propertyName + ": <strong>" + formula + "</strong></div></row>";
                             } else if (propertyName === 'rawTaggedValue') {
                                 // continue
@@ -608,6 +642,10 @@
                                 Object.keys(resolvedFormulasList).forEach(function (k) {
                                     resolvedFormulas.push(resolvedFormulasList[k]['rawValue'])
                                 });
+                            } else if (propertyName === 'resolvedFormula') {
+                                Object.keys(obj[key][sub_key]).forEach(function (k) {
+                                    resolvedFormulas.push(obj[key][sub_key][k])
+                                })
                             } else if (propertyName === 'variables') {
                                 let variableList = obj[key][sub_key]
                                 Object.keys(variableList).forEach(function (variable_name) {
@@ -712,19 +750,43 @@
                     }
                 },
                 showWholeSentence(item) {
-                    item.sentenceIsExpanded = true
+                    this.$set(item, 'sentenceIsExpanded', true);
                     this.headerObject.sentence.width = 400
                 },
-                loadItems() {
+                async loadItems() {
                     this.isLoading = true
                     const url =
                         '{{ url_for("supercon.get_records_by_document", hash = hash) }}'
-                    axios.get(url).then((data) => {
-                        this.items = data.data
-                    }).catch((e) => {
+                    try {
+                        const response = await axios.get(url)
+                        this.items = response.data
+                        if (this.floatingItems.length > 0) {
+                            // Keep floating records from disappearing when updating or not updating records.
+                            this.floatingItems = this.items.filter(item => {
+                                return item.id === this.newItemId || item.id === this.floatingItems[0].id
+                            })
+                        }
+                    } catch(e) {
                         console.error("failed to load documents", e)
-                    }).finally(() => {
+                    } finally {
                         this.isLoading = false
+                    }
+                },
+                loadErrorTypes() {
+                    const url = '{{ url_for("supercon.get_error_types") }}'
+                    axios.get(url).then((data) => {
+                        let errorTypes = [];
+                        for (let prop in data.data) {
+                            errorTypes.push ({'value': prop, 'text': data.data[prop]})
+                        }
+                        let dialog = this.rowsOnItemEditDialog[0].cols.find(col => {
+                            return col.key === "error_type"
+                        });
+                        dialog.selectBoxItems = errorTypes;
+                        this.headerObject.error_type.selectItems = new Array({"value":"all", text:"All"}).concat(errorTypes)
+                        return
+                    }).finally(() => {
+                        //
                     })
                 },
                 hasChangedPageCount(pageCount) {
@@ -931,6 +993,15 @@
                             return item.type === keyword
                     }
                 },
+                errorTypeFilter(value, search, item) {
+                    const keyword = this.headerObject.error_type.filterKeyword
+                    switch (keyword) {
+                        case 'all':
+                            return true
+                        default:
+                            return value === keyword
+                    }
+                },
                 statusFilter(value, search, item) {
                     const keyword = this.headerObject.status.filterKeyword
                     switch (keyword) {
@@ -1000,7 +1071,7 @@
                         )
                     )
                 },
-                async resetRecord(record) {
+                {#async resetRecord(record) {
                     let url = '{{ url_for("supercon.reset_record", id = "id") }}'
                     url = url.replace(
                         "id",
@@ -1017,7 +1088,7 @@
                             }
                         )
                     )
-                },
+                },#}
                 openEditItemDialog(item) {
                     // make a deep copy so that the record is not updated in the table
                     this.editedItem = JSON.parse(JSON.stringify(item))
@@ -1055,7 +1126,7 @@
                     } else {
                         await this.createItem()
                     }
-                    this.loadItems()
+                    await this.loadItems()
                 },
                 async createItem() {
                     const url = '{{ url_for("supercon.create_record") }}'
@@ -1082,7 +1153,9 @@
                     // Deletes sentenceIsExpanded field because this field is for only frontend. The backend doesn't allow an unknown field.
                     delete this.editedItem.sentenceIsExpanded
                     try {
-                        await axios.put(url, this.editedItem)
+                        const response = await axios.put(url, this.editedItem)
+                        // Because the ID changes when the record is updated
+                        this.newItemId = response.data.id
                         this.close()
                     } catch (e) {
                         console.error(e)

@@ -129,9 +129,9 @@
                         <v-icon small class="mr-1" @click="markRecordInvalid(item)" title="Mark as invalid">
                             mdi-thumb-down
                         </v-icon>
-                        <v-icon small class="mr-1" @click="resetRecord(item)" title="Reset status">
-                            mdi-restart
-                        </v-icon>
+{#                        <v-icon small class="mr-1" @click="resetRecord(item)" title="Reset status">#}
+{#                            mdi-restart#}
+{#                        </v-icon>#}
                         <v-icon small class="mr-1" @click="openEditItemDialog(item)" title="Edit">
                         mdi-pencil
                         </v-icon>
@@ -147,7 +147,7 @@
                     <v-row>[[ new Intl.DateTimeFormat(['en-US', 'ja'], { dateStyle: 'short', timeStyle: 'short'}).format(new Date(item.timestamp + "Z")) ]]   </v-row>
                 </template>
             </v-data-table>
-            <p><span style="color:#848484;">&copy; Contributors, 2022 |</span> <span id="version" style="color:#848484;" v-html="version"></span></p>
+            <p><span style="color:#848484;">&copy; Contributors, 2021-2023 |</span> <span id="version" style="color:#848484;" v-html="version"></span></p>
             <v-dialog v-model="itemDialog.shouldShow">
                 <v-card>
                     <v-card-title>[[ itemDialogTitle ]]</v-card-title>
@@ -343,9 +343,10 @@
                         // { text: 'Material ID', value: 'materialId', hidden: true},
                     ],
                     rowsOnItemEditDialog: [{
-                            config: { cols: 4 },
+                            config: { cols: 3 },
                             cols: [
                                 { key: 'rawMaterial'},
+                                { key: 'name' },
                                 { key: 'id', disabled: true },
                                 {
                                     key: 'error_type', label: '*Error type', rules: [(value) => !!value || 'This field is required'],
@@ -416,7 +417,7 @@
                     return this.filteredItems[0]
                 },
                 saveIsValidated() {
-                    return this.editedItem.doi && this.editedItem.hash && this.editedItem.error_type
+                    return this.editedItem.hash && this.editedItem.error_type
                 },
                 headerObject() {
                     return Object.fromEntries(new Map(
@@ -787,7 +788,7 @@
                         )
                     )
                 },
-                async resetRecord(record) {
+                {#async resetRecord(record) {
                     let url = '{{ url_for("supercon.reset_record", id = "id") }}'
                     url = url.replace(
                         "id",
@@ -804,7 +805,7 @@
                             }
                         )
                     )
-                },
+                },#}
                 openEditItemDialog(item) {
                     // make a deep copy so that the record is not updated in the table
                     this.editedItem = JSON.parse(JSON.stringify(item))

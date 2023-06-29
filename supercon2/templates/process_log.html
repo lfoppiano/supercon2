@@ -76,7 +76,7 @@
                     <v-row>[[ new Intl.DateTimeFormat(['en-US', 'ja'], { dateStyle: 'short', timeStyle: 'short'}).format(new Date(item.timestamp + "Z")) ]]   </v-row>
                 </template>
             </v-data-table>
-            <p><span style="color:#848484;">&copy; Contributors, 2022 |</span> <span id="version" style="color:#848484;" v-html="version"></span></p>
+            <p><span style="color:#848484;">&copy; Contributors, 2021-2023 |</span> <span id="version" style="color:#848484;" v-html="version"></span></p>
         </v-container>
     </v-app>
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
@@ -269,7 +269,7 @@
                         case 'all':
                             return true
                         case 'any error':
-                            return item.status !== '200'
+                            return item.status !== '200' && item.status !== '204'
                         default:
                             return item.status === keyword
                     }
