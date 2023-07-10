@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pymatgen.core as mg
 import requests
+from textdistance import RatcliffObershelp
 
 from commons.correction_utils import write_raw_training_data
 from process.grobid_client_generic import GrobidClientGeneric
@@ -81,8 +82,38 @@ grobid_quantities_url = "http://falcon.nims.go.jp/quantities/stable"
 quantity_text_url = grobid_quantities_url + "/service/processQuantityText"
 
 
-def parse_quantity(tc, is_not_tc=False):
-    data = str({'text': tc})
+def parse_pressure_regex(pressure):
+    if RatcliffObershelp().normalized_similarity(applied_pressure, "ambient pressure") > 0.9:
+        return 0.0
+
+    search = pressure_regex.search(pressure)
+    if search:
+        value = search.groups()[0]
+        unit = search.groups()[1]
+        float_value = float(value)
+        if "Pa" in unit and unit != "Pa":
+            if unit.startswith("k"):
+                float_value *= 1000
+            if unit.startswith("G"):
+                float_value *= 1000000000
+            return float_value
+        elif unit == "Pa":
+            return float_value
+        elif "bar" in unit:
+            float_value *= 100000
+            if unit != "bar":
+                if unit.startswith("k"):
+                    float_value *= 1000
+
+            return float_value
+        else:
+            raise Exception("Value not in Pascal. Might not be an applied pressure. ")
+    else:
+        raise Exception("No pressure found")
+
+
+def parse_quantity(quantity_raw_text, type="tc"):
+    data = str({'text': quantity_raw_text})
     response = requests.post(quantity_text_url, files={"text": data})
 
     if response.status_code == 200:
@@ -110,10 +141,12 @@ def parse_quantity(tc, is_not_tc=False):
 
             return quantities_value
 
-        else:
-            if not is_not_tc:
-                float_value = parse_tc_regex(tc)
-                return [float_value]
+    if type == "tc":
+        float_value = parse_tc_regex(quantity_raw_text)
+        return [float_value]
+    elif type == "pressure":
+        float_value = parse_pressure_regex(quantity_raw_text)
+        return [float_value]
 
 
 def get_value_as_float(quantity_obj):
@@ -161,7 +194,8 @@ if __name__ == '__main__':
     db = connection[db_name]
     tabular_collection = db.get_collection("tabular")
 
-    temp_regex = re.compile(r"^([0-9.]+) ?(m?K{1})$")
+    temp_regex = re.compile(r"^([0-9.,]+) ?(m?K{1})$")
+    pressure_regex = re.compile(r"^([0-9.,]+) ?([Gk]?Pa{1})$")
     # tabular_cursor = tabular_collection.find({"status": {"$not": {"$in": ["empty", "invalid", "removed", "obsolete"]}}})
     tabular_cursor_count = tabular_collection.count_documents({"status": {"$in": ["new", "invalid"]}})
     tabular_cursor = tabular_collection.find({"status": {"$in": ["new", "invalid"]}})
@@ -211,7 +245,20 @@ if __name__ == '__main__':
             }
 
             try:
-                parse_quantity(applied_pressure, is_not_tc=True)
+                float_values = parse_quantity(applied_pressure, type="pressure")
+                is_anomaly = False
+                for float_value in float_values:
+                    if float_value > 250 * 1000000000:
+                        anomaly['description'] = "Pressure too high"
+                        anomalies.append(anomaly)
+                        is_anomaly = True
+                    elif float_value < 0:
+                        anomaly['description'] = "Pressure negative"
+                        anomalies.append(anomaly)
+                        is_anomaly = True
+                if is_anomaly:
+                    continue
+
             except Exception as e:
                 anomaly['description'] = "Applied pressure not parseable, " + str(e)
                 anomalies.append(anomaly)
