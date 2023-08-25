@@ -6,8 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
     <title>SuperCon2 | PDF viewer</title>
     <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.5.95/css/materialdesignicons.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/vuetify@2.6.3/dist/vuetify.min.css" rel="stylesheet">    <link rel="icon" type="image/x-icon" href={{ url_for('static', filename='resources/img/favicon.ico' ) }} />
+    <link href="{{ url_for('static', filename='resources/libs/MaterialDesign-Webfont-6.5.95/css/materialdesignicons.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='resources/libs/vuetify-2.6.3/vuetify-v2.6.3.min.css') }}" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href={{ url_for('static', filename='resources/img/favicon.ico' ) }} />
     <link rel="shortcut icon" type="image/x-icon" href={{ url_for('static', filename='resources/img/favicon.ico' ) }} />
     <link rel="stylesheet" href={{ url_for('static', filename='resources/css/style-superconductors.css') }}/>
     <style>
@@ -330,12 +331,12 @@
             </v-container>
         </v-app>
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vuetify@2.6.3/dist/vuetify.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/axios@0.26.1/dist/axios.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mathjs@11.3.1/lib/browser/math.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.0.279"></script>
-    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.0.279/build/pdf.worker.min.js"></script>
+    <script src="{{ url_for('static', filename='resources/libs/vue-2.6.14/vue.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='resources/libs/vuetify-2.6.3/vuetify-v2.6.3.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='resources/libs/axios-0.26.1/axios.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='resources/libs/mathjs-11.3.1/math.js') }}"></script>
+    <script src="{{ url_for('static', filename='resources/libs/pdfjs-3.0.279/build/pdf.js') }}"></script>
+    <script src="{{ url_for('static', filename='resources/libs/pdfjs-3.0.279/build/pdf.worker.js') }}"></script>
     <script type="module">
         import { colors } from "{{ url_for('static', filename='grobid/colors.js')}}"
         import { shortcutKeys } from "{{ url_for('static', filename='grobid/shortcut-keys.js')}}"
