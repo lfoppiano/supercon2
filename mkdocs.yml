@@ -9,4 +9,13 @@ theme:
   name: readthedocs
 nav:
   - Home: 'Index.md'
-  - Guidelines: 'guidelines/guidelines.md'
+  - User interface: 'curation_interface.md'
+  - Curation workflow: 'curation_workflow.md'
+  - Curation guidelines: 'guidelines/guidelines.md'
+
+  ## Development guide
+
+  - Getting started: 'getting-started.md'
+  - Data ingestion: 'data-ingestion.md'
+  - Training data management: 'training-data-management.md'
+  - API documentation: 'api-documentation.md'
