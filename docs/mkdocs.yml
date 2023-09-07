@@ -2,10 +2,10 @@ site_name: SuperCon 2 Documentation
 repo_url: https://github.com/lfoppiano/supercon2
 repo_name: GitHub
 site_description: Guidelines for SuperCon 2 curation for SuperCon database
-docs_dir: doc
+docs_dir: .
 plugins:
   - search
 theme:
   name: readthedocs
 nav:
-  - Home: 'guidelines.md'
+  - Home: 'guideline/guidelines.md'
