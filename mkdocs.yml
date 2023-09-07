@@ -1,0 +1,21 @@
+site_name: SuperCon 2 Documentation
+repo_url: https://github.com/lfoppiano/supercon2
+repo_name: GitHub
+site_description: Guidelines for SuperCon 2 curation for SuperCon database
+docs_dir: docs
+plugins:
+  - search
+theme:
+  name: readthedocs
+nav:
+  - Home: 'Index.md'
+  - User documentation:
+    - User interface: 'curation_interface.md'
+    - Curation workflow: 'curation_workflow.md'
+    - Curation guidelines: 'guidelines/guidelines.md'
+
+  - Development documentation:
+    - Getting started: 'getting-started.md'
+    - Data ingestion: 'data-ingestion.md'
+    - Training data management: 'training-data-management.md'
+    - API documentation: 'api-documentation.md'

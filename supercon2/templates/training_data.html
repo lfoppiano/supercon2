@@ -6,11 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
     <title>SuperCon2 | Training data viewer</title>
     <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
-    <link href={{ url_for('static', filename='resources/css/style-superconductors.css' ) }} rel="stylesheet">
-    <link rel="icon" type="image/x-icon" href={{ url_for('static', filename='resources/img/favicon.ico' ) }}/>
-    <link rel="shortcut icon" type="image/x-icon" href={{ url_for('static', filename='resources/img/favicon.ico' ) }}/>
+    <link href="{{ url_for('static', filename='resources/libs/MaterialDesign-Webfont-6.5.95/css/materialdesignicons.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='resources/libs/vuetify-2.6.3/vuetify-v2.6.3.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='resources/css/style-superconductors.css' ) }}" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='resources/img/favicon.ico' ) }}"/>
+    <link rel="shortcut icon" type="image/x-icon" href="{{ url_for('static', filename='resources/img/favicon.ico' ) }}"/>
 </head>
 
 <body>
@@ -84,9 +84,9 @@
         </v-dialog>
     </v-container>
 </v-app>
-<script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="{{ url_for('static', filename='resources/libs/vue-2.6.14/vue.min.js') }}"></script>
+<script src="{{ url_for('static', filename='resources/libs/vuetify-2.6.3/vuetify-v2.6.3.min.js') }}"></script>
+<script src="{{ url_for('static', filename='resources/libs/axios-0.26.1/axios.min.js') }}"></script>
 <script>
     new Vue({
         el: '#app',
