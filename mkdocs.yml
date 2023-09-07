@@ -8,4 +8,5 @@ plugins:
 theme:
   name: readthedocs
 nav:
-  - Home: 'guideline/guidelines.md'
+  - Home: 'Index.md'
+  - Guidelines: 'guidelines/guidelines.md'
