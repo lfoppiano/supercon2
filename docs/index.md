@@ -3,8 +3,8 @@
 SuperCon 2 is the staging-area of [SuperCon](http://supercon.nims.go.jp), the 'de-facto standard' database of superconductors materials.
 SuperCon 2, collect experimental data automatically extracted from scientific documents and provide a workflow to correct them efficiently and with high quality.
 
-- [User interface](curation_interface/readme.md)
-- [Curation workflow](curation_workflow/readme.md)
+- [User interface](curation_interface.md)
+- [Curation workflow](curation_workflow.md)
 - [Curation guidelines](guidelines/readme.md)
 
 ## Development guide 
