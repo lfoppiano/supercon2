@@ -43,8 +43,8 @@ preferred-citation:
   - family-names: "Ishii"
     given-names: "Masashi"
     orcid: "https://orcid.org/0000-0003-0357-2832"
-  doi: "10.48550/arXiv.2309.10923"
-  journal: "arXiv"
+  doi: 'https://doi.org/10.1080/27660400.2023.2286219"
+  journal: "Science and Technology of Advanced Materials: Methods"
 #   start: 1 # First page number
 #   end: 10 # Last page number
   title: "Semi-automatic staging area for high-quality structured data extraction from scientific literature"

@@ -14,16 +14,17 @@ This repository contains:
 Reference: 
 
 ```
-@unpublished{foppiano:hal-04198232,
-  TITLE = {{Semi-automatic staging area for high-quality structured data extraction from scientific literature}},
-  AUTHOR = {Foppiano, Luca and Tomoya, Mato and Kensei, Terashima and Pedro Ortiz, Suarez and Taku, Tou and Chikako, Sakai and Wei-Sheng, Wang and Toshiyuki, Amagasa and Yoshihiko, Takano and Masashi, Ishii and Tomoya, Mato and Kensei, Terashima and Pedro Ortiz, Suarez and Taku, Tou and Chikako, Sakai and Wei-Sheng, Wang and Toshiyuki, Amagasa and Yoshihiko, Takano and Masashi, Ishii},
-  URL = {https://hal.science/hal-04198232},
-  NOTE = {working paper or preprint},
-  YEAR = {2023},
-  MONTH = Sep,
-  KEYWORDS = {materials informatics superconductors machine learning database tdm ; materials informatics ; superconductors ; machine learning ; database ; tdm},
-  PDF = {https://hal.science/hal-04198232/file/main.pdf},
-  HAL_ID = {hal-04198232},
-  HAL_VERSION = {v1},
+@article{doi:10.1080/27660400.2023.2286219,
+	title        = {Semi-automatic staging area for high-quality structured data extraction from scientific literature},
+	author       = {Luca Foppiano, Tomoya Mato, Kensei Terashima, Pedro Ortiz Suarez, Taku Tou, Chikako Sakai, Wei-Sheng Wang, Toshiyuki Amagasa, Yoshihiko Takano and Masashi Ishii},
+	year         = 2023,
+	journal      = {Science and Technology of Advanced Materials: Methods},
+	publisher    = {Taylor & Francis},
+	volume       = {0},
+	number       = {ja},
+	pages        = 2286219,
+	doi          = {10.1080/27660400.2023.2286219},
+	url          = {https://doi.org/10.1080/27660400.2023.2286219},
+	eprint       = {https://doi.org/10.1080/27660400.2023.2286219}
 }
 ```
