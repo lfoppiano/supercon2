@@ -3,11 +3,11 @@
 SuperCon 2 is the staging-area of [SuperCon](http://supercon.nims.go.jp), the 'de-facto standard' database of superconductors materials. 
 SuperCon 2, collect experimental data automatically extracted from scientific documents and provide a workflow to correct them efficiently and with high quality. 
 
-The SuperCon 2 interface is described in details in [our latest paper](https://hal.science/hal-04198232) (currently in review).
+The SuperCon 2 interface is described in details [here](https://doi.org/10.1080/27660400.2023.2286219).
 
 This repository contains:
 
-- The process to create the SuperCon 2 database from scratch, using [Grobid Superconductor](https://github.com/lfoppiano/grobid-superconductors) to extract materials information from large quantities of PDFs.
+- The process to create the SuperCon 2 database from scratch, using [Grobid Superconductor](https://github.com/lfoppiano/grobid-superconductors) to extract materials information from large quantities of PDF.
 - SuperCon 2 curation interface and workflow application for visualising and editing material and properties extracted from superconductors-related papers.
 - The documentation related to the usage of SuperCon 2, with notes, experiments and other information, accessible [here](https://supercon2.readthedocs.io).
 
